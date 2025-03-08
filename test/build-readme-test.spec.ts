@@ -9,7 +9,8 @@ import { describe, expect, it } from 'vitest';
 
 import { buildReadme } from '../src/build-readme';
 
-import { updateGoldens } from './goldens/update-goldens';
+import { updateGoldens } from './setup/goldens.ts';
+
 
 describe('buildReadme()', () => {
   it('should insert example into README.public.md and write the result to dist/README.md', async () => {
@@ -31,7 +32,7 @@ describe('buildReadme()', () => {
   it('golden test', async () => {
     await buildReadme();
 
-    if (updateGoldens) {
+    if (updateGoldens()) {
       cp('dist/README.md', 'test/goldens/README.md');
     }
 
