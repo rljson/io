@@ -24,22 +24,36 @@ git clone https://github.com/rljson/io.git
 cd io
 ```
 
+## Install pnpm
+
+Windows:
+
+```bash
+corepack enable pnpm
+```
+
+Mac:
+
+```bash
+sudo corepack enable pnpm
+```
+
 ## Install dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 ## Run the tests
 
 ```bash
-npm run test
+pnpm run test
 ```
 
 ## Build the package
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 ## Publish the package
@@ -51,13 +65,13 @@ Increase `version`.
 Compile typescript:
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 Make publish dry-run
 
 ```bash
-npm publish --access=public --dry-run
+pnpm publish --access=public --dry-run
 ```
 
 Check the changes to uploaded
@@ -65,7 +79,7 @@ Check the changes to uploaded
 Publish the package
 
 ```bash
-npm publish --access=public
+pnpm publish --access=public
 ```
 
 ## Architecture
