@@ -52,5 +52,8 @@
     "onlyBuiltDependencies": [
       "esbuild"
     ]
+  },
+  "peerDependencies": {
+    "@rljson/format": "^0.0.1"
   }
 }

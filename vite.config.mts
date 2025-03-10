@@ -16,7 +16,7 @@ export default defineConfig({
       formats: ['es'],
     },
     rollupOptions: {
-      external: [],
+      external: ['@rljson/format'],
       output: {
         globals: {},
       },
