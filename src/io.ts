@@ -4,16 +4,16 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
+import { Rljson } from '@rljson/rljson';
+
 /**
  * The low level data read and write interface.
  */
 export interface Io {
-  foo: string;
+  write(request: { data: Rljson }): Promise<void>;
 }
 
 /**
  * Example Io implementation
  */
-export const exampleIo: Io = {
-  foo: 'bar',
-};
+export const exampleIo = 'See IoMem for an example implementation';
