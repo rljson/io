@@ -10,6 +10,8 @@ import { exampleIo } from '../src/io';
 
 describe('Io', () => {
   it('should be defined', () => {
-    expect(exampleIo).toBe('See IoMem for an example implementation');
+    expect(exampleIo).toBe(
+      'Checkout @rljson/io-mem for an example implementation',
+    );
   });
 });

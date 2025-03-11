@@ -6,14 +6,15 @@
 
 import { Rljson } from '@rljson/rljson';
 
-/**
- * The low level data read and write interface.
- */
+// .............................................................................
 export interface Io {
   write(request: { data: Rljson }): Promise<void>;
+  readRow(request: {
+    table: string;
+    where: Record<string, any>;
+  }): Promise<Rljson>;
 }
 
-/**
- * Example Io implementation
- */
-export const exampleIo = 'See IoMem for an example implementation';
+// .............................................................................
+export const exampleIo =
+  'Checkout @rljson/io-mem for an example implementation';

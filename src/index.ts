@@ -4,5 +4,4 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-export { IoMem } from './io-mem.ts';
-export { type Io } from './io.ts';
+export * from './io.ts';
