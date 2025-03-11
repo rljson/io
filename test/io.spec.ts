@@ -6,13 +6,12 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { Foo } from '../src/foo';
+import { exampleIo } from '../src/io';
 
-describe('Foo', () => {
-  describe('foo()', () => {
-    it('should return "bar"', () => {
-      const foo = new Foo();
-      expect(foo.foo()).toBe('bar');
-    });
+describe('Io', () => {
+  it('should be defined', () => {
+    expect(exampleIo).toBe(
+      'Checkout @rljson/io-mem for an example implementation',
+    );
   });
 });
