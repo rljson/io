@@ -51,7 +51,10 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild"
-    ]
+    ],
+    "overrides": {
+      "@rljson/rljson": "link:../../../.pnpm/global/5/node_modules/@rljson/rljson"
+    }
   },
   "dependencies": {
     "@rljson/hash": "^0.0.9",

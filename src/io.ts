@@ -4,15 +4,24 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-import { Rljson } from '@rljson/rljson';
+import { ContentType, Rljson } from '@rljson/rljson';
 
 // .............................................................................
 export interface Io {
+  /** A promise resolving once the Io interface is ready */
+  isReady(): Promise<void>;
+
+  /** Returns the complete db content as Rljson */
+  dump(): Promise<Rljson>;
+
+  /** Creates a table with a given type */
+  createTable(request: { name: string; type: ContentType }): Promise<void>;
+
+  /** Writes Rljson data in to the database */
   write(request: { data: Rljson }): Promise<void>;
-  readRow(request: {
-    table: string;
-    where: Record<string, any>;
-  }): Promise<Rljson>;
+
+  /** Reads a specific row from a database table */
+  readRow(request: { table: string; rowHash: string }): Promise<Rljson>;
 }
 
 // .............................................................................
