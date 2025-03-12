@@ -59,7 +59,7 @@
   "dependencies": {
     "@rljson/hash": "^0.0.9",
     "@rljson/json": "^0.0.7",
-    "@rljson/rljson": "^0.0.6",
+    "@rljson/rljson": "link:../../../.pnpm/global/5/node_modules/@rljson/rljson",
     "@rljson/validate": "^0.0.4"
   }
 }
