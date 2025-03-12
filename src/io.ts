@@ -6,6 +6,7 @@
 
 import { ContentType, Rljson } from '@rljson/rljson';
 
+
 // .............................................................................
 export interface Io {
   /** A promise resolving once the Io interface is ready */
@@ -16,6 +17,9 @@ export interface Io {
 
   /** Creates a table with a given type */
   createTable(request: { name: string; type: ContentType }): Promise<void>;
+
+  /** Returns the available table names */
+  tables(): Promise<string[]>;
 
   /** Writes Rljson data in to the database */
   write(request: { data: Rljson }): Promise<void>;
