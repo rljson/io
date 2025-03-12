@@ -1,3 +1,7 @@
+<!--
+
+-->
+
 # Contributors Guide
 
 - [Install](#install)
@@ -199,13 +203,13 @@ git fetch && git checkout main && \
 git reset --soft origin/main && \
 git stash -m"PR Aftermath" && \
 git pull && \
-git branch -d $BRANCH && \
+git branch -d $BRANCH
 ```
 
 ### Publish to NPM
 
 ```bash
-npm publish --access public
+npm publish --access public && \
 git tag $(npm pkg get version | tr -d '\\"')
 ```
 
