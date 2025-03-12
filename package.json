@@ -14,7 +14,7 @@
     "type": "git",
     "url": "git+https://github.com/rljson/io.git"
   },
-  "main": "dist/index.js",
+  "main": "dist/io.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
@@ -39,6 +39,7 @@
     "eslint-plugin-tsdoc": "^0.4.0",
     "globals": "^16.0.0",
     "jsdoc": "^4.0.4",
+    "read-pkg": "^9.0.1",
     "typescript": "~5.8.2",
     "typescript-eslint": "^8.26.1",
     "vite": "^6.2.1",
