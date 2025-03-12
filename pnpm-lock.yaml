@@ -4,9 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  '@rljson/rljson': link:../../../.pnpm/global/5/node_modules/@rljson/rljson
-
 importers:
 
   .:
@@ -18,8 +15,8 @@ importers:
         specifier: ^0.0.7
         version: 0.0.7
       '@rljson/rljson':
-        specifier: link:../../../.pnpm/global/5/node_modules/@rljson/rljson
-        version: link:../../../.pnpm/global/5/node_modules/@rljson/rljson
+        specifier: ^0.0.7
+        version: 0.0.7
       '@rljson/validate':
         specifier: ^0.0.4
         version: 0.0.4
@@ -398,6 +395,14 @@ packages:
 
   '@rljson/json@0.0.7':
     resolution: {integrity: sha512-8he5W+EVRH8Rwgtjzz9YNvqp506PZlzmxuNmeI4rwru3vCIlIQ9Yy46cqcpeUQc2VQbSj5enoPvNGOAJDkisZg==}
+    engines: {node: '>=22.14.0'}
+
+  '@rljson/rljson@0.0.6':
+    resolution: {integrity: sha512-Q5kwW2dEYYf8Perl/xRHZ1dWGipoyXKuNwycB9vd+RMLJucuSgKdn0vChqqYrQ09LvuIUMlrgMuxDLNtO43wnw==}
+    engines: {node: '>=22.14.0'}
+
+  '@rljson/rljson@0.0.7':
+    resolution: {integrity: sha512-ym7m/25QXv7fZxgCXfmfSnZwKULn3xN09jqPxRofPwajot+OL7zqbezWOL+x2wOLrmR+EswmSVCvUk7kUc4YCA==}
     engines: {node: '>=22.14.0'}
 
   '@rljson/validate@0.0.4':
@@ -1956,11 +1961,21 @@ snapshots:
 
   '@rljson/json@0.0.7': {}
 
+  '@rljson/rljson@0.0.6':
+    dependencies:
+      '@rljson/hash': 0.0.9
+      '@rljson/json': 0.0.7
+
+  '@rljson/rljson@0.0.7':
+    dependencies:
+      '@rljson/hash': 0.0.9
+      '@rljson/json': 0.0.7
+
   '@rljson/validate@0.0.4':
     dependencies:
       '@rljson/hash': 0.0.9
       '@rljson/json': 0.0.7
-      '@rljson/rljson': link:../../../.pnpm/global/5/node_modules/@rljson/rljson
+      '@rljson/rljson': 0.0.6
 
   '@rollup/pluginutils@5.1.4(rollup@4.35.0)':
     dependencies:

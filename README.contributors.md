@@ -145,7 +145,7 @@ pnpm updateGoldens
 ### Test and Build
 
 ```bash
-pnpm test
+pnpm test &&\
 pnpm build
 ```
 
@@ -165,13 +165,13 @@ We aim to work with the latest versions of our dependencies.
 
 ```bash
 pnpm update --latest &&\
-git commit -am"Update dependencies" &&\
+git commit -am"Update dependencies"
 ```
 
 ### Increase version
 
 ```bash
-pnpm version patch
+pnpm version patch --no-git-tag-version
 ```
 
 ### Create a pull request
@@ -184,7 +184,7 @@ gh pr merge --auto --squash
 
 ### Wait until PR is merged
 
-Get the PR URL
+Get the PR URL with the following command
 
 ```bash
 gh pr view --json url -q .url

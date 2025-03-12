@@ -1,6 +1,6 @@
 {
   "name": "@rljson/io",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "packageManager": "pnpm@10.6.2",
   "description": "Low level interface for reading and writing RLJSON data",
   "homepage": "https://github.com/rljson/io",
@@ -52,14 +52,12 @@
     "onlyBuiltDependencies": [
       "esbuild"
     ],
-    "overrides": {
-      "@rljson/rljson": "link:../../../.pnpm/global/5/node_modules/@rljson/rljson"
-    }
+    "overrides": {}
   },
   "dependencies": {
     "@rljson/hash": "^0.0.9",
     "@rljson/json": "^0.0.7",
-    "@rljson/rljson": "link:../../../.pnpm/global/5/node_modules/@rljson/rljson",
+    "@rljson/rljson": "^0.0.7",
     "@rljson/validate": "^0.0.4"
   }
 }
