@@ -118,7 +118,7 @@ Please replace `Commit Message` in the next command by your commit message.
 It will also used for branch name and pull request
 
 ```bash
-export MESSAGE="Initial implementation" && \
+export MESSAGE="Fix small things in README" && \
 export BRANCH=`echo "$MESSAGE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_]/_/g'` &&\
 git checkout -b $BRANCH
 ```
@@ -175,7 +175,8 @@ git commit -am"Update dependencies"
 ### Increase version
 
 ```bash
-pnpm version patch --no-git-tag-version
+pnpm version patch --no-git-tag-version && \
+git commit -am"Increase version"
 ```
 
 ### Create a pull request
