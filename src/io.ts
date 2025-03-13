@@ -7,7 +7,6 @@
 import { JsonValue } from '@rljson/json';
 import { ContentType, Rljson } from '@rljson/rljson';
 
-
 // .............................................................................
 export interface Io {
   // ...........................................................................
@@ -16,8 +15,14 @@ export interface Io {
   /** A promise resolving once the Io interface is ready */
   isReady(): Promise<void>;
 
+  // ...........................................................................
+  // Dump
+
   /** Returns the complete db content as Rljson */
   dump(): Promise<Rljson>;
+
+  /** Returns the dump of a complete table */
+  dumpTable(request: { name: string }): Promise<Rljson>;
 
   // ...........................................................................
   // Tables
