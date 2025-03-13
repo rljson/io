@@ -1,5 +1,9 @@
 <!--
-
+// @license
+// Copyright (c) 2025 Rljson
+//
+// Use of this source code is governed by terms that can be
+// found in the LICENSE file in the root of this package.
 -->
 
 # Contributors Guide
@@ -118,7 +122,7 @@ Please replace `Commit Message` in the next command by your commit message.
 It will also used for branch name and pull request
 
 ```bash
-export MESSAGE="Fix small things in README" && \
+export MESSAGE="Take over code from old rljson-js lib" && \
 export BRANCH=`echo "$MESSAGE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_]/_/g'` &&\
 git checkout -b $BRANCH
 ```

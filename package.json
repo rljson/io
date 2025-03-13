@@ -1,6 +1,6 @@
 {
   "name": "@rljson/io",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "packageManager": "pnpm@10.6.2",
   "description": "Low level interface for reading and writing RLJSON data",
   "homepage": "https://github.com/rljson/io",
@@ -14,7 +14,7 @@
     "type": "git",
     "url": "git+https://github.com/rljson/io.git"
   },
-  "main": "dist/index.js",
+  "main": "dist/io.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
@@ -39,6 +39,7 @@
     "eslint-plugin-tsdoc": "^0.4.0",
     "globals": "^16.0.0",
     "jsdoc": "^4.0.4",
+    "read-pkg": "^9.0.1",
     "typescript": "~5.8.2",
     "typescript-eslint": "^8.26.1",
     "vite": "^6.2.1",
@@ -55,9 +56,9 @@
     "overrides": {}
   },
   "dependencies": {
-    "@rljson/hash": "^0.0.9",
-    "@rljson/json": "^0.0.7",
+    "@rljson/hash": "^0.0.10",
+    "@rljson/json": "^0.0.8",
     "@rljson/rljson": "^0.0.7",
-    "@rljson/validate": "^0.0.4"
+    "@rljson/validate": "^0.0.5"
   }
 }
