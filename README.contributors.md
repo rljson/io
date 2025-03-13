@@ -191,7 +191,7 @@ git commit -am"Increase version"
 git push -u origin $BRANCH && \
 gh pr create --base main --title "$MESSAGE" --body "" && \
 gh pr merge --auto --squash && \
-echo -e "\033[34m$(gh pr view --json url | jq -r '.url')\033[0m"
+
 ```
 
 ### Wait until PR is merged
@@ -199,6 +199,7 @@ echo -e "\033[34m$(gh pr view --json url | jq -r '.url')\033[0m"
 Get the PR URL with the following command
 
 ```bash
+echo -e "\033[34m$(gh pr view --json url | jq -r '.url')\033[0m"
 echo "Wait until PR is closed ..." && \
 until gh pr view --json closed | jq -e '.closed == true' >/dev/null; do
   sleep 2 >/dev/null;
