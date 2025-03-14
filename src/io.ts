@@ -6,6 +6,7 @@
 
 import { JsonValue } from '@rljson/json';
 import { ContentType, Rljson } from '@rljson/rljson';
+import { ColumnSelection } from '@rljson/table';
 
 // .............................................................................
 export interface Io {
@@ -27,8 +28,12 @@ export interface Io {
   // ...........................................................................
   // Tables
 
-  /** Creates a table with a given type */
-  createTable(request: { name: string; type: ContentType }): Promise<void>;
+  /** Creates a table with a name and a column selection */
+  createTable(request: {
+    name: string;
+    columns: ColumnSelection;
+    type: ContentType;
+  }): Promise<void>;
 
   /** Returns the available table names */
   tables(): Promise<string[]>;

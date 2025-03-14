@@ -7,6 +7,7 @@
 import { hip, hsh } from '@rljson/hash';
 import { copy, equals, Hashed, JsonValue } from '@rljson/json';
 import { ContentType, Rljson, TableType } from '@rljson/rljson';
+import { ColumnSelection } from '@rljson/table';
 
 import { Io } from './io.ts';
 
@@ -61,7 +62,11 @@ export class IoMem implements Io {
 
   // ...........................................................................
   // Table management
-  createTable(request: { name: string; type: ContentType }): Promise<void> {
+  createTable(request: {
+    name: string;
+    columns: ColumnSelection;
+    type: ContentType;
+  }): Promise<void> {
     return this._createTable(request);
   }
 
@@ -80,6 +85,7 @@ export class IoMem implements Io {
   // ...........................................................................
   private async _createTable(request: {
     name: string;
+    columns: ColumnSelection;
     type: ContentType;
   }): Promise<void> {
     const { name, type } = request;

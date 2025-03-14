@@ -42,7 +42,7 @@
     "read-pkg": "^9.0.1",
     "typescript": "~5.8.2",
     "typescript-eslint": "^8.26.1",
-    "vite": "^6.2.1",
+    "vite": "^6.2.2",
     "vite-node": "^3.0.8",
     "vite-plugin-dts": "^4.5.3",
     "vite-tsconfig-paths": "^5.1.4",
@@ -56,10 +56,10 @@
     "overrides": {}
   },
   "dependencies": {
-    "@rljson/hash": "^0.0.10",
-    "@rljson/json": "^0.0.9",
-    "@rljson/rljson": "^0.0.9",
-    "@rljson/table": "^0.0.4",
+    "@rljson/hash": "^0.0.11",
+    "@rljson/json": "^0.0.13",
+    "@rljson/rljson": "^0.0.11",
+    "@rljson/table": "^0.0.5",
     "@rljson/validate": "^0.0.6"
   }
 }
