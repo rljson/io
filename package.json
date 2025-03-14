@@ -59,6 +59,7 @@
     "@rljson/hash": "^0.0.10",
     "@rljson/json": "^0.0.9",
     "@rljson/rljson": "^0.0.9",
+    "@rljson/table": "^0.0.4",
     "@rljson/validate": "^0.0.6"
   }
 }
