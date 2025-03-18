@@ -15,6 +15,9 @@ import { Io } from './io.ts';
  * In-Memory implementation of the Rljson Io interface.
  */
 export class IoMem implements Io {
+  hasTable(request: { name: string }): Promise<boolean> {
+    throw new Error('Method not implemented.');
+  }
   // ...........................................................................
   // Constructor & example
 
@@ -60,8 +63,6 @@ export class IoMem implements Io {
     return this._write(request);
   }
 
-  // ...........................................................................
-  // Table management
   createTable(request: {
     name: string;
     columns: ColumnSelection;
@@ -70,7 +71,7 @@ export class IoMem implements Io {
     return this._createTable(request);
   }
 
-  async tables(): Promise<string[]> {
+  async tableNames(): Promise<string[]> {
     const keys = Object.keys(this._mem);
     const tables = keys.filter((key) => !key.startsWith('_'));
     return tables;

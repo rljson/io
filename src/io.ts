@@ -36,7 +36,10 @@ export interface Io {
   }): Promise<void>;
 
   /** Returns the available table names */
-  tables(): Promise<string[]>;
+  tableNames(): Promise<string[]>;
+
+  /** Returns true if a given table exists */
+  hasTable(request: { name: string }): Promise<boolean>;
 
   // ...........................................................................
   // Write
