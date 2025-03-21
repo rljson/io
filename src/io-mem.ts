@@ -75,7 +75,7 @@ export class IoMem implements Io {
   // Private
   // ######################
 
-  private _mem: Hashed<Rljson> = hip({});
+  private _mem: Hashed<Rljson> = hip({} as Rljson);
 
   // ...........................................................................
   private async _createTable(request: {
@@ -97,10 +97,12 @@ export class IoMem implements Io {
 
     // No table exists yet. Create it.
     else {
-      this._mem[name] ??= {
+      const table: Hashed<TableType> = hip({
         _data: [],
         _type: type,
-      };
+      });
+
+      this._mem[name] ??= table;
     }
   }
 

@@ -190,7 +190,7 @@ describe('IoMem', async () => {
         }
 
         expect(message).toBe(
-          'Table tableA has different types: "properties" vs "cake"',
+          'Table tableA has different types: "properties" vs "cakes"',
         );
       });
     });
@@ -530,11 +530,13 @@ describe('IoMem', async () => {
         _hash: 'RBNvo1WzZ4oRRq0W9-hknp',
         table1: {
           _data: [],
+          _hash: 'DKwor-pULmCs6RY-sMyfrM',
           _type: 'properties',
         },
         table2: {
           _data: [],
-          _type: 'cake',
+          _hash: 'TBokqOt0CS-vORCNBj1owR',
+          _type: 'cakes',
         },
       });
     });
@@ -556,7 +558,7 @@ describe('IoMem', async () => {
         table1: {
           _data: [{ keyA2: 'a2', _hash: 'apLP3I2XLnVm13umIZdVhV' }],
           _type: 'properties',
-          _hash: 'WhzHz3rwmdWwlxwX3oag8O',
+          _hash: 'DKwor-pULmCs6RY-sMyfrM',
         },
       });
     });
