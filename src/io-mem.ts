@@ -4,8 +4,8 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-import { hip, hsh } from '@rljson/hash';
-import { copy, equals, Hashed, JsonValue } from '@rljson/json';
+import { Hashed, hip, hsh } from '@rljson/hash';
+import { copy, equals, JsonValue } from '@rljson/json';
 import { ContentType, Rljson, TableType } from '@rljson/rljson';
 
 import { Io } from './io.ts';

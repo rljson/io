@@ -31,7 +31,7 @@ describe('IoMem', async () => {
       let tables = await io.tables();
       expect(tables).toEqual(['table1']);
 
-      await io.createTable({ name: 'table2', type: 'cake' });
+      await io.createTable({ name: 'table2', type: 'cakes' });
       tables = await io.tables();
       expect(tables).toEqual(['table1', 'table2']);
     });
@@ -41,8 +41,10 @@ describe('IoMem', async () => {
         it('if the table already exists with a different type', async () => {
           await io.createTable({ name: 'table', type: 'properties' });
           await expect(
-            io.createTable({ name: 'table', type: 'buffet' }),
-          ).rejects.toThrow();
+            io.createTable({ name: 'table', type: 'buffets' }),
+          ).rejects.toThrow(
+            'Table table already exists with different type: "properties" vs "buffets"',
+          );
         });
       });
 
@@ -167,7 +169,7 @@ describe('IoMem', async () => {
           await io.write({
             data: {
               tableA: {
-                _type: 'cake',
+                _type: 'cakes',
                 _data: [
                   {
                     keyB2: 'b2',
@@ -176,6 +178,7 @@ describe('IoMem', async () => {
                     itemIds2: 'xyz',
                     layersTable: 'xyz',
                     layers: {},
+                    collections: 'xyz',
                   },
                 ],
               },
@@ -522,7 +525,7 @@ describe('IoMem', async () => {
     it('returns a copy of the complete database', async () => {
       expect(await io.dump()).toEqual({ _hash: 'RBNvo1WzZ4oRRq0W9-hknp' });
       await io.createTable({ name: 'table1', type: 'properties' });
-      await io.createTable({ name: 'table2', type: 'cake' });
+      await io.createTable({ name: 'table2', type: 'cakes' });
       expect(await io.dump()).toEqual({
         _hash: 'RBNvo1WzZ4oRRq0W9-hknp',
         table1: {
