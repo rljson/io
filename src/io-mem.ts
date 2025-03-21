@@ -4,8 +4,8 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-import { hip, hsh } from '@rljson/hash';
-import { copy, equals, Hashed, JsonValue } from '@rljson/json';
+import { Hashed, hip, hsh } from '@rljson/hash';
+import { copy, equals, JsonValue } from '@rljson/json';
 import { ContentType, Rljson, TableType } from '@rljson/rljson';
 
 import { Io } from './io.ts';
@@ -75,7 +75,7 @@ export class IoMem implements Io {
   // Private
   // ######################
 
-  private _mem: Hashed<Rljson> = hip({});
+  private _mem: Hashed<Rljson> = hip({} as Rljson);
 
   // ...........................................................................
   private async _createTable(request: {
@@ -97,10 +97,12 @@ export class IoMem implements Io {
 
     // No table exists yet. Create it.
     else {
-      this._mem[name] ??= {
+      const table: Hashed<TableType> = hip({
         _data: [],
         _type: type,
-      };
+      });
+
+      this._mem[name] ??= table;
     }
   }
 
