@@ -18,7 +18,6 @@ const files = [
   'scripts',
   '.vscode/settings.json',
   '.gitignore',
-  '.markdownlint.json',
   '.npmrc',
   '.npmignore',
   '.prettierignore',
@@ -72,10 +71,10 @@ function replaceTemplateProject() {
   // Replace template-project with the actual project name from package.json
   const pkgFile = path.join(process.cwd(), 'package.json');
   const pkg = JSON.parse(fs.readFileSync(pkgFile, 'utf8'));
-  const projectName = pkg.name;
+  const projectName = pkg.name.replace('@rljson/', '');
 
   // Replace in the following files
-  const replaceFiles = ['doc/workflows/prepare.md', 'tools.md'];
+  const replaceFiles = ['doc/workflows/prepare.md', 'doc/workflows/tools.md'];
 
   for (const file of replaceFiles) {
     const filePath = path.join(process.cwd(), file);
