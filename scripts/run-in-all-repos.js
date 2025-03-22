@@ -12,24 +12,19 @@ import { readdir } from 'fs/promises';
 import { join } from 'path';
 import { cwd } from 'process';
 import { promisify } from 'util';
+import { blue, green, red, yellow } from './functions/colors.js';
 
 const execAsync = promisify(exec);
-
-const green = (str) => `\x1b[32m${str}\x1b[0m`;
-const blue = (str) => `\x1b[34m${str}\x1b[0m`;
-const yellow = (str) => `\x1b[33m${str}\x1b[0m`;
-const red = (str) => `\x1b[31m${str}\x1b[0m`;
 
 // Get the shell command from command-line arguments
 const args = process.argv;
 
 if (args.length < 4) {
-  console.error(red('❌ Add workspace dir and path to the command to run.'));
-  console.error('Example:');
+  const usage = red('Usage:');
   const scriptName = green('node run-with-all-repos.js');
-  const path = yellow('./');
-  const command = blue('ls -la');
-  console.log(`  ${scriptName} ${path} ${command}`);
+  const path = yellow('path');
+  const command = blue('command');
+  console.log(`${usage} ${scriptName} ${path} ${command}`);
 
   process.exit(1);
 }

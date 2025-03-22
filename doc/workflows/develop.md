@@ -33,13 +33,13 @@ git pull
 
 ## Set pull request title
 
-Replace `Update and publish version` here and below
+Replace `Update dependencies and scripts` here and below
 by your new pull request title.
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Update and publish version"
+node scripts/create-branch.js "Update dependencies and scripts"
 ```
 
 ## Update dependencies
@@ -65,7 +65,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Update and publish version"
+git commit -am"Update dependencies and scripts"
 ```
 
 ## Increase version
@@ -96,7 +96,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Update and publish version" --body " "
+gh pr create --base main --title "Update dependencies and scripts" --body " "
 ```
 
 ## Code review

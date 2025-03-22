@@ -22,3 +22,6 @@ export const bgMagenta = (str) => `\x1b[45m${str}\x1b[0m`;
 export const bgCyan = (str) => `\x1b[46m${str}\x1b[0m`;
 export const bgWhite = (str) => `\x1b[47m${str}\x1b[0m`;
 export const bgBlack = (str) => `\x1b[40m${str}\x1b[0m`;
+export const gray = (str) => `\x1b[90m${str}\x1b[0m`;
+export const lightGray = (str) => `\x1b[37m${str}\x1b[0m`;
+export const reset = (str) => `\x1b[0m${str}\x1b[0m`;

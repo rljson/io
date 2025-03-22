@@ -7,10 +7,7 @@
  */
 
 import { execSync } from 'child_process';
-
-const gray = (str) => `\x1b[90m${str}\x1b[0m`;
-const yellow = (str) => `\x1b[33m${str}\x1b[0m`;
-const blue = (str) => `\x1b[34m${str}\x1b[0m`;
+import { blue, gray, green, red } from './functions/colors.js';
 
 function runCommand(command, silent = true) {
   console.log(gray(`# ${command}`));
@@ -33,7 +30,7 @@ function toKebabCase(str) {
 const input = process.argv.slice(2).join(' ');
 
 if (!input) {
-  console.error('❌ Please provide a branch name.');
+  console.error(red('Please provide a branch name.'));
   process.exit(1);
 }
 
@@ -42,7 +39,7 @@ const kebabCaseName = toKebabCase(input);
 try {
   // Create new Git branch
   runCommand(`git checkout -b ${kebabCaseName}`);
-  console.log('✅ ' + yellow('Created new branch: ') + blue(kebabCaseName));
+  console.log('✅ ' + green('Created new branch: ') + blue(kebabCaseName));
 } catch (error) {
-  console.error('❌ Failed to create branch:', error.message);
+  console.error(red('Failed to create branch: ' + error.message));
 }
