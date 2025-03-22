@@ -2,6 +2,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { blue, gray, green, red, yellow } from './functions/colors.js';
 
 // .............................................................................
 const fileNameRexp = /(\.ts|\.md|\.log|\.js|\.json)$/;
@@ -17,7 +18,11 @@ const shouldProcessFile = (file) =>
   fileNameRexp.test(file) && !isExcluded(file);
 
 if (process.argv.length < 4) {
-  console.error(`Usage: ${path.basename(process.argv[1])} <CLASS_A> <CLASS_B>`);
+  const usage = red('Usage:');
+  const script = yellow(path.basename(process.argv[1]));
+  const classA = green('ClassA');
+  const classB = blue('ClassB');
+  console.error([usage, script, classA, classB].join(' '));
   process.exit(1);
 }
 
@@ -99,13 +104,13 @@ const renameFiles = (directory) => {
   }
 };
 
-console.log('Replacing includes first...');
+console.log(gray('Replacing includes first...'));
 replaceIncludesFirst('.');
 
-console.log('Renaming files...');
+console.log(gray('Renaming files...'));
 renameFiles('.');
 
-console.log('Replacing occurrences in files...');
+console.log(gray('Replacing occurrences in files...'));
 replaceInFiles('.');
 
-console.log('Done.');
+console.log(green('Done.'));
