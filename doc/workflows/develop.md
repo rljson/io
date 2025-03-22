@@ -9,7 +9,7 @@ found in the LICENSE file in the root of this package.
 # Ticket workflow
 
 - [Checkout main](#checkout-main)
-- [Define branch and PR name](#define-branch-and-pr-name)
+- [Set pull request title](#set-pull-request-title)
 - [Create a feature branch](#create-a-feature-branch)
 - [Update dependencies](#update-dependencies)
 - [Develop \& debug](#develop--debug)
@@ -17,9 +17,10 @@ found in the LICENSE file in the root of this package.
 - [Increase version](#increase-version)
 - [Run tests and build](#run-tests-and-build)
 - [Rebase main](#rebase-main)
+- [Push changes](#push-changes)
 - [Create a pull request](#create-a-pull-request)
 - [Code review](#code-review)
-- [Delete feature branch](#delete-feature-branch)
+- [Checkout main and delete feature branch](#checkout-main-and-delete-feature-branch)
 - [Publish to NPM](#publish-to-npm)
 
 ## Checkout main
@@ -30,17 +31,15 @@ git fetch
 git pull
 ```
 
-## Define branch and PR name
+## Set pull request title
 
-In the _whole document_, replace the following things:
-
-- `add-update-doc-and-scripts-js` by the name of your new branch
-- `Add update-doc-and-scripts.js` by your new pull request title
+Replace `update-doc-settings-and-scripts.js: Checkout to ../` here and below
+by your new pull request title.
 
 ## Create a feature branch
 
 ```bash
-git checkout -b add-update-doc-and-scripts-js
+node scripts/create-branch.js "update-doc-settings-and-scripts.js: Checkout to ../"
 ```
 
 ## Update dependencies
@@ -62,9 +61,11 @@ Use Vscode or another git client to commit your changes
 
 If you have only one change, run
 
+In Vscode, press
+
 ```bash
 git add .
-git commit -am"Add update-doc-and-scripts.js"
+git commit -am"update-doc-settings-and-scripts.js: Checkout to ../"
 ```
 
 ## Increase version
@@ -86,34 +87,33 @@ npm run build
 git rebase main
 ```
 
+## Push changes
+
+```bash
+node scripts/push-branch.js
+```
+
 ## Create a pull request
 
 ```bash
-git push -u origin add-update-doc-and-scripts-js
-gh pr create --base main --title "Add update-doc-and-scripts.js" --body " "
-gh pr merge --auto --squash
+gh pr create --base main --title "update-doc-settings-and-scripts.js: Checkout to ../" --body " "
 ```
 
 ## Code review
 
-Read [setup-code-review.md](./code-review.md) on how to create a
-code review.
+You need a code review? Read [code-review.md](./code-review.md).
 
-## Check pull request status
+If you don't require a code review, auto merge the branch
 
 ```bash
- node scripts/wait-for-pr.js
+gh pr merge --auto --squash
+node scripts/wait-for-pr.js
 ```
 
-## Delete feature branch
+## Checkout main and delete feature branch
 
 ```bash
-git fetch
-git checkout main
-git reset --soft origin/main
-git stash -m"PR Aftermath"
-git pull
-git branch -d add-update-doc-and-scripts-js
+node scripts/delete-feature-branch.js
 ```
 
 ## Publish to NPM
