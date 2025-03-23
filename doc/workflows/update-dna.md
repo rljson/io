@@ -11,7 +11,7 @@ found in the LICENSE file in the root of this package.
 To update documentation, scripts and settings from template-project, execute
 
 ```bash
-node update-doc-settings-and-scripts.js
+node update-dna.js
 ```
 
 Review and check in the changes

@@ -31,10 +31,17 @@ const files = [
   '.prettierrc',
   'README.contributors.md',
   '.github/workflows/run-tests.yml',
+  'test/setup',
+];
+
+const filesToBeDeleted = [
+  'scripts/update-doc-settings-and-scripts.js',
+  'doc/workflows/update-from-template-project.md',
 ];
 
 const templateRepo = 'https://github.com/rljson/template-project.git';
 const localRepoPath = path.resolve(__dirname, '../../template-project');
+const ownRepoPath = path.resolve(__dirname, '..');
 
 const mustBeClean = false;
 
@@ -89,6 +96,16 @@ function copyFiles() {
   }
 }
 
+function deleteFiles() {
+  for (const file of filesToBeDeleted) {
+    const filePath = path.join(ownRepoPath, file);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log(gray('Deleted: ' + file));
+    }
+  }
+}
+
 function replaceTemplateProject() {
   const pkgFile = path.join(process.cwd(), 'package.json');
   const pkg = JSON.parse(fs.readFileSync(pkgFile, 'utf8'));
@@ -113,6 +130,7 @@ function main() {
   try {
     ensureTemplateRepoUpdated();
     copyFiles();
+    deleteFiles();
     replaceTemplateProject();
     console.log(green('Done.'));
   } catch (err) {
