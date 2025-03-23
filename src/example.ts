@@ -17,7 +17,9 @@ export const example = async () => {
   const rowWithHash = hsh(row);
 
   // Create a table first
-  await ioMem.createTable({ name: 'tableA', type: 'properties' });
+  await ioMem.createTable({
+    config: { key: 'tableA', type: 'properties', columns: {} },
+  });
 
   // Write data into the table
   await ioMem.write({
