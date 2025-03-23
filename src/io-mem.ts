@@ -11,6 +11,7 @@ import { Rljson, TableCfg, TableType } from '@rljson/rljson';
 
 import { Io } from './io.ts';
 
+
 /**
  * In-Memory implementation of the Rljson Io interface.
  */
@@ -65,7 +66,7 @@ export class IoMem implements Io {
 
   // ...........................................................................
   // Table management
-  createTable(request: { config: TableCfg }): Promise<void> {
+  createTable(request: { tableCfg: string }): Promise<void> {
     return this._createTable(request);
   }
 
@@ -114,29 +115,29 @@ export class IoMem implements Io {
   };
 
   // ...........................................................................
-  private async _createTable(request: { config: TableCfg }): Promise<void> {
-    const { key, type } = request.config;
+  private async _createTable(request: { tableCfg: string }): Promise<void> {
+    const config: TableCfg = this._mem.tableCfgs._data.find(
+      (cfg) => cfg._hash === request.tableCfg,
+    );
+
+    if (!config) {
+      throw new Error(`Table config ${request.tableCfg} not found`);
+    }
+
+    const { key, type } = config;
 
     // Get the existing table
     const existing = this._mem[key] as TableType;
     if (existing) {
-      // Throw if the existing table has a different type
-      if (existing._type !== type) {
-        throw new Error(
-          `Table ${key} already exists with different type: "${existing._type}" vs "${type}"`,
-        );
-      }
+      throw new Error(`Table ${key} already exists`);
     }
 
-    // No table exists yet. Create it.
-    else {
-      const table: Hashed<TableType> = hip({
-        _data: [],
-        _type: type,
-      });
+    const table: Hashed<TableType> = hip({
+      _data: [],
+      _type: type,
+    });
 
-      this._mem[key] ??= table;
-    }
+    this._mem[key] ??= table;
   }
 
   // ...........................................................................

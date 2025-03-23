@@ -5,7 +5,7 @@
 // found in the LICENSE file in the root of this package.
 
 import { JsonValue } from '@rljson/json';
-import { Rljson, TableCfg } from '@rljson/rljson';
+import { Rljson } from '@rljson/rljson';
 
 // .............................................................................
 export interface Io {
@@ -30,8 +30,12 @@ export interface Io {
   // ...........................................................................
   // Tables
 
-  /** Creates a table with a given config */
-  createTable(request: { config: TableCfg }): Promise<void>;
+  /**
+   * Creates a table with a given config
+   *
+   * The config must be already in the database
+   */
+  createTable(request: { tableCfg: string }): Promise<void>;
 
   /** Returns the available table names */
   tables(): Promise<string[]>;
