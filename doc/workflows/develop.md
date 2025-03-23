@@ -33,13 +33,13 @@ git pull
 
 ## Set pull request title
 
-Replace `Hand over TableCfg to createTable` here and below
+Replace `update-dna: Copy golden helpers` here and below
 by your new pull request title.
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Hand over TableCfg to createTable"
+node scripts/create-branch.js "update-dna: Copy golden helpers"
 ```
 
 ## Update dependencies
@@ -65,7 +65,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Hand over TableCfg to createTable"
+git commit -am"update-dna: Copy golden helpers"
 ```
 
 ## Increase version
@@ -96,7 +96,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Hand over TableCfg to createTable" --body " "
+gh pr create --base main --title "update-dna: Copy golden helpers" --body " "
 ```
 
 ## Code review
