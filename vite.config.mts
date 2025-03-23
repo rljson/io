@@ -21,6 +21,7 @@ export default defineConfig({
         '@rljson/validate',
         '@rljson/json',
         '@rljson/hash',
+        '@rljson/is-ready',
       ],
       output: {
         globals: {},
