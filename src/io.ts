@@ -12,7 +12,10 @@ export interface Io {
   // ...........................................................................
   // General
 
-  /** A promise resolving once the Io interface is ready */
+  /** A promise resolving once the Io interface is ready
+   *
+   * 💡 Use @rljson/is-ready
+   */
   isReady(): Promise<void>;
 
   // ...........................................................................
