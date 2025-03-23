@@ -27,11 +27,15 @@ describe('IoMem', async () => {
 
   describe('createTable(request)', () => {
     it('should add a table', async () => {
-      await io.createTable({ name: 'table1', type: 'properties' });
+      await io.createTable({
+        config: { key: 'table1', type: 'properties', columns: {} },
+      });
       let tables = await io.tables();
       expect(tables).toEqual(['table1']);
 
-      await io.createTable({ name: 'table2', type: 'cakes' });
+      await io.createTable({
+        config: { key: 'table2', type: 'cakes', columns: {} },
+      });
       tables = await io.tables();
       expect(tables).toEqual(['table1', 'table2']);
     });
@@ -39,9 +43,13 @@ describe('IoMem', async () => {
     describe('createTable', async () => {
       describe('throws', async () => {
         it('if the table already exists with a different type', async () => {
-          await io.createTable({ name: 'table', type: 'properties' });
+          await io.createTable({
+            config: { key: 'table', type: 'properties', columns: {} },
+          });
           await expect(
-            io.createTable({ name: 'table', type: 'buffets' }),
+            io.createTable({
+              config: { key: 'table', type: 'buffets', columns: {} },
+            }),
           ).rejects.toThrow(
             'Table table already exists with different type: "properties" vs "buffets"',
           );
@@ -50,9 +58,13 @@ describe('IoMem', async () => {
 
       describe('does nothing', async () => {
         it('if the table already exists with the same type', async () => {
-          await io.createTable({ name: 'table', type: 'properties' });
+          await io.createTable({
+            config: { key: 'table', type: 'properties', columns: {} },
+          });
           expect(await io.tables()).toEqual(['table']);
-          await io.createTable({ name: 'table', type: 'properties' });
+          await io.createTable({
+            config: { key: 'table', type: 'properties', columns: {} },
+          });
           expect(await io.tables()).toEqual(['table']);
         });
       });
@@ -61,7 +73,9 @@ describe('IoMem', async () => {
 
   describe('write(request)', async () => {
     it('adds data to existing data', async () => {
-      await io.createTable({ name: 'tableA', type: 'properties' });
+      await io.createTable({
+        config: { key: 'tableA', type: 'properties', columns: {} },
+      });
 
       // Write a first item
       await io.write({
@@ -96,7 +110,9 @@ describe('IoMem', async () => {
     });
 
     it('does not add the same data twice', async () => {
-      await io.createTable({ name: 'testTable', type: 'properties' });
+      await io.createTable({
+        config: { key: 'testTable', type: 'properties', columns: {} },
+      });
 
       const rows = [
         {
@@ -152,7 +168,9 @@ describe('IoMem', async () => {
       });
 
       it('when the table has a different type then an existing one', async () => {
-        await io.createTable({ name: 'tableA', type: 'properties' });
+        await io.createTable({
+          config: { key: 'tableA', type: 'properties', columns: {} },
+        });
 
         await io.write({
           data: {
@@ -217,7 +235,9 @@ describe('IoMem', async () => {
 
     describe('returns Rljson containing the table with the one row', () => {
       it('when the data exists', async () => {
-        await io.createTable({ name: 'tableA', type: 'properties' });
+        await io.createTable({
+          config: { key: 'tableA', type: 'properties', columns: {} },
+        });
 
         await io.write({
           data: {
@@ -250,7 +270,9 @@ describe('IoMem', async () => {
       });
 
       it('throws when the row does not exist', async () => {
-        await io.createTable({ name: 'tableA', type: 'properties' });
+        await io.createTable({
+          config: { key: 'tableA', type: 'properties', columns: {} },
+        });
 
         await io.write({
           data: {
@@ -307,7 +329,9 @@ describe('IoMem', async () => {
       };
 
       beforeEach(async () => {
-        await io.createTable({ name: 'testTable', type: 'properties' });
+        await io.createTable({
+          config: { key: 'testTable', type: 'properties', columns: {} },
+        });
         await io.write({ data: testData });
       });
 
@@ -486,7 +510,9 @@ describe('IoMem', async () => {
     });
 
     it('should return an empty array if no rows match the where clause', async () => {
-      await io.createTable({ name: 'testTable', type: 'properties' });
+      await io.createTable({
+        config: { key: 'testTable', type: 'properties', columns: {} },
+      });
       await io.write({
         data: {
           testTable: {
@@ -524,8 +550,12 @@ describe('IoMem', async () => {
   describe('dump()', () => {
     it('returns a copy of the complete database', async () => {
       expect(await io.dump()).toEqual({ _hash: 'RBNvo1WzZ4oRRq0W9-hknp' });
-      await io.createTable({ name: 'table1', type: 'properties' });
-      await io.createTable({ name: 'table2', type: 'cakes' });
+      await io.createTable({
+        config: { key: 'table1', type: 'properties', columns: {} },
+      });
+      await io.createTable({
+        config: { key: 'table2', type: 'cakes', columns: {} },
+      });
       expect(await io.dump()).toEqual({
         _hash: 'RBNvo1WzZ4oRRq0W9-hknp',
         table1: {
@@ -544,7 +574,9 @@ describe('IoMem', async () => {
 
   describe('dumpTable(request)', () => {
     it('returns a copy of the table', async () => {
-      await io.createTable({ name: 'table1', type: 'properties' });
+      await io.createTable({
+        config: { key: 'table1', type: 'properties', columns: {} },
+      });
       await io.write({
         data: {
           table1: {
@@ -554,7 +586,7 @@ describe('IoMem', async () => {
         },
       });
 
-      expect(await io.dumpTable({ name: 'table1' })).toEqual({
+      expect(await io.dumpTable({ table: 'table1' })).toEqual({
         table1: {
           _data: [{ keyA2: 'a2', _hash: 'apLP3I2XLnVm13umIZdVhV' }],
           _type: 'properties',
@@ -564,7 +596,7 @@ describe('IoMem', async () => {
     });
 
     it('throws an error if the table does not exist', async () => {
-      await expect(io.dumpTable({ name: 'nonexistentTable' })).rejects.toThrow(
+      await expect(io.dumpTable({ table: 'nonexistentTable' })).rejects.toThrow(
         'Table nonexistentTable not found',
       );
     });
