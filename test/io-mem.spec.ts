@@ -4,24 +4,62 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-import { rmhsh } from '@rljson/hash';
+import { hip, rmhsh } from '@rljson/hash';
 import { equals } from '@rljson/json';
-import { Rljson, TableType } from '@rljson/rljson';
+import { PropertiesTable, Rljson, TableCfg, TableType } from '@rljson/rljson';
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { IoMem } from '../src/io-mem';
+
+import { expectGolden } from './setup/goldens.ts';
 
 describe('IoMem', async () => {
   let io: IoMem;
 
   beforeEach(async () => {
     io = IoMem.example();
+    await io.isReady();
   });
 
   describe('isReady()', () => {
     it('should return a resolved promise', async () => {
       await io.isReady();
+    });
+  });
+
+  describe('tableCfgs table', () => {
+    it('should be available after isReady() resolves', async () => {
+      const dump = await io.dumpTable({ table: 'tableCfgs' });
+      const tableCfgs = dump.tableCfgs as unknown as PropertiesTable<TableCfg>;
+      const tableCfg = tableCfgs._data[0];
+
+      const cfgRef = tableCfg._hash;
+
+      expect(dump.tableCfgs).toEqual(
+        hip({
+          _data: [
+            {
+              columns: {
+                key: {
+                  key: 'key',
+                  type: 'string',
+                  previous: 'string',
+                },
+                type: {
+                  key: 'type',
+                  type: 'string',
+                  previous: 'string',
+                },
+              },
+              key: 'tableCfgs',
+              type: 'properties',
+            },
+          ],
+          _tableCfg: cfgRef,
+          _type: 'properties',
+        }),
+      );
     });
   });
 
@@ -31,13 +69,13 @@ describe('IoMem', async () => {
         config: { key: 'table1', type: 'properties', columns: {} },
       });
       let tables = await io.tables();
-      expect(tables).toEqual(['table1']);
+      expect(tables).toEqual(['tableCfgs', 'table1']);
 
       await io.createTable({
         config: { key: 'table2', type: 'cakes', columns: {} },
       });
       tables = await io.tables();
-      expect(tables).toEqual(['table1', 'table2']);
+      expect(tables).toEqual(['tableCfgs', 'table1', 'table2']);
     });
 
     describe('createTable', async () => {
@@ -61,11 +99,11 @@ describe('IoMem', async () => {
           await io.createTable({
             config: { key: 'table', type: 'properties', columns: {} },
           });
-          expect(await io.tables()).toEqual(['table']);
+          expect(await io.tables()).toEqual(['tableCfgs', 'table']);
           await io.createTable({
             config: { key: 'table', type: 'properties', columns: {} },
           });
-          expect(await io.tables()).toEqual(['table']);
+          expect(await io.tables()).toEqual(['tableCfgs', 'table']);
         });
       });
     });
@@ -549,26 +587,16 @@ describe('IoMem', async () => {
 
   describe('dump()', () => {
     it('returns a copy of the complete database', async () => {
-      expect(await io.dump()).toEqual({ _hash: 'RBNvo1WzZ4oRRq0W9-hknp' });
+      await expectGolden('io-mem/dump/empty.json').toBe(await io.dump());
+
       await io.createTable({
         config: { key: 'table1', type: 'properties', columns: {} },
       });
       await io.createTable({
         config: { key: 'table2', type: 'cakes', columns: {} },
       });
-      expect(await io.dump()).toEqual({
-        _hash: 'RBNvo1WzZ4oRRq0W9-hknp',
-        table1: {
-          _data: [],
-          _hash: 'DKwor-pULmCs6RY-sMyfrM',
-          _type: 'properties',
-        },
-        table2: {
-          _data: [],
-          _hash: 'TBokqOt0CS-vORCNBj1owR',
-          _type: 'cakes',
-        },
-      });
+
+      await expectGolden('io-mem/dump/two-tables.json').toBe(await io.dump());
     });
   });
 

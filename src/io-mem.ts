@@ -84,9 +84,34 @@ export class IoMem implements Io {
   private _mem: Hashed<Rljson> = hip({} as Rljson);
 
   // ...........................................................................
-  private _init() {
+  private async _init() {
+    this._initTableCfgs();
     this._isReady.resolve();
   }
+
+  // ...........................................................................
+  private _initTableCfgs = () => {
+    const tableCfg: TableCfg = {
+      key: 'tableCfgs',
+      type: 'properties',
+      columns: {
+        key: { key: 'key', type: 'string', previous: 'string' },
+        type: { key: 'type', type: 'string', previous: 'string' },
+      },
+    };
+
+    hip(tableCfg);
+
+    this._mem.tableCfgs = hip({
+      _data: [tableCfg],
+      _type: 'properties',
+      _tableCfg: tableCfg._hash as string,
+    });
+
+    const updateExistingHashes = true;
+    const throwOnOnWrongHashes = false;
+    hip(this._mem, updateExistingHashes, throwOnOnWrongHashes);
+  };
 
   // ...........................................................................
   private async _createTable(request: { config: TableCfg }): Promise<void> {
