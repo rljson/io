@@ -38,7 +38,7 @@ Replace `After io isReady there must be a tableCfgs table` here and below
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "After io isReady there must be a tableCfgs table"
+node scripts/create-branch.js "update-dna: Copy golden helpers"
 ```
 
 ## Update dependencies
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"After io isReady there must be a tableCfgs table"
+git commit -am"update-dna: Copy golden helpers"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "After io isReady there must be a tableCfgs table" --body " "
+gh pr create --base main --title "update-dna: Copy golden helpers" --body " "
 ```
 
 ## Code review
