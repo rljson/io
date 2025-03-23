@@ -4,8 +4,8 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-import { hsh } from '@rljson/hash';
-import { Rljson } from '@rljson/rljson';
+import { hip, hsh } from '@rljson/hash';
+import { Rljson, TableCfg } from '@rljson/rljson';
 
 import { IoMem } from './io-mem.ts';
 
@@ -16,10 +16,24 @@ export const example = async () => {
   const row = { keyA2: 'a2' };
   const rowWithHash = hsh(row);
 
-  // Create a table first
-  await ioMem.createTable({
-    config: { key: 'tableA', type: 'properties', columns: {} },
+  // Create a table config first
+  const tableCfg = hip({
+    key: 'tableA',
+    type: 'properties',
+    columns: {},
+  } as TableCfg);
+
+  await ioMem.write({
+    data: {
+      tableCfgs: {
+        _type: 'properties',
+        _data: [tableCfg],
+      },
+    },
   });
+
+  // Create a table first
+  await ioMem.createTable({ tableCfg: tableCfg._hash });
 
   // Write data into the table
   await ioMem.write({

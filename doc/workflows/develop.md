@@ -33,8 +33,7 @@ git pull
 
 ## Set pull request title
 
-Replace `update-dna: Copy golden helpers` here and below
-by your new pull request title.
+Replace `After io isReady there must be a tableCfgs table` here and below
 
 ## Create a feature branch
 
