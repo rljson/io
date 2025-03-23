@@ -5,6 +5,7 @@
 // found in the LICENSE file in the root of this package.
 
 import { Hashed, hip, hsh } from '@rljson/hash';
+import { IsReady } from '@rljson/is-ready';
 import { copy, equals, JsonValue } from '@rljson/json';
 import { ContentType, Rljson, TableType } from '@rljson/rljson';
 
@@ -16,6 +17,9 @@ import { Io } from './io.ts';
 export class IoMem implements Io {
   // ...........................................................................
   // Constructor & example
+  constructor() {
+    this._init();
+  }
 
   static example = () => {
     return new IoMem();
@@ -24,7 +28,7 @@ export class IoMem implements Io {
   // ...........................................................................
   // General
   isReady() {
-    return Promise.resolve();
+    return this._isReady.promise;
   }
 
   // ...........................................................................
@@ -75,7 +79,14 @@ export class IoMem implements Io {
   // Private
   // ######################
 
+  private _isReady = new IsReady();
+
   private _mem: Hashed<Rljson> = hip({} as Rljson);
+
+  // ...........................................................................
+  private _init() {
+    this._isReady.resolve();
+  }
 
   // ...........................................................................
   private async _createTable(request: {

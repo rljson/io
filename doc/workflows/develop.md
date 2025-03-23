@@ -33,13 +33,13 @@ git pull
 
 ## Set pull request title
 
-Replace `Update dependencies and scripts` here and below
+Replace `Implement isReady for IoMem` here and below
 by your new pull request title.
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Update dependencies and scripts"
+node scripts/create-branch.js "Implement isReady for IoMem"
 ```
 
 ## Update dependencies
@@ -65,7 +65,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Update dependencies and scripts"
+git commit -am"Implement isReady for IoMem"
 ```
 
 ## Increase version
@@ -96,7 +96,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Update dependencies and scripts" --body " "
+gh pr create --base main --title "Implement isReady for IoMem" --body " "
 ```
 
 ## Code review
