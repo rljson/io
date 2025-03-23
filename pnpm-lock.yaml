@@ -18,8 +18,8 @@ importers:
         specifier: ^0.0.18
         version: 0.0.18
       '@rljson/rljson':
-        specifier: ^0.0.25
-        version: 0.0.25
+        specifier: ^0.0.28
+        version: 0.0.28
       '@rljson/validate':
         specifier: ^0.0.8
         version: 0.0.8
@@ -419,8 +419,8 @@ packages:
     resolution: {integrity: sha512-nUOUw5YZKczXsok6BvzBQR7goPBL1XqPZmUQsc3FLg/8PUtgtgvd5QGhHunMzGg8u1kQ78p1w/OOTMXU8NwqYA==}
     engines: {node: '>=22.14.0'}
 
-  '@rljson/rljson@0.0.25':
-    resolution: {integrity: sha512-7mGF9cT6A6DPWFOOIzdZD41CafagqVzfEQDhieMXlUKg+4QTf0mn5hHd9joIzsDd7vSip6mD0p+qUlyjMTXnwQ==}
+  '@rljson/rljson@0.0.28':
+    resolution: {integrity: sha512-raVRKsdPv4EszPjxz8Q3cC2Qa4iLu7+5m4jF85hK/z1xJPy26ivoNyVS+I/cE7xMIKyvv0SPBJnqlHfLDU87fQ==}
     engines: {node: '>=22.14.0'}
 
   '@rljson/validate@0.0.8':
@@ -2037,7 +2037,7 @@ snapshots:
       '@rljson/hash': 0.0.12
       '@rljson/json': 0.0.18
 
-  '@rljson/rljson@0.0.25':
+  '@rljson/rljson@0.0.28':
     dependencies:
       '@rljson/hash': 0.0.12
       '@rljson/json': 0.0.18
