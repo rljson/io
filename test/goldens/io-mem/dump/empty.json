@@ -1,0 +1,30 @@
+{
+  "_hash": "f_npn_lG1S9jtVyhDBexpP",
+  "tableCfgs": {
+    "_data": [
+      {
+        "key": "tableCfgs",
+        "type": "properties",
+        "columns": {
+          "key": {
+            "key": "key",
+            "type": "string",
+            "previous": "string",
+            "_hash": "ihagAmOoQOmhFSVINwQw9A"
+          },
+          "type": {
+            "key": "type",
+            "type": "string",
+            "previous": "string",
+            "_hash": "PSoWCBj2arLb56BHBnYDUO"
+          },
+          "_hash": "4rRRswbOKxipAkL7YAqL4E"
+        },
+        "_hash": "ERJHhmSsLUeZBZb6scDw5M"
+      }
+    ],
+    "_type": "properties",
+    "_tableCfg": "ERJHhmSsLUeZBZb6scDw5M",
+    "_hash": "5otyLLkJeJtua53uALt_ls"
+  }
+}

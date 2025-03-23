@@ -587,7 +587,7 @@ describe('IoMem', async () => {
 
   describe('dump()', () => {
     it('returns a copy of the complete database', async () => {
-      expectGolden('io-mem/dump/empty.json', await io.dump());
+      await expectGolden('io-mem/dump/empty.json').toBe(await io.dump());
 
       await io.createTable({
         config: { key: 'table1', type: 'properties', columns: {} },
@@ -596,7 +596,7 @@ describe('IoMem', async () => {
         config: { key: 'table2', type: 'cakes', columns: {} },
       });
 
-      expectGolden('io-mem/dump/two-tables.json', await io.dump());
+      await expectGolden('io-mem/dump/two-tables.json').toBe(await io.dump());
     });
   });
 
