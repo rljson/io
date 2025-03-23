@@ -7,7 +7,7 @@
 import { Hashed, hip, hsh } from '@rljson/hash';
 import { IsReady } from '@rljson/is-ready';
 import { copy, equals, JsonValue } from '@rljson/json';
-import { ContentType, Rljson, TableType } from '@rljson/rljson';
+import { Rljson, TableCfg, TableType } from '@rljson/rljson';
 
 import { Io } from './io.ts';
 
@@ -38,7 +38,7 @@ export class IoMem implements Io {
     return this._dump();
   }
 
-  async dumpTable(request: { name: string }): Promise<Rljson> {
+  async dumpTable(request: { table: string }): Promise<Rljson> {
     return this._dumpTable(request);
   }
 
@@ -65,7 +65,7 @@ export class IoMem implements Io {
 
   // ...........................................................................
   // Table management
-  createTable(request: { name: string; type: ContentType }): Promise<void> {
+  createTable(request: { config: TableCfg }): Promise<void> {
     return this._createTable(request);
   }
 
@@ -89,19 +89,16 @@ export class IoMem implements Io {
   }
 
   // ...........................................................................
-  private async _createTable(request: {
-    name: string;
-    type: ContentType;
-  }): Promise<void> {
-    const { name, type } = request;
+  private async _createTable(request: { config: TableCfg }): Promise<void> {
+    const { key, type } = request.config;
 
     // Get the existing table
-    const existing = this._mem[name] as TableType;
+    const existing = this._mem[key] as TableType;
     if (existing) {
       // Throw if the existing table has a different type
       if (existing._type !== type) {
         throw new Error(
-          `Table ${name} already exists with different type: "${existing._type}" vs "${request.type}"`,
+          `Table ${key} already exists with different type: "${existing._type}" vs "${type}"`,
         );
       }
     }
@@ -113,7 +110,7 @@ export class IoMem implements Io {
         _type: type,
       });
 
-      this._mem[name] ??= table;
+      this._mem[key] ??= table;
     }
   }
 
@@ -152,14 +149,14 @@ export class IoMem implements Io {
   }
 
   // ...........................................................................
-  private async _dumpTable(request: { name: string }): Promise<Rljson> {
-    const table = this._mem[request.name] as TableType;
+  private async _dumpTable(request: { table: string }): Promise<Rljson> {
+    const table = this._mem[request.table] as TableType;
     if (!table) {
-      throw new Error(`Table ${request.name} not found`);
+      throw new Error(`Table ${request.table} not found`);
     }
 
     return {
-      [request.name]: copy(table),
+      [request.table]: copy(table),
     };
   }
 

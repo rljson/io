@@ -33,13 +33,13 @@ git pull
 
 ## Set pull request title
 
-Replace `Implement isReady for IoMem` here and below
+Replace `Hand over TableCfg to createTable` here and below
 by your new pull request title.
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Implement isReady for IoMem"
+node scripts/create-branch.js "Hand over TableCfg to createTable"
 ```
 
 ## Update dependencies
@@ -65,7 +65,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Implement isReady for IoMem"
+git commit -am"Hand over TableCfg to createTable"
 ```
 
 ## Increase version
@@ -96,7 +96,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Implement isReady for IoMem" --body " "
+gh pr create --base main --title "Hand over TableCfg to createTable" --body " "
 ```
 
 ## Code review

@@ -5,7 +5,7 @@
 // found in the LICENSE file in the root of this package.
 
 import { JsonValue } from '@rljson/json';
-import { ContentType, Rljson } from '@rljson/rljson';
+import { Rljson, TableCfg } from '@rljson/rljson';
 
 // .............................................................................
 export interface Io {
@@ -25,13 +25,13 @@ export interface Io {
   dump(): Promise<Rljson>;
 
   /** Returns the dump of a complete table */
-  dumpTable(request: { name: string }): Promise<Rljson>;
+  dumpTable(request: { table: string }): Promise<Rljson>;
 
   // ...........................................................................
   // Tables
 
-  /** Creates a table with a given type */
-  createTable(request: { name: string; type: ContentType }): Promise<void>;
+  /** Creates a table with a given config */
+  createTable(request: { config: TableCfg }): Promise<void>;
 
   /** Returns the available table names */
   tables(): Promise<string[]>;
