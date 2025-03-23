@@ -33,13 +33,13 @@ git pull
 
 ## Set pull request title
 
-Replace `Hand over TableCfg to createTable` here and below
+Replace `After io isReady there must be a tableCfgs table` here and below
 by your new pull request title.
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Hand over TableCfg to createTable"
+node scripts/create-branch.js "After io isReady there must be a tableCfgs table"
 ```
 
 ## Update dependencies
@@ -65,7 +65,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Hand over TableCfg to createTable"
+git commit -am"After io isReady there must be a tableCfgs table"
 ```
 
 ## Increase version
@@ -96,7 +96,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Hand over TableCfg to createTable" --body " "
+gh pr create --base main --title "After io isReady there must be a tableCfgs table" --body " "
 ```
 
 ## Code review
