@@ -6,13 +6,7 @@
 
 import { hip, rmhsh } from '@rljson/hash';
 import { equals } from '@rljson/json';
-import {
-  exampleTableCfg,
-  PropertiesTable,
-  Rljson,
-  TableCfg,
-  TableType,
-} from '@rljson/rljson';
+import { exampleTableCfg, Rljson, TableCfg, TableType } from '@rljson/rljson';
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -53,48 +47,28 @@ describe('IoMem', async () => {
   describe('tableCfgs table', () => {
     it('should be available after isReady() resolves', async () => {
       const dump = await io.dumpTable({ table: 'tableCfgs' });
-      const tableCfgs = dump.tableCfgs as PropertiesTable<TableCfg>;
-      const tableCfg = tableCfgs._data[0];
-
-      const cfgRef = tableCfg._hash;
-
-      expect(dump.tableCfgs).toEqual(
-        hip({
-          _data: [
-            {
-              columns: {
-                key: {
-                  key: 'key',
-                  type: 'string',
-                  previous: 'string',
-                },
-                type: {
-                  key: 'type',
-                  type: 'string',
-                  previous: 'string',
-                },
-              },
-              key: 'tableCfgs',
-              type: 'properties',
-            },
-          ],
-          _tableCfg: cfgRef,
-          _type: 'properties',
-        }),
-      );
+      await expectGolden('io-mem/tableCfgs.json').toBe(dump);
     });
   });
 
   describe('createTable(request)', () => {
+    const tablesHelper = async (): Promise<string[]> => {
+      const rljson = await io.tables();
+      const tables = rljson.tableCfgs._data.map(
+        (tableCfg: any) => tableCfg.key,
+      );
+      return tables;
+    };
+
     it('should add a table', async () => {
       // Create a first table
       await createTable('table1');
-      let tables = await io.tables();
+      let tables = await tablesHelper();
       expect(tables).toEqual(['tableCfgs', 'table1']);
 
       // Create a second table
       await createTable('table2');
-      tables = await io.tables();
+      tables = await tablesHelper();
       expect(tables).toEqual(['tableCfgs', 'table1', 'table2']);
     });
 
@@ -254,88 +228,6 @@ describe('IoMem', async () => {
         expect(message).toBe(
           'Table tableA has different types: "properties" vs "cakes"',
         );
-      });
-    });
-  });
-
-  describe('readRow(request)', () => {
-    describe('throws', () => {
-      it('when the table does not exist', async () => {
-        let message: string = '';
-
-        try {
-          await io.readRow({
-            table: 'tableA',
-            rowHash: 'xyz',
-            /* v8 ignore next */
-          });
-        } catch (err: any) {
-          message = err.message;
-        }
-
-        expect(message).toBe('Table tableA not found');
-      });
-    });
-
-    describe('returns Rljson containing the table with the one row', () => {
-      it('when the data exists', async () => {
-        await createTable('tableA');
-
-        await io.write({
-          data: {
-            tableA: {
-              _type: 'properties',
-              _data: [{ keyA2: 'a2', keyA3: 'a3' }],
-            },
-          },
-        });
-
-        const dump = await io.dump();
-        const hash = (dump.tableA as any)._data[0]._hash;
-
-        const data = await io.readRow({
-          table: 'tableA',
-          rowHash: hash,
-        });
-
-        expect(data).toEqual({
-          tableA: {
-            _data: [
-              {
-                _hash: hash,
-                keyA2: 'a2',
-                keyA3: 'a3',
-              },
-            ],
-          },
-        });
-      });
-
-      it('throws when the row does not exist', async () => {
-        await createTable('tableA');
-
-        await io.write({
-          data: {
-            tableA: {
-              _type: 'properties',
-              _data: [{ keyA2: 'a2', keyA3: 'a3' }],
-            },
-          },
-        });
-
-        let message: string = '';
-
-        try {
-          await io.readRow({
-            table: 'tableA',
-            rowHash: 'xyz',
-            /* v8 ignore next */
-          });
-        } catch (err: any) {
-          message = err.message;
-        }
-
-        expect(message).toBe('Row "xyz" not found in table tableA');
       });
     });
   });
@@ -608,7 +500,8 @@ describe('IoMem', async () => {
         table1: {
           _data: [{ keyA2: 'a2', _hash: 'apLP3I2XLnVm13umIZdVhV' }],
           _type: 'properties',
-          _hash: 'DKwor-pULmCs6RY-sMyfrM',
+          _hash: 'VEVIifOgskJhzQVQEVl8VO',
+          _tableCfg: 'vcMGFi1C8BUhmKDbRefzlE',
         },
       });
     });

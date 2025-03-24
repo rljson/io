@@ -46,9 +46,9 @@ export const example = async () => {
   });
 
   // Read data from the table
-  const data: Rljson = await ioMem.readRow({
+  const data: Rljson = await ioMem.readRows({
     table: 'tableA',
-    rowHash: rowWithHash._hash,
+    where: { _hash: rowWithHash._hash },
   });
 
   // Print the return rljson data
