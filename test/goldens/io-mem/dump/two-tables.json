@@ -1,8 +1,9 @@
 {
-  "_hash": "kLaUI1ELu3ekS9WPX-CYku",
+  "_hash": "c2klkRm4vrsP7-Yaa3hwhx",
   "tableCfgs": {
     "_data": [
       {
+        "version": 1,
         "key": "tableCfgs",
         "type": "properties",
         "columns": {
@@ -20,10 +21,11 @@
           },
           "_hash": "4rRRswbOKxipAkL7YAqL4E"
         },
-        "_hash": "ERJHhmSsLUeZBZb6scDw5M"
+        "_hash": "2XDYf3b8c7RFeMEEa-NxdF"
       },
       {
         "key": "table1",
+        "version": 1,
         "columns": {
           "a": {
             "key": "a",
@@ -38,10 +40,11 @@
           "_hash": "MTFVrEq9Ps-ok4pltTHfLq"
         },
         "type": "properties",
-        "_hash": "hRfamwpYwNr5QJ3AszdM_k"
+        "_hash": "vcMGFi1C8BUhmKDbRefzlE"
       },
       {
         "key": "table2",
+        "version": 1,
         "columns": {
           "a": {
             "key": "a",
@@ -56,21 +59,23 @@
           "_hash": "MTFVrEq9Ps-ok4pltTHfLq"
         },
         "type": "properties",
-        "_hash": "BvZCee5PvjBcZePfbWbbOI"
+        "_hash": "TJElp9kHjq3E8B59G5WxtL"
       }
     ],
     "_type": "properties",
-    "_tableCfg": "ERJHhmSsLUeZBZb6scDw5M",
-    "_hash": "5otyLLkJeJtua53uALt_ls"
+    "_tableCfg": "2XDYf3b8c7RFeMEEa-NxdF",
+    "_hash": "c94mAQg1EHSUJ_hrmyPSu7"
   },
   "table1": {
     "_data": [],
     "_type": "properties",
-    "_hash": "DKwor-pULmCs6RY-sMyfrM"
+    "_tableCfg": "vcMGFi1C8BUhmKDbRefzlE",
+    "_hash": "VEVIifOgskJhzQVQEVl8VO"
   },
   "table2": {
     "_data": [],
     "_type": "properties",
-    "_hash": "DKwor-pULmCs6RY-sMyfrM"
+    "_tableCfg": "TJElp9kHjq3E8B59G5WxtL",
+    "_hash": "HYHGWLhDqQop11TYVzgJNq"
   }
 }

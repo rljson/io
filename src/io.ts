@@ -38,7 +38,7 @@ export interface Io {
   createTable(request: { tableCfg: string }): Promise<void>;
 
   /** Returns the available table names */
-  tables(): Promise<string[]>;
+  tables(): Promise<Rljson>;
 
   // ...........................................................................
   // Write
@@ -48,9 +48,6 @@ export interface Io {
 
   // ...........................................................................
   // Read rows
-
-  /** Reads a specific row from a database table */
-  readRow(request: { table: string; rowHash: string }): Promise<Rljson>;
 
   /** Queries a list of rows */
   readRows(request: {

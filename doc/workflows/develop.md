@@ -33,12 +33,12 @@ git pull
 
 ## Set pull request title
 
-Replace `After io isReady there must be a tableCfgs table` here and below
+Replace `Small interface changes` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "update-dna: Copy golden helpers"
+node scripts/create-branch.js "Small interface changes"
 ```
 
 ## Update dependencies
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"update-dna: Copy golden helpers"
+git commit -am"Small interface changes"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "update-dna: Copy golden helpers" --body " "
+gh pr create --base main --title "Small interface changes" --body " "
 ```
 
 ## Code review
