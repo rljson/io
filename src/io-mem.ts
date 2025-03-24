@@ -11,7 +11,6 @@ import { Rljson, TableCfg, TableType } from '@rljson/rljson';
 
 import { Io } from './io.ts';
 
-
 /**
  * In-Memory implementation of the Rljson Io interface.
  */
@@ -46,10 +45,6 @@ export class IoMem implements Io {
   // ...........................................................................
   // Rows
 
-  readRow(request: { table: string; rowHash: string }): Promise<Rljson> {
-    return this._readRow(request);
-  }
-
   readRows(request: {
     table: string;
     where: { [column: string]: JsonValue };
@@ -70,10 +65,29 @@ export class IoMem implements Io {
     return this._createTable(request);
   }
 
-  async tables(): Promise<string[]> {
-    const keys = Object.keys(this._mem);
-    const tables = keys.filter((key) => !key.startsWith('_'));
-    return tables;
+  async tables(): Promise<Rljson> {
+    const tables: TableCfg[] = [];
+
+    for (const key of Object.keys(this._mem)) {
+      const table = this._mem[key];
+      const tableCfgRef = table._tableCfg;
+      if (tableCfgRef) {
+        for (const tableCfg of this._mem.tableCfgs._data) {
+          if (tableCfg._hash === tableCfgRef) {
+            tables.push(tableCfg);
+          }
+        }
+      }
+    }
+
+    const result: Rljson = {
+      tableCfgs: {
+        _type: 'properties',
+        _data: tables,
+      },
+    };
+
+    return hip(result);
   }
 
   // ######################
@@ -93,6 +107,7 @@ export class IoMem implements Io {
   // ...........................................................................
   private _initTableCfgs = () => {
     const tableCfg: TableCfg = {
+      version: 1,
       key: 'tableCfgs',
       type: 'properties',
       columns: {
@@ -132,40 +147,13 @@ export class IoMem implements Io {
       throw new Error(`Table ${key} already exists`);
     }
 
-    const table: Hashed<TableType> = hip({
+    const table: TableType = {
       _data: [],
       _type: type,
-    });
+      _tableCfg: config._hash as string,
+    };
 
-    this._mem[key] ??= table;
-  }
-
-  // ...........................................................................
-  private async _readRow(request: {
-    table: string;
-    rowHash: string;
-  }): Promise<Rljson> {
-    const table = this._mem[request.table] as TableType;
-
-    if (!table) {
-      throw new Error(`Table ${request.table} not found`);
-    }
-
-    const row = table._data.find((row) => row._hash === request.rowHash);
-
-    if (!row) {
-      throw new Error(
-        `Row "${request.rowHash}" not found in table ${request.table}`,
-      );
-    }
-
-    const result: Rljson = {
-      [request.table]: {
-        _data: [row],
-      },
-    } as any;
-
-    return result;
+    this._mem[key] ??= hip(table);
   }
 
   // ...........................................................................
