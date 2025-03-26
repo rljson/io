@@ -33,12 +33,12 @@ git pull
 
 ## Set pull request title
 
-Replace `Small interface changes` here and below
+Replace `Update dependencies` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Small interface changes"
+node scripts/create-branch.js "Update dependencies"
 ```
 
 ## Update dependencies
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Small interface changes"
+git commit -am"Update dependencies"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Small interface changes" --body " "
+gh pr create --base main --title "Update dependencies" --body " "
 ```
 
 ## Code review
