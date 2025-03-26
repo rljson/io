@@ -1,11 +1,11 @@
 {
-  "_hash": "a2kykHgSEuhETfcOsMBb1N",
+  "_hash": "Vre6YcG68CnspY5dc7DSlX",
   "tableCfgs": {
     "_data": [
       {
         "version": 1,
         "key": "tableCfgs",
-        "type": "properties",
+        "type": "ingredients",
         "columns": {
           "key": {
             "key": "key",
@@ -21,11 +21,11 @@
           },
           "_hash": "4rRRswbOKxipAkL7YAqL4E"
         },
-        "_hash": "2XDYf3b8c7RFeMEEa-NxdF"
+        "_hash": "E_lIGygQ0yJdIxpgclZSeB"
       }
     ],
-    "_type": "properties",
-    "_tableCfg": "2XDYf3b8c7RFeMEEa-NxdF",
-    "_hash": "c94mAQg1EHSUJ_hrmyPSu7"
+    "_type": "ingredients",
+    "_tableCfg": "E_lIGygQ0yJdIxpgclZSeB",
+    "_hash": "a-e3JtPJw8fxDd3BZu4WT1"
   }
 }

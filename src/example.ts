@@ -19,14 +19,14 @@ export const example = async () => {
   // Create a table config first
   const tableCfg = hip({
     key: 'tableA',
-    type: 'properties',
+    type: 'ingredients',
     columns: {},
   } as TableCfg);
 
   await ioMem.write({
     data: {
       tableCfgs: {
-        _type: 'properties',
+        _type: 'ingredients',
         _data: [tableCfg],
       },
     },
@@ -39,7 +39,7 @@ export const example = async () => {
   await ioMem.write({
     data: {
       tableA: {
-        _type: 'properties',
+        _type: 'ingredients',
         _data: [row],
       },
     },
