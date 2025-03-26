@@ -34,7 +34,7 @@ describe('IoMem', async () => {
     await io.write({
       data: {
         tableCfgs: {
-          _type: 'properties',
+          _type: 'ingredients',
           _data: [tableCfg],
         },
       },
@@ -103,7 +103,7 @@ describe('IoMem', async () => {
       await io.write({
         data: {
           tableA: {
-            _type: 'properties',
+            _type: 'ingredients',
             _data: [{ keyA2: 'a2' }],
           },
         },
@@ -117,7 +117,7 @@ describe('IoMem', async () => {
       await io.write({
         data: {
           tableA: {
-            _type: 'properties',
+            _type: 'ingredients',
             _data: [{ keyB2: 'b2' }],
           },
         },
@@ -155,7 +155,7 @@ describe('IoMem', async () => {
 
       const testData: Rljson = {
         testTable: {
-          _type: 'properties',
+          _type: 'ingredients',
           _data: rows,
         },
       };
@@ -178,7 +178,7 @@ describe('IoMem', async () => {
 
         try {
           await io.write({
-            data: { testTable: { _type: 'properties', _data: [] } },
+            data: { testTable: { _type: 'ingredients', _data: [] } },
           });
         } catch (error) {
           message = (error as Error).message;
@@ -193,7 +193,7 @@ describe('IoMem', async () => {
         await io.write({
           data: {
             tableA: {
-              _type: 'properties',
+              _type: 'ingredients',
               _data: [{ keyA2: 'a2' }],
             },
           },
@@ -226,7 +226,7 @@ describe('IoMem', async () => {
         }
 
         expect(message).toBe(
-          'Table tableA has different types: "properties" vs "cakes"',
+          'Table tableA has different types: "ingredients" vs "cakes"',
         );
       });
     });
@@ -236,7 +236,7 @@ describe('IoMem', async () => {
     describe('should return rows matching the where clause', async () => {
       const testData: Rljson = {
         testTable: {
-          _type: 'properties',
+          _type: 'ingredients',
           _data: [
             {
               string: 'hello',
@@ -443,7 +443,7 @@ describe('IoMem', async () => {
       await io.write({
         data: {
           testTable: {
-            _type: 'properties',
+            _type: 'ingredients',
             _data: [
               { column1: 'value1', column2: 'value2' },
               { column1: 'value3', column2: 'value4' },
@@ -490,7 +490,7 @@ describe('IoMem', async () => {
       await io.write({
         data: {
           table1: {
-            _type: 'properties',
+            _type: 'ingredients',
             _data: [{ keyA2: 'a2' }],
           },
         },
@@ -499,9 +499,9 @@ describe('IoMem', async () => {
       expect(await io.dumpTable({ table: 'table1' })).toEqual({
         table1: {
           _data: [{ keyA2: 'a2', _hash: 'apLP3I2XLnVm13umIZdVhV' }],
-          _type: 'properties',
-          _hash: 'VEVIifOgskJhzQVQEVl8VO',
-          _tableCfg: 'vcMGFi1C8BUhmKDbRefzlE',
+          _type: 'ingredients',
+          _hash: 'LHOhA2OIgqHa5yXiJLRngA',
+          _tableCfg: 'iV1stjZctS3roKFkGegzEG',
         },
       });
     });

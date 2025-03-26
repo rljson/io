@@ -82,7 +82,7 @@ export class IoMem implements Io {
 
     const result: Rljson = {
       tableCfgs: {
-        _type: 'properties',
+        _type: 'ingredients',
         _data: tables,
       },
     };
@@ -109,7 +109,7 @@ export class IoMem implements Io {
     const tableCfg: TableCfg = {
       version: 1,
       key: 'tableCfgs',
-      type: 'properties',
+      type: 'ingredients',
       columns: {
         key: { key: 'key', type: 'string', previous: 'string' },
         type: { key: 'type', type: 'string', previous: 'string' },
@@ -120,7 +120,7 @@ export class IoMem implements Io {
 
     this._mem.tableCfgs = hip({
       _data: [tableCfg],
-      _type: 'properties',
+      _type: 'ingredients',
       _tableCfg: tableCfg._hash as string,
     });
 
