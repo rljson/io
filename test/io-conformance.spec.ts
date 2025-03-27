@@ -44,7 +44,7 @@ describe('Io Conformance', async () => {
     });
 
     // Generate the table
-    await io.createTable({ tableCfg: tableCfg._hash as string });
+    await io.createTable({ tableCfg: tableCfg });
   };
 
   describe('tableCfgs table', () => {
@@ -82,7 +82,8 @@ describe('Io Conformance', async () => {
         it('if the tableCfg is not found', async () => {
           let message: string = '';
           try {
-            await io.createTable({ tableCfg: 'xyz' });
+            const tableCfg: TableCfg = hip(exampleTableCfg({ key: 'xyz' }));
+            await io.createTable({ tableCfg: tableCfg });
           } catch (err: any) {
             message = err.message;
           }

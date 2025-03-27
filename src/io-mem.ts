@@ -61,7 +61,7 @@ export class IoMem implements Io {
 
   // ...........................................................................
   // Table management
-  createTable(request: { tableCfg: string }): Promise<void> {
+  createTable(request: { tableCfg: TableCfg }): Promise<void> {
     return this._createTable(request);
   }
 
@@ -130,13 +130,13 @@ export class IoMem implements Io {
   };
 
   // ...........................................................................
-  private async _createTable(request: { tableCfg: string }): Promise<void> {
+  private async _createTable(request: { tableCfg: TableCfg }): Promise<void> {
     const config: TableCfg = this._mem.tableCfgs._data.find(
-      (cfg) => cfg._hash === request.tableCfg,
+      (cfg) => cfg._hash === request.tableCfg._hash,
     );
 
     if (!config) {
-      throw new Error(`Table config ${request.tableCfg} not found`);
+      throw new Error(`Table config ${request.tableCfg.key} not found`);
     }
 
     const { key, type } = config;
