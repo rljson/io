@@ -10,11 +10,11 @@ import { exampleTableCfg, Rljson, TableCfg, TableType } from '@rljson/rljson';
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { IoMem } from '../src/io-mem';
+import { IoMem } from '../src/io-mem.ts';
 
 import { expectGolden } from './setup/goldens.ts';
 
-describe('IoMem', async () => {
+describe('Io Conformance', async () => {
   let io: IoMem;
 
   beforeEach(async () => {
