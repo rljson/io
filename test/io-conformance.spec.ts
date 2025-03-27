@@ -11,11 +11,14 @@ import { exampleTableCfg, Rljson, TableCfg, TableType } from '@rljson/rljson';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { IoMem } from '../src/io-mem.ts';
+import { Io } from '../src/io.ts';
 
 import { expectGolden } from './setup/goldens.ts';
 
+// import { IsReady } from '@rljson/is-ready';
+
 describe('Io Conformance', async () => {
-  let io: IoMem;
+  let io: Io;
 
   beforeEach(async () => {
     io = IoMem.example();
@@ -28,7 +31,7 @@ describe('Io Conformance', async () => {
     });
   });
 
-  const createTable = async (key: string) => {
+  const createTableHelper = async (key: string) => {
     // Register a new table config
     const tableCfg: TableCfg = hip(exampleTableCfg({ key }));
     await io.write({
@@ -52,31 +55,26 @@ describe('Io Conformance', async () => {
   });
 
   describe('createTable(request)', () => {
-    const tablesHelper = async (): Promise<string[]> => {
-      const rljson = await io.tables();
-      const tables = rljson.tableCfgs._data.map(
-        (tableCfg: any) => tableCfg.key,
-      );
-      return tables;
-    };
-
     it('should add a table', async () => {
+      const keys = async () => {
+        const tables = await io.tables();
+        return tables.tableCfgs._data.map((e) => e.key);
+      };
+
       // Create a first table
-      await createTable('table1');
-      let tables = await tablesHelper();
-      expect(tables).toEqual(['tableCfgs', 'table1']);
+      await createTableHelper('table1');
+      expect(await keys()).toEqual(['tableCfgs', 'table1']);
 
       // Create a second table
-      await createTable('table2');
-      tables = await tablesHelper();
-      expect(tables).toEqual(['tableCfgs', 'table1', 'table2']);
+      await createTableHelper('table2');
+      expect(await keys()).toEqual(['tableCfgs', 'table1', 'table2']);
     });
 
     describe('createTable', async () => {
       describe('throws', async () => {
         it('if the table already exists', async () => {
-          await createTable('table');
-          await expect(createTable('table')).rejects.toThrow(
+          await createTableHelper('table');
+          await expect(createTableHelper('table')).rejects.toThrow(
             'Table table already exists',
           );
         });
@@ -97,7 +95,7 @@ describe('Io Conformance', async () => {
 
   describe('write(request)', async () => {
     it('adds data to existing data', async () => {
-      await createTable('tableA');
+      await createTableHelper('tableA');
 
       // Write a first item
       await io.write({
@@ -132,7 +130,7 @@ describe('Io Conformance', async () => {
     });
 
     it('does not add the same data twice', async () => {
-      await createTable('testTable');
+      await createTableHelper('testTable');
 
       const rows = [
         {
@@ -188,7 +186,7 @@ describe('Io Conformance', async () => {
       });
 
       it('when the table has a different type then an existing one', async () => {
-        await createTable('tableA');
+        await createTableHelper('tableA');
 
         await io.write({
           data: {
@@ -259,7 +257,7 @@ describe('Io Conformance', async () => {
       };
 
       beforeEach(async () => {
-        await createTable('testTable');
+        await createTableHelper('testTable');
         await io.write({ data: testData });
       });
 
@@ -438,7 +436,7 @@ describe('Io Conformance', async () => {
     });
 
     it('should return an empty array if no rows match the where clause', async () => {
-      await createTable('testTable');
+      await createTableHelper('testTable');
 
       await io.write({
         data: {
@@ -477,15 +475,15 @@ describe('Io Conformance', async () => {
   describe('dump()', () => {
     it('returns a copy of the complete database', async () => {
       await expectGolden('io-mem/dump/empty.json').toBe(await io.dump());
-      await createTable('table1');
-      await createTable('table2');
+      await createTableHelper('table1');
+      await createTableHelper('table2');
       await expectGolden('io-mem/dump/two-tables.json').toBe(await io.dump());
     });
   });
 
   describe('dumpTable(request)', () => {
     it('returns a copy of the table', async () => {
-      await createTable('table1');
+      await createTableHelper('table1');
 
       await io.write({
         data: {
@@ -496,14 +494,9 @@ describe('Io Conformance', async () => {
         },
       });
 
-      expect(await io.dumpTable({ table: 'table1' })).toEqual({
-        table1: {
-          _data: [{ keyA2: 'a2', _hash: 'apLP3I2XLnVm13umIZdVhV' }],
-          _type: 'ingredients',
-          _hash: 'LHOhA2OIgqHa5yXiJLRngA',
-          _tableCfg: 'iV1stjZctS3roKFkGegzEG',
-        },
-      });
+      await expectGolden('io-mem/dumpTable/table1.json').toBe(
+        await io.dumpTable({ table: 'table1' }),
+      );
     });
 
     it('throws an error if the table does not exist', async () => {
