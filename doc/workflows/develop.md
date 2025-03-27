@@ -11,7 +11,7 @@ found in the LICENSE file in the root of this package.
 - [Checkout main](#checkout-main)
 - [Set pull request title](#set-pull-request-title)
 - [Create a feature branch](#create-a-feature-branch)
-- [Update dependencies](#update-dependencies)
+- [Rename io-mem.spec.ts to conformance-test.spec.ts](#update-dependencies)
 - [Develop \& debug](#develop--debug)
 - [Commit](#commit)
 - [Increase version](#increase-version)
@@ -33,15 +33,15 @@ git pull
 
 ## Set pull request title
 
-Replace `Update dependencies` here and below
+Replace `Rename io-mem.spec.ts to conformance-test.spec.ts` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Update dependencies"
+node scripts/create-branch.js "Rename io-mem.spec.ts to conformance-test.spec.ts"
 ```
 
-## Update dependencies
+## Rename io-mem.spec.ts to conformance-test.spec.ts
 
 ```bash
 pnpm update --latest
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Update dependencies"
+git commit -am"Rename io-mem.spec.ts to conformance-test.spec.ts"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Update dependencies" --body " "
+gh pr create --base main --title "Rename io-mem.spec.ts to conformance-test.spec.ts" --body " "
 ```
 
 ## Code review
