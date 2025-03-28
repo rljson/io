@@ -8,6 +8,8 @@ found in the LICENSE file in the root of this package.
 
 # Ticket workflow
 
+\_
+
 - [Checkout main](#checkout-main)
 - [Set pull request title](#set-pull-request-title)
 - [Create a feature branch](#create-a-feature-branch)
@@ -21,7 +23,7 @@ found in the LICENSE file in the root of this package.
 - [Create a pull request](#create-a-pull-request)
 - [Code review](#code-review)
 - [Checkout main and delete feature branch](#checkout-main-and-delete-feature-branch)
-- [Publish to NPM](#publish-to-npm)
+- [Publish to NPM](#publish-to-npm)\_
 
 ## Checkout main
 
@@ -33,12 +35,12 @@ git pull
 
 ## Set pull request title
 
-Replace `Fix cp README error` here and below
+Replace `Fix Goldens` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Fix cp README error"
+node scripts/create-branch.js "Fix Goldens"
 ```
 
 ## Update-dependencies
@@ -64,7 +66,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Fix cp README error"
+git commit -am"Fix Goldens"
 ```
 
 ## Increase version
@@ -95,7 +97,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Fix cp README error" --body " "
+gh pr create --base main --title "Fix Goldens" --body " "
 ```
 
 ## Code review
