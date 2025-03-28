@@ -11,7 +11,7 @@ found in the LICENSE file in the root of this package.
 - [Checkout main](#checkout-main)
 - [Set pull request title](#set-pull-request-title)
 - [Create a feature branch](#create-a-feature-branch)
-- [Rename io-mem.spec.ts to conformance-test.spec.ts](#update-dependencies)
+- [Fix cp README error](#update-dependencies)
 - [Develop \& debug](#develop--debug)
 - [Commit](#commit)
 - [Increase version](#increase-version)
@@ -33,15 +33,15 @@ git pull
 
 ## Set pull request title
 
-Replace `Rename io-mem.spec.ts to conformance-test.spec.ts` here and below
+Replace `Fix cp README error` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Rename io-mem.spec.ts to conformance-test.spec.ts"
+node scripts/create-branch.js "Fix cp README error"
 ```
 
-## Rename io-mem.spec.ts to conformance-test.spec.ts
+## Rename update dependencies
 
 ```bash
 pnpm update --latest
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Rename io-mem.spec.ts to conformance-test.spec.ts"
+git commit -am"Fix cp README error"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Rename io-mem.spec.ts to conformance-test.spec.ts" --body " "
+gh pr create --base main --title "Fix cp README error" --body " "
 ```
 
 ## Code review
