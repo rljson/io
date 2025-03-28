@@ -37,8 +37,15 @@ export interface Io {
    */
   createTable(request: { tableCfg: TableCfg }): Promise<void>;
 
-  /** Returns the available table names */
-  tables(): Promise<Rljson>;
+  /**
+   * Returns a json structure returning current table configurations
+   */
+  tableCfgs(): Promise<Rljson>;
+
+  /**
+   * Returns an rljson with all available tables without data
+   */
+  allTableNames(): Promise<string[]>;
 
   // ...........................................................................
   // Write

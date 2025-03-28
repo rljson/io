@@ -6,7 +6,13 @@
 
 import { hip, rmhsh } from '@rljson/hash';
 import { equals } from '@rljson/json';
-import { exampleTableCfg, Rljson, TableCfg, TableType } from '@rljson/rljson';
+import {
+  exampleTableCfg,
+  IngredientsTable,
+  Rljson,
+  TableCfg,
+  TableType,
+} from '@rljson/rljson';
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -34,14 +40,6 @@ describe('Io Conformance', async () => {
   const createTableHelper = async (key: string) => {
     // Register a new table config
     const tableCfg: TableCfg = hip(exampleTableCfg({ key }));
-    await io.write({
-      data: {
-        tableCfgs: {
-          _type: 'ingredients',
-          _data: [tableCfg],
-        },
-      },
-    });
 
     // Generate the table
     await io.createTable({ tableCfg: tableCfg });
@@ -54,42 +52,110 @@ describe('Io Conformance', async () => {
     });
   });
 
-  describe('createTable(request)', () => {
-    it('should add a table', async () => {
-      const keys = async () => {
-        const tables = await io.tables();
-        return tables.tableCfgs._data.map((e) => e.key);
+  describe('allTableNames()', () => {
+    it('should return an empty array if no tables are created', async () => {
+      const tables = await io.allTableNames();
+      expect(tables).toEqual(['tableCfgs']);
+    });
+
+    it('should return the names of all tables', async () => {
+      await createTableHelper('table1');
+      await createTableHelper('table2');
+
+      const tables = await io.allTableNames();
+      expect(tables).toEqual(['tableCfgs', 'table1', 'table2']);
+    });
+  });
+
+  describe('tableCfgs()', () => {
+    it('should an rljson containing the newest config of each table', async () => {
+      const table0V1: TableCfg = {
+        key: 'table0',
+        type: 'ingredients',
+        version: 1,
+        columns: {
+          col0: { key: 'col0', type: 'string' },
+          col1: { key: 'col1', type: 'string' },
+          col2: { key: 'col2', type: 'string' },
+        },
       };
+
+      const table0V2 = { ...table0V1, version: 2 };
+      const table1V1 = { ...table0V1, key: 'table1', version: 1 };
+      const table1V2 = { ...table1V1, version: 2 };
+
+      // Add multiple versions of the same tables
+      await io.write({
+        data: {
+          tableCfgs: {
+            _type: 'ingredients',
+            _data: [table0V1, table0V2, table1V1, table1V2],
+          },
+        },
+      });
+
+      // Check the tableCfgs
+      const tableCfgs = await io.tableCfgs();
+      const tableCfgsData = (tableCfgs.tableCfgs as TableType)._data;
+      expect(tableCfgsData.length).toBe(3);
+      expect(tableCfgsData[0].key).toBe('tableCfgs');
+      expect(tableCfgsData[0].version).toBe(1);
+      expect(tableCfgsData[1].key).toBe('table0');
+      expect(tableCfgsData[1].version).toBe(2);
+      expect(tableCfgsData[2].key).toBe('table1');
+      expect(tableCfgsData[2].version).toBe(2);
+    });
+  });
+
+  describe('createTable(request)', () => {
+    it('should add a table and a table config', async () => {
+      const tablesFromConfig = async () => {
+        const tables = (await io.tableCfgs())
+          .tableCfgs as IngredientsTable<TableCfg>;
+
+        return tables._data.map((e) => e.key);
+      };
+
+      const physicalTables = async () => await io.allTableNames();
 
       // Create a first table
       await createTableHelper('table1');
-      expect(await keys()).toEqual(['tableCfgs', 'table1']);
+
+      expect(await tablesFromConfig()).toEqual(['tableCfgs', 'table1']);
+      expect(await physicalTables()).toEqual(['tableCfgs', 'table1']);
 
       // Create a second table
       await createTableHelper('table2');
-      expect(await keys()).toEqual(['tableCfgs', 'table1', 'table2']);
+      expect(await tablesFromConfig()).toEqual([
+        'tableCfgs',
+        'table1',
+        'table2',
+      ]);
+      expect(await physicalTables()).toEqual(['tableCfgs', 'table1', 'table2']);
     });
 
-    describe('createTable', async () => {
-      describe('throws', async () => {
-        it('if the table already exists', async () => {
-          await createTableHelper('table');
-          await expect(createTableHelper('table')).rejects.toThrow(
-            'Table table already exists',
-          );
-        });
+    describe('throws', async () => {
+      it('if the table already exists', async () => {
+        await createTableHelper('table');
+        await expect(createTableHelper('table')).rejects.toThrow(
+          'Table table already exists',
+        );
+      });
 
-        it('if the tableCfg is not found', async () => {
-          let message: string = '';
-          try {
-            const tableCfg: TableCfg = hip(exampleTableCfg({ key: 'xyz' }));
-            await io.createTable({ tableCfg: tableCfg });
-          } catch (err: any) {
-            message = err.message;
-          }
+      it('if the hashes in the tableCfg are wrong', async () => {
+        const tableCfg: TableCfg = hip(exampleTableCfg({ key: 'table' }));
+        tableCfg._hash = 'wrongHash';
+        let message: string = '';
+        try {
+          await io.createTable({ tableCfg: tableCfg });
+        } catch (err: any) {
+          message = err.message;
+        }
 
-          expect(message).toBe('Table config xyz not found');
-        });
+        expect(message).toBe(
+          'Hash "wrongHash" does not match the newly calculated one "iR8un4m_Ezax4i1mBv0w93". ' +
+            'Please make sure that all systems are producing the same hashes.',
+        );
       });
     });
   });
