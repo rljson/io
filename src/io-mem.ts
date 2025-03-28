@@ -7,7 +7,7 @@
 import { Hashed, hip, hsh } from '@rljson/hash';
 import { IsReady } from '@rljson/is-ready';
 import { copy, equals, JsonValue } from '@rljson/json';
-import { Rljson, TableCfg, TableType } from '@rljson/rljson';
+import { Rljson, TableCfg, TableKey, TableType } from '@rljson/rljson';
 
 import { Io } from './io.ts';
 
@@ -61,33 +61,37 @@ export class IoMem implements Io {
 
   // ...........................................................................
   // Table management
-  createTable(request: { tableCfg: string }): Promise<void> {
+  createTable(request: { tableCfg: TableCfg }): Promise<void> {
     return this._createTable(request);
   }
 
-  async tables(): Promise<Rljson> {
-    const tables: TableCfg[] = [];
+  async tableCfgs(): Promise<Rljson> {
+    const tables = this._mem.tableCfgs._data as TableCfg[];
 
-    for (const key of Object.keys(this._mem)) {
-      const table = this._mem[key];
-      const tableCfgRef = table._tableCfg;
-      if (tableCfgRef) {
-        for (const tableCfg of this._mem.tableCfgs._data) {
-          if (tableCfg._hash === tableCfgRef) {
-            tables.push(tableCfg);
-          }
-        }
+    // Take the last version of eacth type key
+    const newestVersion: Record<TableKey, TableCfg> = {};
+    for (const table of tables) {
+      const existing = newestVersion[table.key];
+      if (!existing) {
+        newestVersion[table.key] = table;
+      } else if (table.version > existing.version) {
+        newestVersion[table.key] = table;
       }
     }
 
-    const result: Rljson = {
+    const resultData = Object.values(newestVersion);
+
+    return hip({
       tableCfgs: {
         _type: 'ingredients',
-        _data: tables,
+        _data: resultData,
       },
-    };
+    } as Rljson);
+  }
 
-    return hip(result);
+  async allTableNames(): Promise<string[]> {
+    const tables = Object.keys(this._mem).filter((key) => !key.startsWith('_'));
+    return tables;
   }
 
   // ######################
@@ -130,29 +134,40 @@ export class IoMem implements Io {
   };
 
   // ...........................................................................
-  private async _createTable(request: { tableCfg: string }): Promise<void> {
-    const config: TableCfg = this._mem.tableCfgs._data.find(
-      (cfg) => cfg._hash === request.tableCfg,
-    );
+  private async _createTable(request: { tableCfg: TableCfg }): Promise<void> {
+    // Throw if an table with the same key already exists
+    const { key, type } = request.tableCfg;
 
-    if (!config) {
-      throw new Error(`Table config ${request.tableCfg} not found`);
-    }
-
-    const { key, type } = config;
-
-    // Get the existing table
     const existing = this._mem[key] as TableType;
     if (existing) {
       throw new Error(`Table ${key} already exists`);
     }
 
+    // Recreate hashes in the case the existing hashes are wrong
+    const newConfig = hsh(request.tableCfg);
+
+    // Find an existing table config with the same hash
+    const existingConfig: TableCfg = this._mem.tableCfgs._data.find(
+      (cfg) => cfg._hash === newConfig._hash,
+    );
+
+    // Write the new config into the database
+    if (!existingConfig) {
+      this._mem.tableCfgs._data.push(newConfig);
+      this._mem.tableCfgs._hash = '';
+      const updateExistingHashes = false;
+      const throwIfOnWrongHashes = false;
+      hip(this._mem.tableCfgs, updateExistingHashes, throwIfOnWrongHashes);
+    }
+
+    // Create the table annd assign the table config hash
     const table: TableType = {
       _data: [],
       _type: type,
-      _tableCfg: config._hash as string,
+      _tableCfg: newConfig._hash as string,
     };
 
+    // Add hashes to the table
     this._mem[key] ??= hip(table);
   }
 
