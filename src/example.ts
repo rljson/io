@@ -33,7 +33,7 @@ export const example = async () => {
   });
 
   // Create a table first
-  await ioMem.createTable({ tableCfg: tableCfg._hash });
+  await ioMem.createTable({ tableCfg: tableCfg });
 
   // Write data into the table
   await ioMem.write({
