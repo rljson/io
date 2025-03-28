@@ -8,8 +8,6 @@ found in the LICENSE file in the root of this package.
 
 # Ticket workflow
 
-\_
-
 - [Checkout main](#checkout-main)
 - [Set pull request title](#set-pull-request-title)
 - [Create a feature branch](#create-a-feature-branch)
@@ -23,7 +21,7 @@ found in the LICENSE file in the root of this package.
 - [Create a pull request](#create-a-pull-request)
 - [Code review](#code-review)
 - [Checkout main and delete feature branch](#checkout-main-and-delete-feature-branch)
-- [Publish to NPM](#publish-to-npm)\_
+- [Publish to NPM](#publish-to-npm)
 
 ## Checkout main
 
