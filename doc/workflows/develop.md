@@ -8,10 +8,12 @@ found in the LICENSE file in the root of this package.
 
 # Ticket workflow
 
+\_
+
 - [Checkout main](#checkout-main)
 - [Set pull request title](#set-pull-request-title)
 - [Create a feature branch](#create-a-feature-branch)
-- [Fix cp README error](#update-dependencies)
+- [Update-dependencies](#update-dependencies)
 - [Develop \& debug](#develop--debug)
 - [Commit](#commit)
 - [Increase version](#increase-version)
@@ -21,7 +23,7 @@ found in the LICENSE file in the root of this package.
 - [Create a pull request](#create-a-pull-request)
 - [Code review](#code-review)
 - [Checkout main and delete feature branch](#checkout-main-and-delete-feature-branch)
-- [Publish to NPM](#publish-to-npm)
+- [Publish to NPM](#publish-to-npm)\_
 
 ## Checkout main
 
@@ -41,7 +43,7 @@ Replace `Fix cp README error` here and below
 node scripts/create-branch.js "Fix cp README error"
 ```
 
-## Rename update dependencies
+## Update-dependencies
 
 ```bash
 pnpm update --latest
