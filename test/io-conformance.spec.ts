@@ -100,13 +100,15 @@ describe('Io Conformance', async () => {
       // Check the tableCfgs
       const tableCfgs = await io.tableCfgs();
       const tableCfgsData = (tableCfgs.tableCfgs as TableType)._data;
-      expect(tableCfgsData.length).toBe(3);
+      expect(tableCfgsData.length).toBe(4);
       expect(tableCfgsData[0].key).toBe('tableCfgs');
       expect(tableCfgsData[0].version).toBe(1);
-      expect(tableCfgsData[1].key).toBe('table0');
-      expect(tableCfgsData[1].version).toBe(2);
-      expect(tableCfgsData[2].key).toBe('table1');
+      expect(tableCfgsData[1].key).toBe('revisions');
+      expect(tableCfgsData[1].version).toBe(1);
+      expect(tableCfgsData[2].key).toBe('table0');
       expect(tableCfgsData[2].version).toBe(2);
+      expect(tableCfgsData[3].key).toBe('table1');
+      expect(tableCfgsData[3].version).toBe(2);
     });
   });
 
@@ -124,17 +126,31 @@ describe('Io Conformance', async () => {
       // Create a first table
       await createTableHelper('table1');
 
-      expect(await tablesFromConfig()).toEqual(['tableCfgs', 'table1']);
-      expect(await physicalTables()).toEqual(['tableCfgs', 'table1']);
+      expect(await tablesFromConfig()).toEqual([
+        'tableCfgs',
+        'revisions',
+        'table1',
+      ]);
+      expect(await physicalTables()).toEqual([
+        'tableCfgs',
+        'revisions',
+        'table1',
+      ]);
 
       // Create a second table
       await createTableHelper('table2');
       expect(await tablesFromConfig()).toEqual([
         'tableCfgs',
+        'revisions',
         'table1',
         'table2',
       ]);
-      expect(await physicalTables()).toEqual(['tableCfgs', 'table1', 'table2']);
+      expect(await physicalTables()).toEqual([
+        'tableCfgs',
+        'revisions',
+        'table1',
+        'table2',
+      ]);
     });
 
     describe('throws', async () => {
@@ -147,6 +163,7 @@ describe('Io Conformance', async () => {
 
       it('if the hashes in the tableCfg are wrong', async () => {
         const tableCfg: TableCfg = hip(exampleTableCfg({ key: 'table' }));
+        const rightHash = tableCfg._hash;
         tableCfg._hash = 'wrongHash';
         let message: string = '';
         try {
@@ -156,7 +173,7 @@ describe('Io Conformance', async () => {
         }
 
         expect(message).toBe(
-          'Hash "wrongHash" does not match the newly calculated one "7nz16snZ2Xn07xsW2yVGEL". ' +
+          `Hash "wrongHash" does not match the newly calculated one "${rightHash}". ` +
             'Please make sure that all systems are producing the same hashes.',
         );
       });

@@ -1,5 +1,5 @@
 {
-  "_hash": "s1cFkh-8Wye5rccNdn0v_J",
+  "_hash": "1CY_bBcFw5qU6PngCfP6P2",
   "tableCfgs": {
     "_data": [
       {
@@ -12,17 +12,47 @@
         "columns": {
           "key": {
             "type": "string",
-            "previous": "string",
-            "_hash": "pANCKhQGCoBnJtpEyoO-ik"
+            "_hash": "AEBOaGQVNw8XEcTXrPopBU"
           },
           "type": {
             "type": "string",
-            "previous": "string",
-            "_hash": "pANCKhQGCoBnJtpEyoO-ik"
+            "_hash": "AEBOaGQVNw8XEcTXrPopBU"
           },
-          "_hash": "hpPxZlSWCV--W_ETNrPwlo"
+          "_hash": "i9dW71QAqKTOtXrdHzedya"
         },
-        "_hash": "9A-vjBQXLjpmRF_GDO8cF7"
+        "_hash": "FnkfKIfksP8lVDEi1hjKBn"
+      },
+      {
+        "version": 1,
+        "key": "revisions",
+        "type": "ingredients",
+        "isHead": false,
+        "isRoot": false,
+        "isShared": true,
+        "columns": {
+          "table": {
+            "type": "string",
+            "_hash": "AEBOaGQVNw8XEcTXrPopBU"
+          },
+          "predecessor": {
+            "type": "string",
+            "_hash": "AEBOaGQVNw8XEcTXrPopBU"
+          },
+          "successor": {
+            "type": "string",
+            "_hash": "AEBOaGQVNw8XEcTXrPopBU"
+          },
+          "timestamp": {
+            "type": "number",
+            "_hash": "zd-Cda-hVAhTMHlYGtJ_lb"
+          },
+          "id": {
+            "type": "string",
+            "_hash": "AEBOaGQVNw8XEcTXrPopBU"
+          },
+          "_hash": "kDw9ocmOPGDCooCX5n9H3O"
+        },
+        "_hash": "KK7MV6tta9SVVZx_GSP3Dg"
       },
       {
         "key": "table1",
@@ -66,8 +96,14 @@
       }
     ],
     "_type": "ingredients",
-    "_tableCfg": "9A-vjBQXLjpmRF_GDO8cF7",
-    "_hash": "Y99jxsAr_SoJ3uyaWk6w_2"
+    "_tableCfg": "FnkfKIfksP8lVDEi1hjKBn",
+    "_hash": "T3n9USKuaflt59BHzzfCZd"
+  },
+  "revisions": {
+    "_data": [],
+    "_type": "ingredients",
+    "_tableCfg": "KK7MV6tta9SVVZx_GSP3Dg",
+    "_hash": "KPf80u29M_KHWbDqmx_gPx"
   },
   "table1": {
     "_data": [],
