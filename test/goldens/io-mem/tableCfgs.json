@@ -11,21 +11,51 @@
         "columns": {
           "key": {
             "type": "string",
-            "previous": "string",
-            "_hash": "pANCKhQGCoBnJtpEyoO-ik"
+            "_hash": "AEBOaGQVNw8XEcTXrPopBU"
           },
           "type": {
             "type": "string",
-            "previous": "string",
-            "_hash": "pANCKhQGCoBnJtpEyoO-ik"
+            "_hash": "AEBOaGQVNw8XEcTXrPopBU"
           },
-          "_hash": "hpPxZlSWCV--W_ETNrPwlo"
+          "_hash": "i9dW71QAqKTOtXrdHzedya"
         },
-        "_hash": "9A-vjBQXLjpmRF_GDO8cF7"
+        "_hash": "FnkfKIfksP8lVDEi1hjKBn"
+      },
+      {
+        "version": 1,
+        "key": "revisions",
+        "type": "ingredients",
+        "isHead": false,
+        "isRoot": false,
+        "isShared": true,
+        "columns": {
+          "table": {
+            "type": "string",
+            "_hash": "AEBOaGQVNw8XEcTXrPopBU"
+          },
+          "predecessor": {
+            "type": "string",
+            "_hash": "AEBOaGQVNw8XEcTXrPopBU"
+          },
+          "successor": {
+            "type": "string",
+            "_hash": "AEBOaGQVNw8XEcTXrPopBU"
+          },
+          "timestamp": {
+            "type": "number",
+            "_hash": "zd-Cda-hVAhTMHlYGtJ_lb"
+          },
+          "id": {
+            "type": "string",
+            "_hash": "AEBOaGQVNw8XEcTXrPopBU"
+          },
+          "_hash": "kDw9ocmOPGDCooCX5n9H3O"
+        },
+        "_hash": "KK7MV6tta9SVVZx_GSP3Dg"
       }
     ],
     "_type": "ingredients",
-    "_tableCfg": "9A-vjBQXLjpmRF_GDO8cF7",
-    "_hash": "0az5E0hoW2-l743VsO9px_"
+    "_tableCfg": "FnkfKIfksP8lVDEi1hjKBn",
+    "_hash": "mH6xUNrFI-SGgu5fZBi1Pg"
   }
 }
