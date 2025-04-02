@@ -5,7 +5,14 @@
 // found in the LICENSE file in the root of this package.
 
 import { Json } from '@rljson/json';
-import { iterateTables, Ref, Rljson, TableKey } from '@rljson/rljson';
+import {
+  Cake,
+  iterateTables,
+  Layer,
+  Ref,
+  Rljson,
+  TableKey,
+} from '@rljson/rljson';
 
 // .............................................................................
 /**
@@ -73,6 +80,21 @@ export const calcReverseRefs = (rljson: Rljson): ReverseRefs => {
           _writeIngredientRefs(parentTableKey, parentTableRow, result);
           break;
 
+        case 'layers': {
+          _writeLayerRefs(parentTableKey, parentTableRow, result);
+          break;
+        }
+
+        case 'sliceIds': {
+          // Slice ids do not reference other tables
+          break;
+        }
+
+        case 'cakes': {
+          _writeCakeRefs(parentTableKey, parentTableRow, result);
+          break;
+        }
+
         default:
         // throw new Error('Table type "${table_type}" not yet implemented.');
       }
@@ -102,10 +124,69 @@ const _writeIngredientRefs = (
     const childTableName = parentColumnName.slice(0, -3);
     const childRowHash = parentRow[parentColumnName] as string;
 
-    const referencesForChildTable = result[childTableName]!;
-    const referencesForChildTableRow = referencesForChildTable[childRowHash]!;
-
-    referencesForChildTableRow[parentTableName] ??= {};
-    referencesForChildTableRow[parentTableName][parentRowHash] ??= {};
+    _write(
+      result,
+      childTableName,
+      childRowHash,
+      parentTableName,
+      parentRowHash,
+    );
   }
+};
+
+// .............................................................................
+const _writeLayerRefs = (
+  parentTableName: TableKey,
+  parentRow: Layer,
+  result: ReverseRefs,
+) => {
+  const childTableName = parentRow.ingredientsTable;
+  const parentRowHash = parentRow._hash as string;
+
+  for (const sliceId in parentRow.assign) {
+    if (sliceId.startsWith('_')) {
+      continue;
+    }
+
+    const sliceHash = parentRow.assign[sliceId] as string;
+
+    _write(result, childTableName, sliceHash, parentTableName, parentRowHash);
+  }
+};
+
+// .............................................................................
+const _writeCakeRefs = (
+  parentTableName: TableKey,
+  parentRow: Cake,
+  result: ReverseRefs,
+) => {
+  const parentRowHash = parentRow._hash as string;
+
+  for (const layer in parentRow.layers) {
+    const childTableName = parentRow.layersTable;
+    const childRowHash = parentRow.layers[layer] as string;
+    _write(
+      result,
+      childTableName,
+      childRowHash,
+      parentTableName,
+      parentRowHash,
+    );
+  }
+};
+
+// .............................................................................
+const _write = (
+  result: ReverseRefs,
+  childTableName: string,
+  childRowHash: string,
+  parentTableName: string,
+  parentRowHash: string,
+) => {
+  const referencesForChildTable = (result[childTableName] ??= {});
+  const referencesForChildTableRow = (referencesForChildTable[childRowHash] ??=
+    {});
+
+  referencesForChildTableRow[parentTableName] ??= {};
+  referencesForChildTableRow[parentTableName][parentRowHash] ??= {};
 };

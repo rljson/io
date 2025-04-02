@@ -48,15 +48,6 @@ describe('ReverseRefs', () => {
           expect(reverseRefs).not.toBeUndefined();
         });
 
-        it('nutritionalValues row 1 is not referenced by any ingredients row', () => {
-          // Get the hash of the nutritionalValues child row
-          const childRow = bakery.nutritionalValues._data[1]._hash;
-
-          // The child row is not referenced by a parent row.
-          // Thus the reverse reference object is undefined
-          expect(reverseRefs.nutritionalValues[childRow]).toEqual({});
-        });
-
         it('ingredients row 0 is referenced by recipeIngredients', () => {
           // Get the hash of the ingredients child row
           const childRow = bakery.ingredients._data[0]._hash;
@@ -74,7 +65,81 @@ describe('ReverseRefs', () => {
             },
           });
         });
+
+        it('recipeIngredients row 0 is referenced by recipes', () => {
+          // Get the hash of the recipeIngredients child row
+          const childRow = bakery.recipeIngredients._data[0]._hash;
+
+          // Get the hash of the recipeIngredients parent row
+          const parentRow = bakery.recipes._data[0]._hash;
+
+          // The reverse reference object should tell that the child row
+          // is referenced by the parent row
+          expect(reverseRefs.recipeIngredients[childRow]).toEqual({
+            recipes: {
+              // parent table name
+              // parent table row hash
+              [parentRow]: {},
+            },
+          });
+        });
+
+        it('nutritionalValues row 1 is not referenced by any ingredients row', () => {
+          // Get the hash of the nutritionalValues child row
+          const childRow = bakery.nutritionalValues._data[1]._hash;
+
+          // The child row is not referenced by a parent row.
+          // Thus the reverse reference object is undefined
+          expect(reverseRefs.nutritionalValues[childRow]).toEqual({});
+        });
       });
+
+      describe('layers', () => {
+        it('recipes row 0 is referenced by cake layer 0', () => {
+          // Get the hash of the recipes child row
+          const childRow = bakery.recipes._data[0]._hash;
+
+          // Get the hash of the layers parent row
+          const parentRow = bakery.layers._data[0]._hash;
+
+          // The reverse reference object should tell that the child row
+          // is referenced by the parent row
+          expect(reverseRefs.recipes[childRow]).toEqual({
+            layers: {
+              // parent table name
+              // parent table row hash
+              [parentRow]: {},
+            },
+          });
+        });
+      });
+
+      describe('sliceIds', () => {
+        it('do not reference any other columns', () => {});
+      });
+
+      describe('cakes', () => {
+        it('layers row 0 is referenced by cake row 0', () => {
+          // Get the hash of the layers row 0 child row
+          const childRow = bakery.layers._data[0]._hash;
+
+          // Get the hash of the cakes parent row
+          const parentRow = bakery.cakes._data[0]._hash;
+
+          // The reverse reference object should tell that the child row
+          // is referenced by the parent row
+          expect(reverseRefs.layers[childRow]).toEqual({
+            cakes: {
+              // parent table name
+              // parent table row hash
+              [parentRow]: {},
+            },
+          });
+        });
+        it('recipies row 0 is referenced by layers row 0 slice0 and slice1', () => {});
+      });
+
+      // describe('buffets', () => {});
     });
   });
 });

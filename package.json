@@ -59,7 +59,7 @@
     "@rljson/hash": "^0.0.13",
     "@rljson/is-ready": "^0.0.17",
     "@rljson/json": "^0.0.18",
-    "@rljson/rljson": "^0.0.34",
+    "@rljson/rljson": "^0.0.36",
     "@rljson/validate": "^0.0.9"
   }
 }
