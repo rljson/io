@@ -50,7 +50,7 @@ export interface Io {
   // ...........................................................................
   // Write
 
-  /** Writes Rljson data in to the database */
+  /** Writes Rljson data into the database */
   write(request: { data: Rljson }): Promise<void>;
 
   // ...........................................................................

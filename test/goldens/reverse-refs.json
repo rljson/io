@@ -1,0 +1,35 @@
+{
+  "buffets": {
+    "baOC9UaVHg4KpiS-fmGCD7": {}
+  },
+  "cakes": {
+    "Gy4sD92uxlJYHTgTZhsD1T": {}
+  },
+  "slices": {
+    "wyYfK5E4ArrMKQ_zvi2-EE": {}
+  },
+  "layers": {
+    "hn-2XthOKVlr9zvJaGlNNh": {}
+  },
+  "recipes": {
+    "IaZuXtJLwBmy8Zc6ggoJbO": {}
+  },
+  "recipeIngredients": {
+    "4coxp7hPCsH7hSnAVeUVZj": {}
+  },
+  "ingredients": {
+    "A5d-4if1fQpQERfwFsjKqb": {
+      "recipeIngredients": {
+        "4coxp7hPCsH7hSnAVeUVZj": {}
+      }
+    }
+  },
+  "nutritionalValues": {
+    "R165gWZn_Pcj_je3AwSsXI": {
+      "ingredients": {
+        "A5d-4if1fQpQERfwFsjKqb": {}
+      }
+    },
+    "IqeoWJjZQNlr-NVk2QT15B": {}
+  }
+}

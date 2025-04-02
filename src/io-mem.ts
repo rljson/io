@@ -4,7 +4,7 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-import { Hashed, hip, hsh } from '@rljson/hash';
+import { hip, hsh } from '@rljson/hash';
 import { IsReady } from '@rljson/is-ready';
 import { copy, equals, JsonValue } from '@rljson/json';
 import { Rljson, TableCfg, TableKey, TableType } from '@rljson/rljson';
@@ -100,7 +100,7 @@ export class IoMem implements Io {
 
   private _isReady = new IsReady();
 
-  private _mem: Hashed<Rljson> = hip({} as Rljson);
+  private _mem: Rljson = hip({} as Rljson);
 
   // ...........................................................................
   private async _init() {
@@ -114,9 +114,13 @@ export class IoMem implements Io {
       version: 1,
       key: 'tableCfgs',
       type: 'ingredients',
+      isHead: false,
+      isRoot: false,
+      isShared: true,
+
       columns: {
-        key: { key: 'key', type: 'string', previous: 'string' },
-        type: { key: 'type', type: 'string', previous: 'string' },
+        key: { type: 'string', previous: 'string' },
+        type: { type: 'string', previous: 'string' },
       },
     };
 
@@ -128,9 +132,7 @@ export class IoMem implements Io {
       _tableCfg: tableCfg._hash as string,
     });
 
-    const updateExistingHashes = true;
-    const throwOnOnWrongHashes = false;
-    hip(this._mem, updateExistingHashes, throwOnOnWrongHashes);
+    hip(this._mem, { updateExistingHashes: true, throwOnWrongHashes: false });
   };
 
   // ...........................................................................
@@ -156,8 +158,8 @@ export class IoMem implements Io {
       this._mem.tableCfgs._data.push(newConfig);
       this._mem.tableCfgs._hash = '';
       const updateExistingHashes = false;
-      const throwIfOnWrongHashes = false;
-      hip(this._mem.tableCfgs, updateExistingHashes, throwIfOnWrongHashes);
+      const throwOnWrongHashes = false;
+      hip(this._mem.tableCfgs, { updateExistingHashes, throwOnWrongHashes });
     }
 
     // Create the table annd assign the table config hash
@@ -224,10 +226,8 @@ export class IoMem implements Io {
     }
 
     // Recalc main hashes
-    this._mem._hash = '';
-    const updateExistingHashes = false;
-    const throwIfOnWrongHashes = false;
-    hip(this._mem, updateExistingHashes, throwIfOnWrongHashes);
+    (this._mem as any)._hash = '';
+    hip(this._mem, { updateExistingHashes: false, throwOnWrongHashes: false });
   }
 
   // ...........................................................................
