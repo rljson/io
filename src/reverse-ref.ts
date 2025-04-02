@@ -6,6 +6,7 @@
 
 import { Json } from '@rljson/json';
 import {
+  Buffet,
   Cake,
   iterateTables,
   Layer,
@@ -95,8 +96,10 @@ export const calcReverseRefs = (rljson: Rljson): ReverseRefs => {
           break;
         }
 
-        default:
-        // throw new Error('Table type "${table_type}" not yet implemented.');
+        case 'buffets': {
+          _writeBuffetRefs(parentTableKey, parentTableRow, result);
+          break;
+        }
       }
     }
   });
@@ -165,6 +168,27 @@ const _writeCakeRefs = (
   for (const layer in parentRow.layers) {
     const childTableName = parentRow.layersTable;
     const childRowHash = parentRow.layers[layer] as string;
+    _write(
+      result,
+      childTableName,
+      childRowHash,
+      parentTableName,
+      parentRowHash,
+    );
+  }
+};
+
+// .............................................................................
+const _writeBuffetRefs = (
+  parentTableName: TableKey,
+  parentRow: Buffet,
+  result: ReverseRefs,
+) => {
+  const parentRowHash = parentRow._hash as string;
+
+  for (const item of parentRow.items) {
+    const childTableName = item.table;
+    const childRowHash = item.ref;
     _write(
       result,
       childTableName,

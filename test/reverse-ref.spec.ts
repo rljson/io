@@ -26,7 +26,7 @@ describe('ReverseRefs', () => {
       expectGolden('reverse-refs.json').toBe(reverseRefs);
     });
 
-    describe('writes the reverse references for', () => {
+    describe('writes the reverse references for elements referenced by', () => {
       describe('ingredients', () => {
         it('nutritionalValues row 0 is referenced by ingredients row 0', () => {
           // Get the hash of the nutritionalValues child row
@@ -139,7 +139,25 @@ describe('ReverseRefs', () => {
         it('recipies row 0 is referenced by layers row 0 slice0 and slice1', () => {});
       });
 
-      // describe('buffets', () => {});
+      describe('buffets', () => {
+        it('cakes row 0 is referenced by buffet row 0', () => {
+          // Get the has of the cakes child row
+          const childRow = bakery.cakes._data[0]._hash;
+
+          // Get the hash of the buffets parent row
+          const parentRow = bakery.buffets._data[0]._hash;
+
+          // The reverse reference object should tell that the child row
+          // is referenced by the parent row
+          expect(reverseRefs.cakes[childRow]).toEqual({
+            buffets: {
+              // parent table name
+              // parent table row hash
+              [parentRow]: {},
+            },
+          });
+        });
+      });
     });
   });
 });
