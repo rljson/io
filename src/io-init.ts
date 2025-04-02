@@ -53,25 +53,4 @@ export class IoInit {
 
     await this.io.createTable({ tableCfg });
   };
-
-  initReverseRefs = async () => {
-    const tableCfg: TableCfg = {
-      version: 1,
-      key: 'reverseRefs',
-      type: 'ingredients',
-      isHead: false,
-      isRoot: false,
-      isShared: true,
-
-      columns: {
-        table: { type: 'string' },
-        predecessor: { type: 'string' },
-        successor: { type: 'string' },
-        timestamp: { type: 'number' },
-        id: { type: 'string' },
-      },
-    };
-
-    await this.io.createTable({ tableCfg });
-  };
 }

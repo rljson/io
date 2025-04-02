@@ -55,7 +55,7 @@ describe('Io Conformance', async () => {
   describe('allTableNames()', () => {
     it('should return an empty array if no tables are created', async () => {
       const tables = await io.allTableNames();
-      expect(tables).toEqual(['tableCfgs']);
+      expect(tables).toEqual(['tableCfgs', 'revisions']);
     });
 
     it('should return the names of all tables', async () => {
@@ -63,7 +63,7 @@ describe('Io Conformance', async () => {
       await createTableHelper('table2');
 
       const tables = await io.allTableNames();
-      expect(tables).toEqual(['tableCfgs', 'table1', 'table2']);
+      expect(tables).toEqual(['tableCfgs', 'revisions', 'table1', 'table2']);
     });
   });
 
@@ -294,9 +294,8 @@ describe('Io Conformance', async () => {
                 _data: [
                   {
                     keyB2: 'b2',
-                    sliceIds: 'xyz',
+                    sliceIdsRow: 'xyz',
                     sliceIdsTable: 'xyz',
-                    itemIds2: 'xyz',
                     layersTable: 'xyz',
                     layers: {},
                     collections: 'xyz',
