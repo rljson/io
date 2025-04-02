@@ -8,13 +8,11 @@ found in the LICENSE file in the root of this package.
 
 # Ticket workflow
 
-\_
-
 - [Checkout main](#checkout-main)
 - [Set pull request title](#set-pull-request-title)
 - [Create a feature branch](#create-a-feature-branch)
 - [Update-dependencies](#update-dependencies)
-- [Develop \& debug](#develop--debug)
+- [Develop & debug](#develop--debug)
 - [Commit](#commit)
 - [Increase version](#increase-version)
 - [Run tests and build](#run-tests-and-build)
@@ -35,12 +33,12 @@ git pull
 
 ## Set pull request title
 
-Replace `Fix Goldens` here and below
+Replace `Create revisions and reverseRefs table` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Fix Goldens"
+node scripts/create-branch.js "Create revisions and reverseRefs table"
 ```
 
 ## Update-dependencies
@@ -66,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Fix Goldens"
+git commit -am"Create revisions and reverseRefs table"
 ```
 
 ## Increase version
@@ -97,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Fix Goldens" --body " "
+gh pr create --base main --title "Create revisions and reverseRefs table" --body " "
 ```
 
 ## Code review
