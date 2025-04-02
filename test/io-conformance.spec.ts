@@ -68,15 +68,18 @@ describe('Io Conformance', async () => {
   });
 
   describe('tableCfgs()', () => {
-    it('should an rljson containing the newest config of each table', async () => {
+    it('an rljson containing the newest config of each table', async () => {
       const table0V1: TableCfg = {
         key: 'table0',
         type: 'ingredients',
         version: 1,
+        isHead: false,
+        isRoot: false,
+        isShared: true,
         columns: {
-          col0: { key: 'col0', type: 'string' },
-          col1: { key: 'col1', type: 'string' },
-          col2: { key: 'col2', type: 'string' },
+          col0: { type: 'string' },
+          col1: { type: 'string' },
+          col2: { type: 'string' },
         },
       };
 
@@ -153,7 +156,7 @@ describe('Io Conformance', async () => {
         }
 
         expect(message).toBe(
-          'Hash "wrongHash" does not match the newly calculated one "iR8un4m_Ezax4i1mBv0w93". ' +
+          'Hash "wrongHash" does not match the newly calculated one "7nz16snZ2Xn07xsW2yVGEL". ' +
             'Please make sure that all systems are producing the same hashes.',
         );
       });
@@ -274,8 +277,8 @@ describe('Io Conformance', async () => {
                 _data: [
                   {
                     keyB2: 'b2',
-                    itemIds: 'xyz',
-                    itemIdsTable: 'xyz',
+                    sliceIds: 'xyz',
+                    sliceIdsTable: 'xyz',
                     itemIds2: 'xyz',
                     layersTable: 'xyz',
                     layers: {},
