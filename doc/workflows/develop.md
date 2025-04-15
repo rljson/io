@@ -33,12 +33,12 @@ git pull
 
 ## Set pull request title
 
-Replace `Create revisions and reverseRefs table` here and below
+Replace `Update rljson to provide iterateTablesSync` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Create revisions and reverseRefs table"
+node scripts/create-branch.js "Update rljson to provide iterateTablesSync"
 ```
 
 ## Update-dependencies
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Create revisions and reverseRefs table"
+git commit -am"Update rljson to provide iterateTablesSync"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Create revisions and reverseRefs table" --body " "
+gh pr create --base main --title "Update rljson to provide iterateTablesSync" --body " "
 ```
 
 ## Code review
