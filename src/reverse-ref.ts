@@ -8,7 +8,7 @@ import { Json } from '@rljson/json';
 import {
   Buffet,
   Cake,
-  iterateTables,
+  iterateTablesSync,
   Layer,
   Ref,
   Rljson,
@@ -61,7 +61,7 @@ export const calcReverseRefs = (rljson: Rljson): ReverseRefs => {
 
   // ......................
   // Prepare data structure
-  iterateTables(rljson, (childTableKey, table) => {
+  iterateTablesSync(rljson, (childTableKey, table) => {
     const childTable: { [childRowHash: string]: ParentRef } = {};
     result[childTableKey] = childTable;
     for (const childRow of table._data) {
@@ -71,7 +71,7 @@ export const calcReverseRefs = (rljson: Rljson): ReverseRefs => {
 
   // ............................
   // Generate reverse references
-  iterateTables(rljson, (parentTableKey, parentTable) => {
+  iterateTablesSync(rljson, (parentTableKey, parentTable) => {
     // Iterate all rows of each table
     for (const parentTableRow of parentTable._data) {
       // Find out whe other tables & rows are referenced by this row
