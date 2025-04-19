@@ -33,12 +33,12 @@ git pull
 
 ## Set pull request title
 
-Replace `Update rljson to provide iterateTablesSync` here and below
+Replace `Update io-conformance.spec.ts from io-sqlite` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Update rljson to provide iterateTablesSync"
+node scripts/create-branch.js "Update io-conformance.spec.ts from io-sqlite"
 ```
 
 ## Update-dependencies
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Update rljson to provide iterateTablesSync"
+git commit -am"Update io-conformance.spec.ts from io-sqlite"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Update rljson to provide iterateTablesSync" --body " "
+gh pr create --base main --title "Update io-conformance.spec.ts from io-sqlite" --body " "
 ```
 
 ## Code review
