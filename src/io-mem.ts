@@ -10,6 +10,7 @@ import { copy, equals, JsonValue } from '@rljson/json';
 import { Rljson, TableCfg, TableKey, TableType } from '@rljson/rljson';
 
 import { IoInit } from './io-init.ts';
+import { IoTools } from './io-tools.ts';
 import { Io } from './io.ts';
 
 /**
@@ -22,7 +23,7 @@ export class IoMem implements Io {
     this._init();
   }
 
-  static example = () => {
+  static example = async () => {
     return new IoMem();
   };
 
@@ -53,6 +54,14 @@ export class IoMem implements Io {
     return this._readRows(request);
   }
 
+  async rowCount(table: string): Promise<number> {
+    const tableData = this._mem[table] as TableType;
+    if (!tableData) {
+      throw new Error(`Table "${table}" not found`);
+    }
+    return Promise.resolve(tableData._data.length);
+  }
+
   // ...........................................................................
   // Write
 
@@ -62,8 +71,8 @@ export class IoMem implements Io {
 
   // ...........................................................................
   // Table management
-  createTable(request: { tableCfg: TableCfg }): Promise<void> {
-    return this._createTable(request);
+  createOrExtendTable(request: { tableCfg: TableCfg }): Promise<void> {
+    return this._createOrExtendTable(request);
   }
 
   async tableCfgs(): Promise<Rljson> {
@@ -99,6 +108,8 @@ export class IoMem implements Io {
   // Private
   // ######################
 
+  private _ioTools!: IoTools;
+
   private _isReady = new IsReady();
 
   private _mem: Rljson = hip({} as Rljson);
@@ -107,6 +118,7 @@ export class IoMem implements Io {
 
   // ...........................................................................
   private async _init() {
+    this._ioTools = new IoTools(this);
     this._ioInit = new IoInit(this);
     this._initTableCfgs();
     await this._ioInit.initRevisionsTable();
@@ -128,14 +140,14 @@ export class IoMem implements Io {
   };
 
   // ...........................................................................
-  private async _createTable(request: { tableCfg: TableCfg }): Promise<void> {
-    // Throw if an table with the same key already exists
-    const { key, type } = request.tableCfg;
+  private async _createOrExtendTable(request: {
+    tableCfg: TableCfg;
+  }): Promise<void> {
+    // Make sure that the table config is compatible
+    // with an potential existing table
+    await this._ioTools.throwWhenTableIsNotCompatible(request.tableCfg);
 
-    const existing = this._mem[key] as TableType;
-    if (existing) {
-      throw new Error(`Table ${key} already exists`);
-    }
+    const { type, key } = request.tableCfg;
 
     // Recreate hashes in the case the existing hashes are wrong
     const newConfig = hsh(request.tableCfg);
@@ -149,9 +161,10 @@ export class IoMem implements Io {
     if (!existingConfig) {
       this._mem.tableCfgs._data.push(newConfig);
       this._mem.tableCfgs._hash = '';
-      const updateExistingHashes = false;
-      const throwOnWrongHashes = false;
-      hip(this._mem.tableCfgs, { updateExistingHashes, throwOnWrongHashes });
+      hip(this._mem.tableCfgs, {
+        updateExistingHashes: false,
+        throwOnWrongHashes: false,
+      });
     }
 
     // Create the table annd assign the table config hash

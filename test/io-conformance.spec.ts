@@ -5,7 +5,6 @@
 // found in the LICENSE file in the root of this package.
 
 import { hip, rmhsh } from '@rljson/hash';
-import { equals } from '@rljson/json';
 import {
   exampleTableCfg,
   IngredientsTable,
@@ -16,18 +15,18 @@ import {
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { IoMem } from '../src/io-mem.ts';
-import { Io } from '../src/io.ts';
+import { IoMem } from '../src/io-mem';
+import { IoTools } from '../src/io-tools';
 
 import { expectGolden } from './setup/goldens.ts';
 
-// import { IsReady } from '@rljson/is-ready';
-
 describe('Io Conformance', async () => {
-  let io: Io;
+  let io: IoMem;
+  let ioTools: IoTools;
 
   beforeEach(async () => {
-    io = IoMem.example();
+    io = await IoMem.example();
+    ioTools = new IoTools(io);
     await io.isReady();
   });
 
@@ -37,12 +36,14 @@ describe('Io Conformance', async () => {
     });
   });
 
-  const createTableHelper = async (key: string) => {
-    // Register a new table config
-    const tableCfg: TableCfg = hip(exampleTableCfg({ key }));
-
-    // Generate the table
-    await io.createTable({ tableCfg: tableCfg });
+  const createExampleTable = async (key: string) => {
+    // Register a new table config and generate the table
+    const tableCfg: TableCfg = exampleTableCfg({ key });
+    try {
+      await io.createOrExtendTable({ tableCfg: tableCfg });
+    } catch (error) {
+      throw error; // Re-throw the error after logging it
+    }
   };
 
   describe('tableCfgs table', () => {
@@ -59,8 +60,8 @@ describe('Io Conformance', async () => {
     });
 
     it('should return the names of all tables', async () => {
-      await createTableHelper('table1');
-      await createTableHelper('table2');
+      await createExampleTable('table1');
+      await createExampleTable('table2');
 
       const tables = await io.allTableNames();
       expect(tables).toEqual(['tableCfgs', 'revisions', 'table1', 'table2']);
@@ -68,51 +69,153 @@ describe('Io Conformance', async () => {
   });
 
   describe('tableCfgs()', () => {
-    it('an rljson containing the newest config of each table', async () => {
+    it('returns an rljson object containing the newest config for each table', async () => {
+      //create four tables with two versions each
       const table0V1: TableCfg = {
         key: 'table0',
         type: 'ingredients',
-        version: 1,
         isHead: false,
         isRoot: false,
         isShared: true,
-        columns: {
-          col0: { type: 'string' },
-          col1: { type: 'string' },
-          col2: { type: 'string' },
-        },
+        version: 1,
+        columns: [
+          { key: 'col0', type: 'string' },
+          { key: 'col1', type: 'string' },
+          { key: 'col2', type: 'string' },
+        ],
       };
 
+      await io.createOrExtendTable({ tableCfg: table0V1 });
       const table0V2 = { ...table0V1, version: 2 };
+      await io.createOrExtendTable({ tableCfg: table0V2 });
       const table1V1 = { ...table0V1, key: 'table1', version: 1 };
+      await io.createOrExtendTable({ tableCfg: table1V1 });
       const table1V2 = { ...table1V1, version: 2 };
-
-      // Add multiple versions of the same tables
-      await io.write({
-        data: {
-          tableCfgs: {
-            _type: 'ingredients',
-            _data: [table0V1, table0V2, table1V1, table1V2],
-          },
-        },
-      });
+      await io.createOrExtendTable({ tableCfg: table1V2 });
 
       // Check the tableCfgs
-      const tableCfgs = await io.tableCfgs();
-      const tableCfgsData = (tableCfgs.tableCfgs as TableType)._data;
-      expect(tableCfgsData.length).toBe(4);
-      expect(tableCfgsData[0].key).toBe('tableCfgs');
-      expect(tableCfgsData[0].version).toBe(1);
-      expect(tableCfgsData[1].key).toBe('revisions');
-      expect(tableCfgsData[1].version).toBe(1);
-      expect(tableCfgsData[2].key).toBe('table0');
-      expect(tableCfgsData[2].version).toBe(2);
-      expect(tableCfgsData[3].key).toBe('table1');
-      expect(tableCfgsData[3].version).toBe(2);
+      const actualTableCfgs = (await io.tableCfgs()).tableCfgs
+        ._data as unknown as TableCfg[];
+
+      expect(actualTableCfgs.length).toBe(4);
+      expect((actualTableCfgs[0] as TableCfg).key).toBe('tableCfgs');
+      expect((actualTableCfgs[0] as TableCfg).version).toBe(1);
+      expect((actualTableCfgs[1] as TableCfg).key).toBe('revisions');
+      expect((actualTableCfgs[1] as TableCfg).version).toBe(1);
+      expect((actualTableCfgs[2] as TableCfg).key).toBe('table0');
+      expect((actualTableCfgs[2] as TableCfg).version).toBe(2);
+      expect((actualTableCfgs[3] as TableCfg).key).toBe('table1');
+      expect((actualTableCfgs[3] as TableCfg).version).toBe(2);
     });
   });
 
-  describe('createTable(request)', () => {
+  describe('throws an error', async () => {
+    it('if the hashes in the tableCfg are wrong', async () => {
+      const tableCfg: TableCfg = hip(exampleTableCfg({ key: 'table1' }));
+      tableCfg._hash = 'wrongHash';
+      let message: string = '';
+      try {
+        await io.createOrExtendTable({ tableCfg: tableCfg });
+      } catch (err: any) {
+        message = err.message;
+      }
+
+      expect(message).toBe(
+        'Hash "wrongHash" does not match the newly calculated one "V9NqVeFM0OLG4kObpo4JQQ". ' +
+          'Please make sure that all systems are producing the same hashes.',
+      );
+    });
+  });
+
+  describe('createOrExtendTable(request)', () => {
+    let existing: TableCfg;
+    beforeEach(async () => {
+      existing = exampleTableCfg();
+      await io.createOrExtendTable({ tableCfg: existing });
+    });
+
+    describe('throws an error', () => {
+      it('if the hashes in the tableCfg are wrong', async () => {
+        const tableCfg: TableCfg = hip(exampleTableCfg({ key: 'table' }));
+        const rightHash = tableCfg._hash;
+        tableCfg._hash = 'wrongHash';
+        let message: string = '';
+        try {
+          await io.createOrExtendTable({ tableCfg: tableCfg });
+        } catch (err: any) {
+          message = err.message;
+        }
+
+        expect(message).toBe(
+          `Hash "wrongHash" does not match the newly calculated one "${rightHash}". ` +
+            'Please make sure that all systems are producing the same hashes.',
+        );
+      });
+
+      it('when the update has invalid column types', async () => {
+        const update = exampleTableCfg({
+          ...existing,
+          columns: [
+            ...existing.columns,
+            {
+              key: 'x',
+              type: 'unknown' as any,
+            },
+          ],
+        });
+
+        await expect(
+          io.createOrExtendTable({ tableCfg: update }),
+        ).rejects.toThrow(
+          'Invalid update of table able "table": ' +
+            'Column "x" has an unsupported type "unknown"',
+        );
+      });
+
+      it('when the update has deleted columns', async () => {
+        const update = { ...existing, columns: existing.columns.slice(0, 1) };
+        await expect(
+          io.createOrExtendTable({ tableCfg: update }),
+        ).rejects.toThrow(
+          'Invalid update of table able "table": ' +
+            'Columns must not be deleted. Deleted columns: b}',
+        );
+      });
+
+      it('when column keys have changed', async () => {
+        const update = {
+          ...existing,
+          columns: [
+            { ...existing.columns[0], key: 'b' },
+            { ...existing.columns[1], key: 'a' },
+          ],
+        };
+        await expect(
+          io.createOrExtendTable({ tableCfg: update }),
+        ).rejects.toThrow(
+          'Invalid update of table able "table": Column keys must not change! ' +
+            'Column "a" was renamed into "b".',
+        );
+      });
+
+      it('when column types have changed', async () => {
+        const update = {
+          ...existing,
+          columns: [
+            { ...existing.columns[0], type: 'boolean' },
+            { ...existing.columns[1], type: 'number' },
+          ],
+        } as TableCfg;
+        await expect(
+          io.createOrExtendTable({ tableCfg: update }),
+        ).rejects.toThrow(
+          'Invalid update of table able "table": ' +
+            'Column types must not change! ' +
+            'Type of column "a" was changed from "string" to boolean.',
+        );
+      });
+    });
+
     it('should add a table and a table config', async () => {
       const tablesFromConfig = async () => {
         const tables = (await io.tableCfgs())
@@ -124,65 +227,140 @@ describe('Io Conformance', async () => {
       const physicalTables = async () => await io.allTableNames();
 
       // Create a first table
-      await createTableHelper('table1');
+      await createExampleTable('table1');
 
       expect(await tablesFromConfig()).toEqual([
         'tableCfgs',
         'revisions',
+        'table',
         'table1',
       ]);
       expect(await physicalTables()).toEqual([
         'tableCfgs',
         'revisions',
+        'table',
         'table1',
       ]);
 
       // Create a second table
-      await createTableHelper('table2');
+      await createExampleTable('table2');
       expect(await tablesFromConfig()).toEqual([
         'tableCfgs',
         'revisions',
+        'table',
         'table1',
         'table2',
       ]);
       expect(await physicalTables()).toEqual([
         'tableCfgs',
         'revisions',
+        'table',
         'table1',
         'table2',
       ]);
     });
 
-    describe('throws', async () => {
-      it('if the table already exists', async () => {
-        await createTableHelper('table');
-        await expect(createTableHelper('table')).rejects.toThrow(
-          'Table table already exists',
-        );
+    it('should extend an existing table', async () => {
+      // Create a first table
+      const tableCfg: TableCfg = exampleTableCfg({ key: 'tableA' });
+      await io.createOrExtendTable({ tableCfg });
+      await io.write({
+        data: {
+          tableA: {
+            _type: 'ingredients',
+            _data: [{ keyA2: 'a2' }],
+          },
+        },
       });
 
-      it('if the hashes in the tableCfg are wrong', async () => {
-        const tableCfg: TableCfg = hip(exampleTableCfg({ key: 'table' }));
-        const rightHash = tableCfg._hash;
-        tableCfg._hash = 'wrongHash';
-        let message: string = '';
-        try {
-          await io.createTable({ tableCfg: tableCfg });
-        } catch (err: any) {
-          message = err.message;
-        }
+      // Check the table content before
+      const dump = rmhsh(await io.dumpTable({ table: 'tableA' }));
+      expect(dump).toEqual({
+        tableA: {
+          _data: [
+            {
+              keyA2: 'a2',
+            },
+          ],
+          _type: 'ingredients',
+          _tableCfg: '5xbrfD3vtlKPaLU4rcc5R3',
+        },
+      });
 
-        expect(message).toBe(
-          `Hash "wrongHash" does not match the newly calculated one "${rightHash}". ` +
-            'Please make sure that all systems are producing the same hashes.',
-        );
+      // Update the table by adding a new column
+      const tableCfg2: TableCfg = {
+        ...tableCfg,
+        columns: [
+          ...tableCfg.columns,
+          { key: 'keyA1', type: 'string' },
+          { key: 'keyA2', type: 'string' },
+          { key: 'keyB2', type: 'string' },
+        ],
+      };
+      await io.createOrExtendTable({ tableCfg: tableCfg2 });
+
+      // Check the table contents after. It has not changed.
+      const dump2 = rmhsh(await io.dumpTable({ table: 'tableA' }));
+      expect(dump2).toEqual({
+        tableA: {
+          _data: [
+            {
+              keyA2: 'a2',
+            },
+          ],
+          _tableCfg: '5xbrfD3vtlKPaLU4rcc5R3',
+          _type: 'ingredients',
+        },
+      });
+
+      // Now add a new row adding
+      await io.write({
+        data: {
+          tableA: {
+            _type: 'ingredients',
+            _data: [{ keyA1: 'a1', keyA2: 'a2', keyB2: 'b2' }],
+          },
+        },
+      });
+
+      // Check the table contents after. It has an additional row.
+      const dump3 = rmhsh(await io.dumpTable({ table: 'tableA' }));
+      expect(dump3).toEqual({
+        tableA: {
+          _data: [
+            {
+              keyA2: 'a2',
+            },
+            {
+              keyA1: 'a1',
+              keyA2: 'a2',
+              keyB2: 'b2',
+            },
+          ],
+          _tableCfg: '5xbrfD3vtlKPaLU4rcc5R3',
+          _type: 'ingredients',
+        },
       });
     });
   });
 
   describe('write(request)', async () => {
     it('adds data to existing data', async () => {
-      await createTableHelper('tableA');
+      const exampleCfg: TableCfg = exampleTableCfg({ key: 'tableA' });
+      const tableCfg: TableCfg = {
+        ...exampleCfg,
+        columns: [
+          { key: 'keyA1', type: 'string' },
+          { key: 'keyA2', type: 'string' },
+          { key: 'keyB2', type: 'string' },
+        ],
+      };
+
+      await io.createOrExtendTable({ tableCfg });
+      const allTableNames = await io.allTableNames();
+      expect(allTableNames).toContain('tableA');
+
+      expect('tableA').toBe(tableCfg.key);
 
       // Write a first item
       await io.write({
@@ -194,9 +372,16 @@ describe('Io Conformance', async () => {
         },
       });
 
+      expect(await io.rowCount('tableA')).toEqual(1);
+
       const dump = await io.dump();
       const items = (dump.tableA as TableType)._data;
-      expect(items).toEqual([{ keyA2: 'a2', _hash: 'apLP3I2XLnVm13umIZdVhV' }]);
+      expect(items).toEqual([
+        {
+          _hash: 'apLP3I2XLnVm13umIZdVhV',
+          keyA2: 'a2',
+        },
+      ]);
 
       // Write a second item
       await io.write({
@@ -211,30 +396,60 @@ describe('Io Conformance', async () => {
       const dump2 = await io.dump();
       const items2 = (dump2.tableA as TableType)._data;
       expect(items2).toEqual([
-        { keyA2: 'a2', _hash: 'apLP3I2XLnVm13umIZdVhV' },
-        { keyB2: 'b2', _hash: 'oNNJMCE_2iycGPDyM_5_lp' },
+        {
+          _hash: 'apLP3I2XLnVm13umIZdVhV',
+          keyA2: 'a2',
+        },
+        {
+          _hash: 'oNNJMCE_2iycGPDyM_5_lp',
+          keyB2: 'b2',
+        },
       ]);
     });
 
     it('does not add the same data twice', async () => {
-      await createTableHelper('testTable');
+      const tableName = 'testTable';
+      const exampleCfg: TableCfg = exampleTableCfg({ key: tableName });
+      const tableCfg: TableCfg = {
+        ...exampleCfg,
+        columns: [
+          { key: 'string', type: 'string' },
+          { key: 'number', type: 'number' },
+          { key: 'null', type: 'null' },
+          { key: 'boolean', type: 'boolean' },
+          { key: 'array', type: 'jsonArray' },
+          { key: 'object', type: 'json' },
+        ],
+      };
+
+      await io.createOrExtendTable({ tableCfg });
+      const allTableNames = await io.allTableNames();
+      expect(allTableNames).toContain(tableName);
+      expect(await ioTools.allColumnKeys(tableName)).toEqual([
+        'string',
+        'number',
+        'null',
+        'boolean',
+        'array',
+        'object',
+      ]);
 
       const rows = [
         {
           string: 'hello',
           number: 5,
           null: null,
-          boolean: true,
-          array: [1, 2, { a: 10 }],
-          object: { a: 1, b: { c: 3 } },
+          boolean: 1, //true
+          array: '[1, 2, { a: 10 }]',
+          object: '{ a: 1, b: { c: 3 } }',
         },
         {
           string: 'world',
           number: 6,
           null: null,
-          boolean: true,
-          array: [1, 2, { a: 10 }],
-          object: { a: 1, b: 2 },
+          boolean: 1, //true
+          array: '[1, 2, { a: 10 }]',
+          object: '{ a: 1, b: 2 }',
         },
       ];
 
@@ -245,49 +460,51 @@ describe('Io Conformance', async () => {
         },
       };
 
-      // Write a first item
+      // Get row count before
+      const rowCountBefore = await io.rowCount(tableName);
+      expect(rowCountBefore).toEqual(0);
+
+      // Write first two rows
       await io.write({ data: testData });
+      const rowCountAfterFirstWrite = await io.rowCount(tableName);
+      expect(rowCountAfterFirstWrite).toEqual(2);
 
       // Write the same item again
-      await io.write({ data: testData });
+      expect(io.write({ data: testData }));
 
-      // Only one item should be in the table
-      const dump = await io.dump();
-      const testTable = dump.testTable as TableType;
-      expect(equals(testTable._data, rows)).toBe(true);
+      // Nothing changes because the data is the same
+      const rowCountAfterSecondWrite = await io.rowCount(tableName);
+      expect(rowCountAfterSecondWrite).toEqual(rowCountAfterFirstWrite);
     });
 
     describe('throws', () => {
       it('when table does not exist', async () => {
-        let message: string = '';
-
-        try {
-          await io.write({
-            data: { testTable: { _type: 'ingredients', _data: [] } },
-          });
-        } catch (error) {
-          message = (error as Error).message;
-        }
-
-        expect(message).toEqual('Table testTable does not exist');
+        await expect(
+          io.write({
+            data: {
+              tableA: {
+                _type: 'ingredients',
+                _data: [{ keyA2: 'a2' }],
+              },
+            },
+          }),
+        ).rejects.toThrow('Table tableA does not exist');
       });
 
       it('when the table has a different type then an existing one', async () => {
-        await createTableHelper('tableA');
+        const exampleCfg: TableCfg = exampleTableCfg({ key: 'tableA' });
+        const tableCfg: TableCfg = {
+          ...exampleCfg,
+          columns: [
+            { key: 'keyA1', type: 'string' },
+            { key: 'keyA2', type: 'string' },
+            { key: 'keyB2', type: 'string' },
+          ],
+        };
+        await io.createOrExtendTable({ tableCfg });
 
-        await io.write({
-          data: {
-            tableA: {
-              _type: 'ingredients',
-              _data: [{ keyA2: 'a2' }],
-            },
-          },
-        });
-
-        let message: string = '';
-
-        try {
-          await io.write({
+        await expect(
+          io.write({
             data: {
               tableA: {
                 _type: 'cakes',
@@ -296,6 +513,7 @@ describe('Io Conformance', async () => {
                     keyB2: 'b2',
                     sliceIdsRow: 'xyz',
                     sliceIdsTable: 'xyz',
+                    itemIds2: 'xyz',
                     layersTable: 'xyz',
                     layers: {},
                     collections: 'xyz',
@@ -303,47 +521,56 @@ describe('Io Conformance', async () => {
                 ],
               },
             },
-            /* v8 ignore next */
-          });
-        } catch (err: any) {
-          message = err.message;
-        }
-
-        expect(message).toBe(
+          }),
+        ).rejects.toThrow(
           'Table tableA has different types: "ingredients" vs "cakes"',
         );
       });
     });
   });
 
-  describe('readRows({table, where})', () => {
+  describe('readRows({table, where})', async () => {
     describe('should return rows matching the where clause', async () => {
-      const testData: Rljson = {
-        testTable: {
-          _type: 'ingredients',
-          _data: [
-            {
-              string: 'hello',
-              number: 5,
-              null: null,
-              boolean: true,
-              array: [1, 2, { a: 10 }],
-              object: { a: 1, b: { c: 3 } },
-            },
-            {
-              string: 'world',
-              number: 6,
-              null: null,
-              boolean: true,
-              array: [1, 2, { a: 10 }],
-              object: { a: 1, b: 2 },
-            },
-          ],
-        },
-      };
-
       beforeEach(async () => {
-        await createTableHelper('testTable');
+        const tableName = 'testTable';
+        const exampleCfg: TableCfg = exampleTableCfg({ key: tableName });
+        const tableCfg: TableCfg = {
+          ...exampleCfg,
+          columns: [
+            { key: 'string', type: 'string' },
+            { key: 'number', type: 'number' },
+            { key: 'null', type: 'null' },
+            { key: 'boolean', type: 'boolean' },
+            { key: 'array', type: 'jsonArray' },
+            { key: 'object', type: 'json' },
+          ],
+        };
+
+        await io.createOrExtendTable({ tableCfg });
+
+        const testData: Rljson = {
+          testTable: {
+            _type: 'ingredients',
+            _data: [
+              {
+                string: 'hello',
+                number: 5,
+                null: null,
+                boolean: true,
+                array: [1, 2, { a: 10 }],
+                object: { a: 1, b: { c: 3 } },
+              },
+              {
+                string: 'world',
+                number: 6,
+                null: null,
+                boolean: true,
+                array: [1, 2, { a: 10 }],
+                object: { a: 1, b: 2 },
+              },
+            ],
+          },
+        };
         await io.write({ data: testData });
       });
 
@@ -468,7 +695,10 @@ describe('Io Conformance', async () => {
         const result = rmhsh(
           await io.readRows({
             table: 'testTable',
-            where: { array: [1, 2, { a: 10 }] },
+            //where: { array: [1, 2, { a: 10 }] },
+            where: {
+              array: [1, 2, { a: 10, _hash: 'LeFJOCQVgToOfbUuKJQ-GO' }],
+            },
           }),
         );
 
@@ -500,7 +730,14 @@ describe('Io Conformance', async () => {
         const result = rmhsh(
           await io.readRows({
             table: 'testTable',
-            where: { object: { a: 1, b: { c: 3 } } },
+            //where: { object: { a: 1, b: { c: 3 } } },
+            where: {
+              object: {
+                a: 1,
+                b: { c: 3, _hash: 'yrqcsGrHfad4G4u9fgcAxY' },
+                _hash: 'd-0fwNtdekpWJzLu4goUDI',
+              },
+            },
           }),
         );
 
@@ -522,15 +759,15 @@ describe('Io Conformance', async () => {
     });
 
     it('should return an empty array if no rows match the where clause', async () => {
-      await createTableHelper('testTable');
+      await createExampleTable('testTable');
 
       await io.write({
         data: {
           testTable: {
             _type: 'ingredients',
             _data: [
-              { column1: 'value1', column2: 'value2' },
-              { column1: 'value3', column2: 'value4' },
+              { a: 'value1', b: 'value2' },
+              { a: 'value3', b: 'value4' },
             ],
           },
         },
@@ -538,7 +775,7 @@ describe('Io Conformance', async () => {
 
       const result = await io.readRows({
         table: 'testTable',
-        where: { column1: 'nonexistent' },
+        where: { a: 'nonexistent' },
       });
 
       expect(result).toEqual({
@@ -558,24 +795,58 @@ describe('Io Conformance', async () => {
     });
   });
 
+  describe('rowCount(table)', () => {
+    it('returns the number of rows in the table', async () => {
+      await createExampleTable('table1');
+      await createExampleTable('table2');
+      await io.write({
+        data: {
+          table1: {
+            _type: 'ingredients',
+            _data: [
+              { a: 'a1' },
+              { a: 'a2' },
+              { a: 'a3' },
+              { a: 'a4' },
+              { a: 'a5' },
+            ],
+          },
+          table2: {
+            _type: 'ingredients',
+            _data: [{ a: 'a1' }, { a: 'a2' }],
+          },
+        },
+      });
+      const count1 = await io.rowCount('table1');
+      const count2 = await io.rowCount('table2');
+      expect(count1).toBe(5);
+      expect(count2).toBe(2);
+    });
+    it('throws an error if the table does not exist', async () => {
+      await expect(io.rowCount('nonexistentTable')).rejects.toThrow(
+        'Table "nonexistentTable" not found',
+      );
+    });
+  });
+
   describe('dump()', () => {
     it('returns a copy of the complete database', async () => {
       await expectGolden('io-mem/dump/empty.json').toBe(await io.dump());
-      await createTableHelper('table1');
-      await createTableHelper('table2');
+      await createExampleTable('table1');
+      await createExampleTable('table2');
       await expectGolden('io-mem/dump/two-tables.json').toBe(await io.dump());
     });
   });
 
   describe('dumpTable(request)', () => {
     it('returns a copy of the table', async () => {
-      await createTableHelper('table1');
+      await createExampleTable('table1');
 
       await io.write({
         data: {
           table1: {
             _type: 'ingredients',
-            _data: [{ keyA2: 'a2' }],
+            _data: [{ a: 'a2' }],
           },
         },
       });

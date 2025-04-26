@@ -24,10 +24,10 @@ export class IoInit {
       isRoot: false,
       isShared: true,
 
-      columns: {
-        key: { type: 'string' },
-        type: { type: 'string' },
-      },
+      columns: [
+        { key: 'key', type: 'string' },
+        { key: 'type', type: 'string' },
+      ],
     });
 
     return tableCfg;
@@ -42,15 +42,15 @@ export class IoInit {
       isRoot: false,
       isShared: true,
 
-      columns: {
-        table: { type: 'string' },
-        predecessor: { type: 'string' },
-        successor: { type: 'string' },
-        timestamp: { type: 'number' },
-        id: { type: 'string' },
-      },
+      columns: [
+        { key: 'table', type: 'string' },
+        { key: 'predecessor', type: 'string' },
+        { key: 'successor', type: 'string' },
+        { key: 'timestamp', type: 'number' },
+        { key: 'id', type: 'string' },
+      ],
     };
 
-    await this.io.createTable({ tableCfg });
+    await this.io.createOrExtendTable({ tableCfg });
   };
 }
