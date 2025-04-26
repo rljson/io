@@ -5,13 +5,7 @@
 // found in the LICENSE file in the root of this package.
 
 import { hip, rmhsh } from '@rljson/hash';
-import {
-  exampleTableCfg,
-  IngredientsTable,
-  Rljson,
-  TableCfg,
-  TableType,
-} from '@rljson/rljson';
+import { exampleTableCfg, IngredientsTable, Rljson, TableCfg, TableType } from '@rljson/rljson';
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -20,6 +14,7 @@ import { IoTools } from '../src/io-tools';
 import { Io } from '../src/io.ts';
 
 import { expectGolden } from './setup/goldens.ts';
+
 
 export const runIoConformanceTests = (
   createIo: () => Promise<Io> = async () => IoMem.example(),
@@ -53,7 +48,7 @@ export const runIoConformanceTests = (
     describe('tableCfgs table', () => {
       it('should be available after isReady() resolves', async () => {
         const dump = await io.dumpTable({ table: 'tableCfgs' });
-        await expectGolden('io-mem/tableCfgs.json').toBe(dump);
+        await expectGolden('io-conformance/tableCfgs.json').toBe(dump);
       });
     });
 
@@ -213,7 +208,7 @@ export const runIoConformanceTests = (
           return tables._data.map((e) => e.key);
         };
 
-        const physicalTables = async () => await ioTools.allTableNames();
+        const physicalTables = async () => await ioTools.allTableKeys();
 
         // Create a first table
         await createExampleTable('table1');
@@ -346,8 +341,8 @@ export const runIoConformanceTests = (
         };
 
         await io.createOrExtendTable({ tableCfg });
-        const allTableNames = await ioTools.allTableNames();
-        expect(allTableNames).toContain('tableA');
+        const allTableKeys = await ioTools.allTableKeys();
+        expect(allTableKeys).toContain('tableA');
 
         expect('tableA').toBe(tableCfg.key);
 
@@ -412,8 +407,8 @@ export const runIoConformanceTests = (
         };
 
         await io.createOrExtendTable({ tableCfg });
-        const allTableNames = await ioTools.allTableNames();
-        expect(allTableNames).toContain(tableName);
+        const allTableKeys = await ioTools.allTableKeys();
+        expect(allTableKeys).toContain(tableName);
         expect(await ioTools.allColumnKeys(tableName)).toEqual([
           'string',
           'number',
@@ -820,10 +815,14 @@ export const runIoConformanceTests = (
 
     describe('dump()', () => {
       it('returns a copy of the complete database', async () => {
-        await expectGolden('io-mem/dump/empty.json').toBe(await io.dump());
+        await expectGolden('io-conformance/dump/empty.json').toBe(
+          await io.dump(),
+        );
         await createExampleTable('table1');
         await createExampleTable('table2');
-        await expectGolden('io-mem/dump/two-tables.json').toBe(await io.dump());
+        await expectGolden('io-conformance/dump/two-tables.json').toBe(
+          await io.dump(),
+        );
       });
     });
 
@@ -840,7 +839,7 @@ export const runIoConformanceTests = (
           },
         });
 
-        await expectGolden('io-mem/dumpTable/table1.json').toBe(
+        await expectGolden('io-conformance/dumpTable/table1.json').toBe(
           await io.dumpTable({ table: 'table1' }),
         );
       });

@@ -5,12 +5,14 @@
 // found in the LICENSE file in the root of this package.
 
 import { hip } from '@rljson/hash';
+import { jsonValueType } from '@rljson/json';
 import { exampleTableCfg } from '@rljson/rljson';
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { Io } from '../src/io';
 import { IoTools } from '../src/io-tools';
+
 
 describe('IoTools', () => {
   let ioTools: IoTools;
@@ -24,7 +26,7 @@ describe('IoTools', () => {
     it('should return a list of all table names', async () => {
       await io.createOrExtendTable({ tableCfg: exampleTableCfg() });
 
-      expect(ioTools.allTableNames()).resolves.toEqual([
+      expect(ioTools.allTableKeys()).resolves.toEqual([
         'tableCfgs',
         'revisions',
         'table',
@@ -32,7 +34,7 @@ describe('IoTools', () => {
     });
 
     it('should return an empty array if no tables are created', async () => {
-      const tables = await ioTools.allTableNames();
+      const tables = await ioTools.allTableKeys();
       expect(tables).toEqual(['tableCfgs', 'revisions']);
     });
   });
@@ -48,6 +50,24 @@ describe('IoTools', () => {
       expect(ioTools.tableCfg('unknown')).rejects.toThrow(
         'Table "unknown" not found',
       );
+    });
+  });
+
+  describe('tableCfgsTableCfg', () => {
+    it('contains a column config for each key', () => {
+      const cfg = ioTools.tableCfgsTableCfg;
+      const keys = Object.keys(cfg);
+      const columns = cfg.columns;
+      expect(keys.length).toBe(columns.length);
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        const val = cfg[key];
+        const column = columns[i];
+        expect(column.key).toBe(key);
+
+        const expectedType = jsonValueType(val);
+        expect(column.type).toBe(expectedType);
+      }
     });
   });
 

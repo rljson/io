@@ -4,11 +4,13 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
+import { hip } from '@rljson/hash';
 import { jsonValueTypes } from '@rljson/json';
 import { TableCfg, TableKey } from '@rljson/rljson';
 
 import { IoMem } from './io-mem.ts';
 import { Io } from './io.ts';
+
 
 /**
  * Provides utility functions for the Io interface.
@@ -19,6 +21,58 @@ export class IoTools {
    * @param io The Io interface to use
    */
   constructor(public readonly io: Io) {}
+
+  /**
+   * Initializes the revisions table.
+   */
+  initRevisionsTable = async () => {
+    const tableCfg: TableCfg = {
+      version: 1,
+      key: 'revisions',
+      type: 'ingredients',
+      isHead: true,
+      isRoot: true,
+      isShared: false,
+
+      columns: [
+        { key: 'table', type: 'string' },
+        { key: 'predecessor', type: 'string' },
+        { key: 'successor', type: 'string' },
+        { key: 'timestamp', type: 'number' },
+        { key: 'id', type: 'string' },
+      ],
+    };
+
+    await this.io.createOrExtendTable({ tableCfg });
+  };
+
+  /**
+   * Returns the table configuration of the tableCfgs table.
+   */
+  get tableCfgsTableCfg() {
+    const tableCfg = hip<TableCfg>({
+      _hash: '',
+      key: 'tableCfgs',
+      type: 'ingredients',
+      isHead: false,
+      isRoot: false,
+      isShared: true,
+      version: 1,
+
+      columns: [
+        { key: '_hash', type: 'string' },
+        { key: 'key', type: 'string' },
+        { key: 'type', type: 'string' },
+        { key: 'isHead', type: 'boolean' },
+        { key: 'isRoot', type: 'boolean' },
+        { key: 'isShared', type: 'boolean' },
+        { key: 'version', type: 'number' },
+        { key: 'columns', type: 'jsonArray' },
+      ],
+    });
+
+    return tableCfg;
+  }
 
   /**
    * Example object for test purposes
@@ -32,7 +86,7 @@ export class IoTools {
   /**
    * Returns a list with all table names
    */
-  async allTableNames(): Promise<string[]> {
+  async allTableKeys(): Promise<string[]> {
     const result = (await this.io.tableCfgs()).tableCfgs._data.map(
       (e) => e.key,
     );
