@@ -5,12 +5,16 @@
 // found in the LICENSE file in the root of this package.
 
 import { hip } from '@rljson/hash';
-import { jsonValueTypes } from '@rljson/json';
-import { TableCfg, TableKey } from '@rljson/rljson';
+import {
+  iterateTables,
+  Rljson,
+  TableCfg,
+  TableKey,
+  throwOnInvalidTableCfg,
+} from '@rljson/rljson';
 
 import { IoMem } from './io-mem.ts';
 import { Io } from './io.ts';
-
 
 /**
  * Provides utility functions for the Io interface.
@@ -21,6 +25,36 @@ export class IoTools {
    * @param io The Io interface to use
    */
   constructor(public readonly io: Io) {}
+
+  /**
+   * Returns the table configuration of the tableCfgs table.
+   */
+  static get tableCfgsTableCfg() {
+    const tableCfg = hip<TableCfg>({
+      _hash: '',
+      key: 'tableCfgs',
+      type: 'ingredients',
+      isHead: false,
+      isRoot: false,
+      isShared: true,
+      version: 1,
+      previous: '',
+
+      columns: [
+        { key: '_hash', type: 'string' },
+        { key: 'key', type: 'string' },
+        { key: 'type', type: 'string' },
+        { key: 'isHead', type: 'boolean' },
+        { key: 'isRoot', type: 'boolean' },
+        { key: 'isShared', type: 'boolean' },
+        { key: 'version', type: 'number' },
+        { key: 'previous', type: 'string' },
+        { key: 'columns', type: 'jsonArray' },
+      ],
+    });
+
+    return tableCfg;
+  }
 
   /**
    * Initializes the revisions table.
@@ -35,6 +69,7 @@ export class IoTools {
       isShared: false,
 
       columns: [
+        { key: '_hash', type: 'string' },
         { key: 'table', type: 'string' },
         { key: 'predecessor', type: 'string' },
         { key: 'successor', type: 'string' },
@@ -47,41 +82,46 @@ export class IoTools {
   };
 
   /**
-   * Returns the table configuration of the tableCfgs table.
-   */
-  get tableCfgsTableCfg() {
-    const tableCfg = hip<TableCfg>({
-      _hash: '',
-      key: 'tableCfgs',
-      type: 'ingredients',
-      isHead: false,
-      isRoot: false,
-      isShared: true,
-      version: 1,
-
-      columns: [
-        { key: '_hash', type: 'string' },
-        { key: 'key', type: 'string' },
-        { key: 'type', type: 'string' },
-        { key: 'isHead', type: 'boolean' },
-        { key: 'isRoot', type: 'boolean' },
-        { key: 'isShared', type: 'boolean' },
-        { key: 'version', type: 'number' },
-        { key: 'columns', type: 'jsonArray' },
-      ],
-    });
-
-    return tableCfg;
-  }
-
-  /**
    * Example object for test purposes
    * @returns An instance of io tools
    */
   static example = async () => {
     const io = await IoMem.example();
+    await io.init();
+    await io.isReady();
     return new IoTools(io);
   };
+
+  /**
+   * Throws if the table does not exist
+   */
+  async throwWhenTableDoesNotExist(table: TableKey): Promise<void> {
+    const exists = await this.io.tableExists(table);
+    if (!exists) {
+      throw new Error(`Table "${table}" not found`);
+    }
+  }
+
+  /**
+   * Throws if any of the tables in rljson do not exist
+   * @param rljson - The Rljson object to check
+   */
+  async throwWhenTablesDoNotExist(rljson: Rljson): Promise<void> {
+    try {
+      await iterateTables(rljson, async (tableKey) => {
+        const exists = await this.io.tableExists(tableKey);
+        if (!exists) {
+          throw new Error(`Table "${tableKey}" not found`);
+        }
+      });
+    } catch (e) {
+      const missingTables = (e as Array<any>).map((e) => e.tableKey);
+
+      throw new Error(
+        `The following tables do not exist: ${missingTables.join(', ')}`,
+      );
+    }
+  }
 
   /**
    * Returns a list with all table names
@@ -131,14 +171,7 @@ export class IoTools {
   async throwWhenTableIsNotCompatible(update: TableCfg): Promise<void> {
     const prefix = `Invalid update of table able "${update.key}"`;
 
-    // Have all columns one of the supported types?
-    for (const column of update.columns) {
-      if (!jsonValueTypes.includes(column.type)) {
-        throw new Error(
-          `${prefix}: Column "${column.key}" has an unsupported type "${column.type}"`,
-        );
-      }
-    }
+    throwOnInvalidTableCfg(update);
 
     // Check compatibility with existing table
     const existing = await this.tableCfgOrNull(update.key);
