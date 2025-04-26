@@ -6,7 +6,7 @@
 
 import { hip } from '@rljson/hash';
 import { jsonValueType } from '@rljson/json';
-import { exampleTableCfg } from '@rljson/rljson';
+import { exampleTableCfg, Rljson } from '@rljson/rljson';
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -21,7 +21,56 @@ describe('IoTools', () => {
     io = ioTools.io;
   });
 
-  describe('allTableNames', () => {
+  describe('throwWhenTableDoesNotExist', () => {
+    it('should throw an error if the table does not exist', async () => {
+      const tableKey = 'nonExistentTable';
+      await expect(
+        ioTools.throwWhenTableDoesNotExist(tableKey),
+      ).rejects.toThrow(`Table "${tableKey}" not found`);
+    });
+    it('should not throw an error if the table exists', async () => {
+      const tableKey = 'existingTable';
+      await io.createOrExtendTable({
+        tableCfg: exampleTableCfg({ key: tableKey }),
+      });
+      await expect(
+        ioTools.throwWhenTableDoesNotExist(tableKey),
+      ).resolves.not.toThrow();
+    });
+  });
+
+  describe('throwWhenTablesDoNotExist', () => {
+    it('should throw an error if any table does not exist', async () => {
+      const rljson: Rljson = {
+        unknownTable: { _data: [] } as any,
+      };
+
+      let message: string | undefined;
+      try {
+        await ioTools.throwWhenTablesDoNotExist(rljson);
+      } catch (e) {
+        message = (e as Error).message;
+      }
+      expect(message).toBe('The following tables do not exist: unknownTable');
+    });
+
+    it('should not throw an error if all tables exist', async () => {
+      await io.createOrExtendTable({
+        tableCfg: exampleTableCfg({ key: 'existingTable1' }),
+      });
+      await io.createOrExtendTable({
+        tableCfg: exampleTableCfg({ key: 'existingTable2' }),
+      });
+      await expect(
+        ioTools.throwWhenTablesDoNotExist({
+          existingTable1: {},
+          existingTable2: {},
+        } as any),
+      ).resolves.not.toThrow();
+    });
+  });
+
+  describe('allTableKeys', () => {
     it('should return a list of all table names', async () => {
       await io.createOrExtendTable({ tableCfg: exampleTableCfg() });
 

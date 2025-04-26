@@ -33,12 +33,12 @@ git pull
 
 ## Set pull request title
 
-Replace `Update rljson` here and below
+Replace `Various stability improvements` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Update rljson"
+node scripts/create-branch.js "Various stability improvements"
 ```
 
 ## Update-dependencies
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Update rljson"
+git commit -am"Various stability improvements"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Update rljson" --body " "
+gh pr create --base main --title "Various stability improvements" --body " "
 ```
 
 ## Code review

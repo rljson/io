@@ -5,7 +5,13 @@
 // found in the LICENSE file in the root of this package.
 
 import { hip } from '@rljson/hash';
-import { TableCfg, TableKey, throwOnInvalidTableCfg } from '@rljson/rljson';
+import {
+  iterateTables,
+  Rljson,
+  TableCfg,
+  TableKey,
+  throwOnInvalidTableCfg,
+} from '@rljson/rljson';
 
 import { IoMem } from './io-mem.ts';
 import { Io } from './io.ts';
@@ -85,6 +91,37 @@ export class IoTools {
     await io.isReady();
     return new IoTools(io);
   };
+
+  /**
+   * Throws if the table does not exist
+   */
+  async throwWhenTableDoesNotExist(table: TableKey): Promise<void> {
+    const exists = await this.io.tableExists(table);
+    if (!exists) {
+      throw new Error(`Table "${table}" not found`);
+    }
+  }
+
+  /**
+   * Throws if any of the tables in rljson do not exist
+   * @param rljson - The Rljson object to check
+   */
+  async throwWhenTablesDoNotExist(rljson: Rljson): Promise<void> {
+    try {
+      await iterateTables(rljson, async (tableKey) => {
+        const exists = await this.io.tableExists(tableKey);
+        if (!exists) {
+          throw new Error(`Table "${tableKey}" not found`);
+        }
+      });
+    } catch (e) {
+      const missingTables = (e as Array<any>).map((e) => e.tableKey);
+
+      throw new Error(
+        `The following tables do not exist: ${missingTables.join(', ')}`,
+      );
+    }
+  }
 
   /**
    * Returns a list with all table names

@@ -5,7 +5,7 @@
 // found in the LICENSE file in the root of this package.
 
 import { JsonValue } from '@rljson/json';
-import { Rljson, TableCfg } from '@rljson/rljson';
+import { Rljson, TableCfg, TableKey } from '@rljson/rljson';
 
 // .............................................................................
 export interface Io {
@@ -32,6 +32,11 @@ export interface Io {
 
   // ...........................................................................
   // Tables
+
+  /**
+   * Returns true if the table exists
+   */
+  tableExists(tableKey: TableKey): Promise<boolean>;
 
   /**
    * Creates a table with a given config.

@@ -78,6 +78,11 @@ export class IoMem implements Io {
 
   // ...........................................................................
   // Table management
+  async tableExists(tableKey: TableKey): Promise<boolean> {
+    const table = this._mem[tableKey] as TableType;
+    return table ? true : false;
+  }
+
   createOrExtendTable(request: { tableCfg: TableCfg }): Promise<void> {
     return this._createOrExtendTable(request);
   }
@@ -188,10 +193,9 @@ export class IoMem implements Io {
 
   // ...........................................................................
   private async _dumpTable(request: { table: string }): Promise<Rljson> {
+    await this._ioTools.throwWhenTableDoesNotExist(request.table);
+
     const table = this._mem[request.table] as TableType;
-    if (!table) {
-      throw new Error(`Table ${request.table} not found`);
-    }
 
     return {
       [request.table]: copy(table),
@@ -203,13 +207,11 @@ export class IoMem implements Io {
     const addedData = hsh(request.data);
     const tables = Object.keys(addedData);
 
+    await this._ioTools.throwWhenTablesDoNotExist(request.data);
+
     for (const table of tables) {
       if (table.startsWith('_')) {
         continue;
-      } else {
-        if (!this._mem[table]) {
-          throw new Error(`Table ${table} does not exist`);
-        }
       }
 
       const oldTable = this._mem[table] as TableType;
@@ -242,11 +244,9 @@ export class IoMem implements Io {
     table: string;
     where: { [column: string]: JsonValue };
   }): Promise<Rljson> {
-    const table = this._mem[request.table] as TableType;
+    await this._ioTools.throwWhenTableDoesNotExist(request.table);
 
-    if (!table) {
-      throw new Error(`Table ${request.table} not found`);
-    }
+    const table = this._mem[request.table] as TableType;
 
     const result: Rljson = {
       [request.table]: {

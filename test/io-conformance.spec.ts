@@ -118,6 +118,19 @@ export const runIoConformanceTests = (
       });
     });
 
+    describe('tableExists(tableKey)', () => {
+      it('returns true if the table exists', async () => {
+        await createExampleTable('table1');
+        const exists = await io.tableExists('table1');
+        expect(exists).toBe(true);
+      });
+
+      it('returns false if the table does not exist', async () => {
+        const exists = await io.tableExists('nonexistentTable');
+        expect(exists).toBe(false);
+      });
+    });
+
     describe('createOrExtendTable(request)', () => {
       let existing: TableCfg;
       beforeEach(async () => {
@@ -486,7 +499,7 @@ export const runIoConformanceTests = (
                 },
               },
             }),
-          ).rejects.toThrow('Table tableA does not exist');
+          ).rejects.toThrow('The following tables do not exist: tableA');
         });
 
         it('when the table has a different type then an existing one', async () => {
@@ -791,7 +804,7 @@ export const runIoConformanceTests = (
             table: 'nonexistentTable',
             where: { column1: 'value1' },
           }),
-        ).rejects.toThrow('Table nonexistentTable not found');
+        ).rejects.toThrow('Table "nonexistentTable" not found');
       });
     });
 
@@ -863,7 +876,7 @@ export const runIoConformanceTests = (
       it('throws an error if the table does not exist', async () => {
         await expect(
           io.dumpTable({ table: 'nonexistentTable' }),
-        ).rejects.toThrow('Table nonexistentTable not found');
+        ).rejects.toThrow('Table "nonexistentTable" not found');
       });
     });
   });

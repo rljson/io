@@ -4,9 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  '@rljson/rljson': link:../rljson
-
 importers:
 
   .:
@@ -21,8 +18,8 @@ importers:
         specifier: ^0.0.21
         version: 0.0.21
       '@rljson/rljson':
-        specifier: link:../rljson
-        version: link:../rljson
+        specifier: ^0.0.43
+        version: 0.0.43
       '@rljson/validate':
         specifier: ^0.0.10
         version: 0.0.10
@@ -416,6 +413,14 @@ packages:
 
   '@rljson/json@0.0.21':
     resolution: {integrity: sha512-oNDY2B6HgHSzbaRh2fU8tTEEChuCzJU2sF9yzLYzS9jryT13XyfvSO13WkkPXgpMCe78AuIaGwbusNg8YARrdA==}
+    engines: {node: '>=22.14.0'}
+
+  '@rljson/rljson@0.0.40':
+    resolution: {integrity: sha512-tt5wJv7sW9Cb9p8sLefrkVbZ3S7/ntVKuss6K+QpmoFks1dSDwzUqsHCIthEGt0s2yirGgNO1a++9rzNOq75dQ==}
+    engines: {node: '>=22.14.0'}
+
+  '@rljson/rljson@0.0.43':
+    resolution: {integrity: sha512-TYB6+zKg1kFfknClm/2rODwlTe9CLUrk244JkHR0YcbIylXi7YY/kBtAyig5y/epFvv1t0tZZG/J7Pzq6y0Iiw==}
     engines: {node: '>=22.14.0'}
 
   '@rljson/validate@0.0.10':
@@ -1588,8 +1593,8 @@ packages:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
     engines: {node: '>= 0.8.0'}
 
-  type-fest@4.40.0:
-    resolution: {integrity: sha512-ABHZ2/tS2JkvH1PEjxFDTUWC8dB5OsIGZP4IFLhR293GqT5Y5qB1WwL2kMPYhQW9DVgVD8Hd7I8gjwPIf5GFkw==}
+  type-fest@4.40.1:
+    resolution: {integrity: sha512-9YvLNnORDpI+vghLU/Nf+zSv0kL47KbVJ1o3sKgoTefl6i+zebxbiDQWoe/oWWqPhIgQdRZRT1KA9sCPL810SA==}
     engines: {node: '>=16'}
 
   typescript-eslint@8.31.0:
@@ -2048,11 +2053,21 @@ snapshots:
 
   '@rljson/json@0.0.21': {}
 
+  '@rljson/rljson@0.0.40':
+    dependencies:
+      '@rljson/hash': 0.0.13
+      '@rljson/json': 0.0.18
+
+  '@rljson/rljson@0.0.43':
+    dependencies:
+      '@rljson/hash': 0.0.15
+      '@rljson/json': 0.0.21
+
   '@rljson/validate@0.0.10':
     dependencies:
       '@rljson/hash': 0.0.13
       '@rljson/json': 0.0.18
-      '@rljson/rljson': link:../rljson
+      '@rljson/rljson': 0.0.40
 
   '@rollup/pluginutils@5.1.4(rollup@4.40.0)':
     dependencies:
@@ -3013,7 +3028,7 @@ snapshots:
     dependencies:
       '@babel/code-frame': 7.26.2
       index-to-position: 1.1.0
-      type-fest: 4.40.0
+      type-fest: 4.40.1
 
   parse-statements@1.0.11: {}
 
@@ -3073,7 +3088,7 @@ snapshots:
       '@types/normalize-package-data': 2.4.4
       normalize-package-data: 6.0.2
       parse-json: 8.3.0
-      type-fest: 4.40.0
+      type-fest: 4.40.1
       unicorn-magic: 0.1.0
 
   redent@4.0.0:
@@ -3249,7 +3264,7 @@ snapshots:
     dependencies:
       prelude-ls: 1.2.1
 
-  type-fest@4.40.0: {}
+  type-fest@4.40.1: {}
 
   typescript-eslint@8.31.0(eslint@9.25.1)(typescript@5.8.3):
     dependencies:
