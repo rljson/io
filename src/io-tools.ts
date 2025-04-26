@@ -11,7 +11,6 @@ import { TableCfg, TableKey } from '@rljson/rljson';
 import { IoMem } from './io-mem.ts';
 import { Io } from './io.ts';
 
-
 /**
  * Provides utility functions for the Io interface.
  */
@@ -21,6 +20,36 @@ export class IoTools {
    * @param io The Io interface to use
    */
   constructor(public readonly io: Io) {}
+
+  /**
+   * Returns the table configuration of the tableCfgs table.
+   */
+  static get tableCfgsTableCfg() {
+    const tableCfg = hip<TableCfg>({
+      _hash: '',
+      key: 'tableCfgs',
+      type: 'ingredients',
+      isHead: false,
+      isRoot: false,
+      isShared: true,
+      version: 1,
+      previous: '',
+
+      columns: [
+        { key: '_hash', type: 'string' },
+        { key: 'key', type: 'string' },
+        { key: 'type', type: 'string' },
+        { key: 'isHead', type: 'boolean' },
+        { key: 'isRoot', type: 'boolean' },
+        { key: 'isShared', type: 'boolean' },
+        { key: 'version', type: 'number' },
+        { key: 'previous', type: 'string' },
+        { key: 'columns', type: 'jsonArray' },
+      ],
+    });
+
+    return tableCfg;
+  }
 
   /**
    * Initializes the revisions table.
@@ -35,6 +64,7 @@ export class IoTools {
       isShared: false,
 
       columns: [
+        { key: '_hash', type: 'string' },
         { key: 'table', type: 'string' },
         { key: 'predecessor', type: 'string' },
         { key: 'successor', type: 'string' },
@@ -47,39 +77,13 @@ export class IoTools {
   };
 
   /**
-   * Returns the table configuration of the tableCfgs table.
-   */
-  get tableCfgsTableCfg() {
-    const tableCfg = hip<TableCfg>({
-      _hash: '',
-      key: 'tableCfgs',
-      type: 'ingredients',
-      isHead: false,
-      isRoot: false,
-      isShared: true,
-      version: 1,
-
-      columns: [
-        { key: '_hash', type: 'string' },
-        { key: 'key', type: 'string' },
-        { key: 'type', type: 'string' },
-        { key: 'isHead', type: 'boolean' },
-        { key: 'isRoot', type: 'boolean' },
-        { key: 'isShared', type: 'boolean' },
-        { key: 'version', type: 'number' },
-        { key: 'columns', type: 'jsonArray' },
-      ],
-    });
-
-    return tableCfg;
-  }
-
-  /**
    * Example object for test purposes
    * @returns An instance of io tools
    */
   static example = async () => {
     const io = await IoMem.example();
+    await io.init();
+    await io.isReady();
     return new IoTools(io);
   };
 

@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@rljson/rljson': link:../rljson
+
 importers:
 
   .:
@@ -18,8 +21,8 @@ importers:
         specifier: ^0.0.21
         version: 0.0.21
       '@rljson/rljson':
-        specifier: ^0.0.42
-        version: 0.0.42
+        specifier: link:../rljson
+        version: link:../rljson
       '@rljson/validate':
         specifier: ^0.0.10
         version: 0.0.10
@@ -413,14 +416,6 @@ packages:
 
   '@rljson/json@0.0.21':
     resolution: {integrity: sha512-oNDY2B6HgHSzbaRh2fU8tTEEChuCzJU2sF9yzLYzS9jryT13XyfvSO13WkkPXgpMCe78AuIaGwbusNg8YARrdA==}
-    engines: {node: '>=22.14.0'}
-
-  '@rljson/rljson@0.0.40':
-    resolution: {integrity: sha512-tt5wJv7sW9Cb9p8sLefrkVbZ3S7/ntVKuss6K+QpmoFks1dSDwzUqsHCIthEGt0s2yirGgNO1a++9rzNOq75dQ==}
-    engines: {node: '>=22.14.0'}
-
-  '@rljson/rljson@0.0.42':
-    resolution: {integrity: sha512-Z83tpGzZs6ojyrFioNmeyvxso55ry7E8bgIAWiqE78BYML0yNVPSEwghuEcEThfeSJ1ctd53sIje3WnuZRjWDA==}
     engines: {node: '>=22.14.0'}
 
   '@rljson/validate@0.0.10':
@@ -2053,21 +2048,11 @@ snapshots:
 
   '@rljson/json@0.0.21': {}
 
-  '@rljson/rljson@0.0.40':
-    dependencies:
-      '@rljson/hash': 0.0.13
-      '@rljson/json': 0.0.18
-
-  '@rljson/rljson@0.0.42':
-    dependencies:
-      '@rljson/hash': 0.0.15
-      '@rljson/json': 0.0.21
-
   '@rljson/validate@0.0.10':
     dependencies:
       '@rljson/hash': 0.0.13
       '@rljson/json': 0.0.18
-      '@rljson/rljson': 0.0.40
+      '@rljson/rljson': link:../rljson
 
   '@rollup/pluginutils@5.1.4(rollup@4.40.0)':
     dependencies:

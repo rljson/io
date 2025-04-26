@@ -13,7 +13,6 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { Io } from '../src/io';
 import { IoTools } from '../src/io-tools';
 
-
 describe('IoTools', () => {
   let ioTools: IoTools;
   let io: Io;
@@ -55,7 +54,7 @@ describe('IoTools', () => {
 
   describe('tableCfgsTableCfg', () => {
     it('contains a column config for each key', () => {
-      const cfg = ioTools.tableCfgsTableCfg;
+      const cfg = IoTools.tableCfgsTableCfg;
       const keys = Object.keys(cfg);
       const columns = cfg.columns;
       expect(keys.length).toBe(columns.length);
@@ -65,7 +64,7 @@ describe('IoTools', () => {
         const column = columns[i];
         expect(column.key).toBe(key);
 
-        const expectedType = jsonValueType(val);
+        const expectedType = jsonValueType(val!);
         expect(column.type).toBe(expectedType);
       }
     });
@@ -75,20 +74,17 @@ describe('IoTools', () => {
     it('should return a list of all column names of a given table', async () => {
       const tableCfg = exampleTableCfg();
       await io.createOrExtendTable({ tableCfg });
-      expect(ioTools.allColumnKeys(tableCfg.key)).resolves.toEqual(['a', 'b']);
+      expect(ioTools.allColumnKeys(tableCfg.key)).resolves.toEqual([
+        '_hash',
+        'a',
+        'b',
+      ]);
     });
 
     it('should throw an error if the table is not found', async () => {
       expect(ioTools.allColumnKeys('unknown')).rejects.toThrow(
         'Table "unknown" not found',
       );
-    });
-    it('should return an empty list if the table has no columns', async () => {
-      const tableCfg = exampleTableCfg({
-        columns: [],
-      });
-      await io.createOrExtendTable({ tableCfg });
-      expect(ioTools.allColumnKeys(tableCfg.key)).resolves.toEqual([]);
     });
   });
 

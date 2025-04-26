@@ -12,6 +12,9 @@ export interface Io {
   // ...........................................................................
   // General
 
+  /** Starts the initialization */
+  init(): Promise<void>;
+
   /** A promise resolving once the Io interface is ready
    *
    * 💡 Use @rljson/is-ready
@@ -56,7 +59,7 @@ export interface Io {
   /** Queries a list of rows */
   readRows(request: {
     table: string;
-    where: { [column: string]: JsonValue };
+    where: { [column: string]: JsonValue | null };
   }): Promise<Rljson>;
 
   /** Returns the number of rows in the given table */

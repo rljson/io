@@ -7,11 +7,16 @@
 import { hip, hsh } from '@rljson/hash';
 import { IsReady } from '@rljson/is-ready';
 import { copy, equals, JsonValue } from '@rljson/json';
-import { Rljson, TableCfg, TableKey, TableType } from '@rljson/rljson';
+import {
+  Rljson,
+  TableCfg,
+  TableKey,
+  TableType,
+  throwOnInvalidTableCfg,
+} from '@rljson/rljson';
 
 import { IoTools } from './io-tools.ts';
 import { Io } from './io.ts';
-
 
 /**
  * In-Memory implementation of the Rljson Io interface.
@@ -19,8 +24,10 @@ import { Io } from './io.ts';
 export class IoMem implements Io {
   // ...........................................................................
   // Constructor & example
-  constructor() {
-    this._init();
+  constructor() {}
+
+  init(): Promise<void> {
+    return this._init();
   }
 
   static example = async () => {
@@ -120,7 +127,7 @@ export class IoMem implements Io {
 
   // ...........................................................................
   private _initTableCfgs = () => {
-    const tableCfg = this._ioTools.tableCfgsTableCfg;
+    const tableCfg = IoTools.tableCfgsTableCfg;
 
     this._mem.tableCfgs = hip({
       _data: [tableCfg],
@@ -135,6 +142,9 @@ export class IoMem implements Io {
   private async _createOrExtendTable(request: {
     tableCfg: TableCfg;
   }): Promise<void> {
+    // Validate the table config
+    throwOnInvalidTableCfg(request.tableCfg);
+
     // Make sure that the table config is compatible
     // with an potential existing table
     await this._ioTools.throwWhenTableIsNotCompatible(request.tableCfg);
