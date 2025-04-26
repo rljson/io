@@ -5,12 +5,15 @@
 // found in the LICENSE file in the root of this package.
 
 import { JsonValue } from '@rljson/json';
-import { Rljson, TableCfg } from '@rljson/rljson';
+import { Rljson, TableCfg, TableKey } from '@rljson/rljson';
 
 // .............................................................................
 export interface Io {
   // ...........................................................................
   // General
+
+  /** Starts the initialization */
+  init(): Promise<void>;
 
   /** A promise resolving once the Io interface is ready
    *
@@ -29,6 +32,11 @@ export interface Io {
 
   // ...........................................................................
   // Tables
+
+  /**
+   * Returns true if the table exists
+   */
+  tableExists(tableKey: TableKey): Promise<boolean>;
 
   /**
    * Creates a table with a given config.
@@ -56,7 +64,7 @@ export interface Io {
   /** Queries a list of rows */
   readRows(request: {
     table: string;
-    where: { [column: string]: JsonValue };
+    where: { [column: string]: JsonValue | null };
   }): Promise<Rljson>;
 
   /** Returns the number of rows in the given table */
