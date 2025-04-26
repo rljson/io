@@ -5,7 +5,13 @@
 // found in the LICENSE file in the root of this package.
 
 import { hip, rmhsh } from '@rljson/hash';
-import { exampleTableCfg, IngredientsTable, Rljson, TableCfg, TableType } from '@rljson/rljson';
+import {
+  exampleTableCfg,
+  IngredientsTable,
+  Rljson,
+  TableCfg,
+  TableType,
+} from '@rljson/rljson';
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -14,7 +20,6 @@ import { IoTools } from '../src/io-tools';
 import { Io } from '../src/io.ts';
 
 import { expectGolden } from './setup/goldens.ts';
-
 
 export const runIoConformanceTests = (
   createIo: () => Promise<Io> = async () => IoMem.example(),
@@ -399,7 +404,7 @@ export const runIoConformanceTests = (
           columns: [
             { key: 'string', type: 'string' },
             { key: 'number', type: 'number' },
-            { key: 'null', type: 'null' },
+            { key: 'null', type: 'string' },
             { key: 'boolean', type: 'boolean' },
             { key: 'array', type: 'jsonArray' },
             { key: 'object', type: 'json' },
@@ -523,7 +528,7 @@ export const runIoConformanceTests = (
             columns: [
               { key: 'string', type: 'string' },
               { key: 'number', type: 'number' },
-              { key: 'null', type: 'null' },
+              { key: 'null', type: 'string' },
               { key: 'boolean', type: 'boolean' },
               { key: 'array', type: 'jsonArray' },
               { key: 'object', type: 'json' },
