@@ -31,21 +31,18 @@ export interface Io {
   // Tables
 
   /**
-   * Creates a table with a given config
-   *
-   * The config must be already in the database
+   * Creates a table with a given config.
+   * If the table already exists, new columns are added to the existing table.
+   * If the table does not exist, it is created with the given config.
+   * If the table exists and columns are removed, an error is thrown.
+   * If the table exists and the column type is changed, an error is thrown.
    */
-  createTable(request: { tableCfg: TableCfg }): Promise<void>;
+  createOrExtendTable(request: { tableCfg: TableCfg }): Promise<void>;
 
   /**
    * Returns a json structure returning current table configurations
    */
   tableCfgs(): Promise<Rljson>;
-
-  /**
-   * Returns an rljson with all available tables without data
-   */
-  allTableNames(): Promise<string[]>;
 
   // ...........................................................................
   // Write
@@ -61,6 +58,9 @@ export interface Io {
     table: string;
     where: { [column: string]: JsonValue };
   }): Promise<Rljson>;
+
+  /** Returns the number of rows in the given table */
+  rowCount(table: string): Promise<number>;
 }
 
 // .............................................................................
