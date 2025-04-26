@@ -9,9 +9,9 @@ import { IsReady } from '@rljson/is-ready';
 import { copy, equals, JsonValue } from '@rljson/json';
 import { Rljson, TableCfg, TableKey, TableType } from '@rljson/rljson';
 
-import { IoInit } from './io-init.ts';
 import { IoTools } from './io-tools.ts';
 import { Io } from './io.ts';
+
 
 /**
  * In-Memory implementation of the Rljson Io interface.
@@ -109,21 +109,18 @@ export class IoMem implements Io {
 
   private _mem: Rljson = hip({} as Rljson);
 
-  private _ioInit!: IoInit;
-
   // ...........................................................................
   private async _init() {
     this._ioTools = new IoTools(this);
-    this._ioInit = new IoInit(this);
     this._initTableCfgs();
-    await this._ioInit.initRevisionsTable();
+    await this._ioTools.initRevisionsTable();
 
     this._isReady.resolve();
   }
 
   // ...........................................................................
   private _initTableCfgs = () => {
-    const tableCfg = this._ioInit.tableCfg;
+    const tableCfg = this._ioTools.tableCfgsTableCfg;
 
     this._mem.tableCfgs = hip({
       _data: [tableCfg],
