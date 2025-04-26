@@ -33,12 +33,12 @@ git pull
 
 ## Set pull request title
 
-Replace `Update io-conformance.spec.ts from io-sqlite` here and below
+Replace `Update rljson` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Update io-conformance.spec.ts from io-sqlite"
+node scripts/create-branch.js "Update rljson"
 ```
 
 ## Update-dependencies
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Update io-conformance.spec.ts from io-sqlite"
+git commit -am"Update rljson"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Update io-conformance.spec.ts from io-sqlite" --body " "
+gh pr create --base main --title "Update rljson" --body " "
 ```
 
 ## Code review
