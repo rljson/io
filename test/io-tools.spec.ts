@@ -30,6 +30,11 @@ describe('IoTools', () => {
         'table',
       ]);
     });
+
+    it('should return an empty array if no tables are created', async () => {
+      const tables = await ioTools.allTableNames();
+      expect(tables).toEqual(['tableCfgs', 'revisions']);
+    });
   });
 
   describe('tableCfg(table)', () => {

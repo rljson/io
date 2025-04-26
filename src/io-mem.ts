@@ -99,11 +99,6 @@ export class IoMem implements Io {
     } as Rljson);
   }
 
-  async allTableNames(): Promise<string[]> {
-    const tables = Object.keys(this._mem).filter((key) => !key.startsWith('_'));
-    return tables;
-  }
-
   // ######################
   // Private
   // ######################
