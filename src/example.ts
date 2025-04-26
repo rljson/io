@@ -17,11 +17,15 @@ export const example = async () => {
   const rowWithHash = hsh(row);
 
   // Create a table config first
-  const tableCfg = hip({
+  const tableCfg = hip<TableCfg>({
     key: 'tableA',
     type: 'ingredients',
-    columns: {},
-  } as TableCfg);
+    columns: [],
+    version: 1,
+    isHead: true,
+    isRoot: true,
+    isShared: false,
+  });
 
   await ioMem.write({
     data: {
@@ -33,7 +37,7 @@ export const example = async () => {
   });
 
   // Create a table first
-  await ioMem.createTable({ tableCfg: tableCfg });
+  await ioMem.createOrExtendTable({ tableCfg: tableCfg });
 
   // Write data into the table
   await ioMem.write({
