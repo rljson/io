@@ -37,7 +37,6 @@ export class IoTools {
       isHead: false,
       isRoot: false,
       isShared: true,
-      version: 1,
       previous: '',
 
       columns: [
@@ -47,7 +46,6 @@ export class IoTools {
         { key: 'isHead', type: 'boolean' },
         { key: 'isRoot', type: 'boolean' },
         { key: 'isShared', type: 'boolean' },
-        { key: 'version', type: 'number' },
         { key: 'previous', type: 'string' },
         { key: 'columns', type: 'jsonArray' },
       ],
@@ -61,7 +59,6 @@ export class IoTools {
    */
   initRevisionsTable = async () => {
     const tableCfg: TableCfg = {
-      version: 1,
       key: 'revisions',
       type: 'ingredients',
       isHead: true,

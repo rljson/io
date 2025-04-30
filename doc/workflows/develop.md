@@ -33,12 +33,12 @@ git pull
 
 ## Set pull request title
 
-Replace `Various stability improvements` here and below
+Replace `Remove version from TableCfg because hash is sufficient` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Various stability improvements"
+node scripts/create-branch.js "Remove version from TableCfg because hash is sufficient"
 ```
 
 ## Update-dependencies
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Various stability improvements"
+git commit -am"Remove version from TableCfg because hash is sufficient"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Various stability improvements" --body " "
+gh pr create --base main --title "Remove version from TableCfg because hash is sufficient" --body " "
 ```
 
 ## Code review
