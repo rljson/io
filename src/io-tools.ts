@@ -11,6 +11,7 @@ import {
   TableCfg,
   TableKey,
   throwOnInvalidTableCfg,
+  validateRljsonAgainstTableCfg,
 } from '@rljson/rljson';
 
 import { IoMem } from './io-mem.ts';
@@ -215,6 +216,27 @@ export class IoTools {
           );
         }
       }
+    }
+  }
+
+  /**
+   * Throws if the data in the table do not match the table configuration
+   */
+  async throwWhenTableDataDoesNotMatchCfg(data: Rljson) {
+    const errors: string[] = [];
+
+    await iterateTables(data, async (tableKey) => {
+      const tableCfg = await this.tableCfg(tableKey);
+      const table = data[tableKey];
+      errors.push(...validateRljsonAgainstTableCfg(table._data, tableCfg));
+    });
+
+    if (errors.length > 0) {
+      throw new Error(
+        `Table data does not match the configuration.\n\nErrors:\n${errors
+          .map((e) => `- ${e}`)
+          .join('\n')}`,
+      );
     }
   }
 }
