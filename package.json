@@ -42,7 +42,7 @@
     "read-pkg": "^9.0.1",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.31.1",
-    "vite": "^6.3.3",
+    "vite": "^6.3.4",
     "vite-node": "^3.1.2",
     "vite-plugin-dts": "^4.5.3",
     "vite-tsconfig-paths": "^5.1.4",
@@ -59,7 +59,7 @@
     "@rljson/hash": "^0.0.15",
     "@rljson/is-ready": "^0.0.17",
     "@rljson/json": "^0.0.21",
-    "@rljson/rljson": "^0.0.48",
+    "@rljson/rljson": "^0.0.50",
     "@rljson/validate": "^0.0.10"
   }
 }
