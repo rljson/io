@@ -70,6 +70,39 @@ describe('IoTools', () => {
     });
   });
 
+  describe('throwWhenTableDataDoesNotMatchCfg', () => {
+    it('throws when data contains a column not in the cfg', async () => {
+      const tableCfg = exampleTableCfg();
+      await io.createOrExtendTable({ tableCfg });
+
+      const data: Rljson = {
+        table: {
+          _type: 'ingredients',
+          _data: [
+            { a: 1, b: 2, c: 3 }, // Extra column 'c'
+            { a: '1', b: 2 }, // Fine
+          ],
+        },
+      };
+
+      const errors: string[] = [];
+      try {
+        await ioTools.throwWhenTableDataDoesNotMatchCfg(data);
+      } catch (e) {
+        const errs = (e as Error).message.split('\n');
+        errors.push(...errs);
+      }
+
+      expect(errors).toEqual([
+        'Table data does not match the configuration.',
+        '',
+        'Errors:',
+        '- Column "a" in row 0 of "table" has type "number", but expected "string"',
+        '- Column "c" in row 0 of table "table" does not exist.',
+      ]);
+    });
+  });
+
   describe('allTableKeys', () => {
     it('should return a list of all table names', async () => {
       await io.createOrExtendTable({ tableCfg: exampleTableCfg() });

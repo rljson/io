@@ -226,6 +226,7 @@ export class IoMem implements Io {
     const tables = Object.keys(addedData);
 
     await this._ioTools.throwWhenTablesDoNotExist(request.data);
+    await this._ioTools.throwWhenTableDataDoesNotMatchCfg(request.data);
 
     for (const table of tables) {
       if (table.startsWith('_')) {
