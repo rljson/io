@@ -287,7 +287,6 @@ export const runIoConformanceTests = (
         await io.write({
           data: {
             tableA: {
-              _type: 'ingredients',
               _data: [{ a: 'hello', b: 5 }],
             },
           },
@@ -303,7 +302,6 @@ export const runIoConformanceTests = (
                 b: 5,
               },
             ],
-            _type: 'ingredients',
             _tableCfg: 'MfpwQygnDmu3ISp6dBjsEf',
           },
         };
@@ -338,7 +336,6 @@ export const runIoConformanceTests = (
         await io.write({
           data: {
             tableA: {
-              _type: 'ingredients',
               _data: [{ keyA1: 'a1', keyA2: 'a2', keyB2: 'b2' }],
             },
           },
@@ -360,7 +357,6 @@ export const runIoConformanceTests = (
               },
             ],
             _tableCfg: 'swD0rJhzryBIY7sfxIV8Gl',
-            _type: 'ingredients',
           },
         });
       });
@@ -389,7 +385,6 @@ export const runIoConformanceTests = (
         await io.write({
           data: {
             tableA: {
-              _type: 'ingredients',
               _data: [{ keyA2: 'a2' }],
             },
           },
@@ -410,7 +405,6 @@ export const runIoConformanceTests = (
         await io.write({
           data: {
             tableA: {
-              _type: 'ingredients',
               _data: [{ keyB2: 'b2' }],
             },
           },
@@ -480,7 +474,6 @@ export const runIoConformanceTests = (
 
         const testData: Rljson = {
           testTable: {
-            _type: 'ingredients',
             _data: rows,
           },
         };
@@ -508,39 +501,11 @@ export const runIoConformanceTests = (
             io.write({
               data: {
                 tableA: {
-                  _type: 'ingredients',
                   _data: [{ keyA2: 'a2' }],
                 },
               },
             }),
           ).rejects.toThrow('The following tables do not exist: tableA');
-        });
-
-        it('when the table has a different type then an existing one', async () => {
-          const exampleCfg: TableCfg = exampleTableCfg({ key: 'tableA' });
-          const tableCfg: TableCfg = {
-            ...exampleCfg,
-            columns: [
-              { key: '_hash', type: 'string' },
-              { key: 'keyA1', type: 'string' },
-              { key: 'keyA2', type: 'string' },
-              { key: 'keyB2', type: 'string' },
-            ],
-          };
-          await io.createOrExtendTable({ tableCfg });
-
-          await expect(
-            io.write({
-              data: {
-                tableA: {
-                  _type: 'cakes',
-                  _data: [],
-                },
-              },
-            }),
-          ).rejects.toThrow(
-            'Table tableA has different types: "ingredients" vs "cakes"',
-          );
         });
       });
     });
@@ -567,7 +532,6 @@ export const runIoConformanceTests = (
 
           const testData: Rljson = {
             testTable: {
-              _type: 'ingredients',
               _data: [
                 {
                   string: 'hello',
@@ -781,7 +745,6 @@ export const runIoConformanceTests = (
         await io.write({
           data: {
             testTable: {
-              _type: 'ingredients',
               _data: [
                 { a: 'value1', b: 2 },
                 { a: 'value3', b: 4 },
@@ -819,7 +782,6 @@ export const runIoConformanceTests = (
         await io.write({
           data: {
             table1: {
-              _type: 'ingredients',
               _data: [
                 { a: 'a1' },
                 { a: 'a2' },
@@ -829,7 +791,6 @@ export const runIoConformanceTests = (
               ],
             },
             table2: {
-              _type: 'ingredients',
               _data: [{ a: 'a1' }, { a: 'a2' }],
             },
           },
@@ -866,7 +827,6 @@ export const runIoConformanceTests = (
         await io.write({
           data: {
             table1: {
-              _type: 'ingredients',
               _data: [{ a: 'a2' }],
             },
           },

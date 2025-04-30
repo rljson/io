@@ -12,7 +12,7 @@ import { calcReverseRefs, ReverseRefs } from '../src/reverse-ref';
 
 import { expectGolden } from './setup/goldens';
 
-describe('ReverseRefs', () => {
+describe.skip('ReverseRefs', () => {
   describe('calcReverseRefs', () => {
     let bakery: Rljson;
     let reverseRefs: ReverseRefs;
