@@ -52,6 +52,8 @@ export interface ReverseRefs {
   };
 }
 
+/* v8 ignore start */
+
 // .............................................................................
 /**
  * Calculates the reverse references for a given rljson object
@@ -106,6 +108,8 @@ export const calcReverseRefs = (rljson: Rljson): ReverseRefs => {
 
   return result;
 };
+
+/* v8 ignore end */
 
 // .............................................................................
 const _writeIngredientRefs = (

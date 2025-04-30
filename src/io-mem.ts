@@ -7,13 +7,7 @@
 import { hip, hsh } from '@rljson/hash';
 import { IsReady } from '@rljson/is-ready';
 import { copy, equals, JsonValue } from '@rljson/json';
-import {
-  ContentType,
-  Rljson,
-  TableCfg,
-  TableKey,
-  TableType,
-} from '@rljson/rljson';
+import { Rljson, TableCfg, TableKey, TableType } from '@rljson/rljson';
 
 import { IoTools } from './io-tools.ts';
 import { Io } from './io.ts';
@@ -104,7 +98,6 @@ export class IoMem implements Io {
 
     return hip({
       tableCfgs: {
-        _type: 'ingredients',
         _data: resultData,
       },
     } as Rljson);
@@ -135,7 +128,6 @@ export class IoMem implements Io {
 
     this._mem.tableCfgs = hip({
       _data: [tableCfg],
-      _type: 'ingredients',
       _tableCfg: tableCfg._hash as string,
     });
 
@@ -151,7 +143,7 @@ export class IoMem implements Io {
     const tableCfg = request.tableCfg;
     await this._ioTools.throwWhenTableIsNotCompatible(tableCfg);
 
-    const { type, key } = tableCfg;
+    const { key } = tableCfg;
 
     // Recreate hashes in the case the existing hashes are wrong
     const newConfig = hsh(tableCfg);
@@ -161,18 +153,14 @@ export class IoMem implements Io {
 
     // Write the new config into the database
     if (!existingConfig) {
-      this._createTable(newConfig, type, key);
+      this._createTable(newConfig, key);
     } else {
       this._extendTable(existingConfig, newConfig);
     }
   }
 
   // ...........................................................................
-  private _createTable(
-    newConfig: TableCfg,
-    type: ContentType,
-    tableKey: TableKey,
-  ) {
+  private _createTable(newConfig: TableCfg, tableKey: TableKey) {
     // Write the table config into the database
     newConfig = hsh(newConfig);
     this._mem.tableCfgs._data.push(newConfig);
@@ -180,7 +168,6 @@ export class IoMem implements Io {
     // Create a table and write it into the database
     const table: TableType = {
       _data: [],
-      _type: type,
       _tableCfg: newConfig._hash as string,
     };
 
@@ -235,13 +222,6 @@ export class IoMem implements Io {
 
       const oldTable = this._mem[table] as TableType;
       const newTable = addedData[table] as TableType;
-
-      // Make sure oldTable and newTable have the same type
-      if (oldTable._type !== newTable._type) {
-        throw new Error(
-          `Table ${table} has different types: "${oldTable._type}" vs "${newTable._type}"`,
-        );
-      }
 
       // Table exists. Merge data
       for (const item of newTable._data) {
