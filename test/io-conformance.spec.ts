@@ -6,6 +6,7 @@
 
 import { hip, rmhsh } from '@rljson/hash';
 import {
+  addColumnsToTableCfg,
   exampleTableCfg,
   IngredientsTable,
   Rljson,
@@ -61,42 +62,38 @@ export const runIoConformanceTests = (
     describe('tableCfgs()', () => {
       it('returns an rljson object containing the newest config for each table', async () => {
         //create four tables with two versions each
-        const table0V1: TableCfg = {
+        const tableV0: TableCfg = {
           key: 'table0',
           type: 'ingredients',
           isHead: false,
           isRoot: false,
           isShared: true,
-          version: 1,
           columns: [
             { key: '_hash', type: 'string' },
             { key: 'col0', type: 'string' },
-            { key: 'col1', type: 'string' },
-            { key: 'col2', type: 'string' },
           ],
         };
 
-        await io.createOrExtendTable({ tableCfg: table0V1 });
-        const table0V2 = { ...table0V1, version: 2 };
-        await io.createOrExtendTable({ tableCfg: table0V2 });
-        const table1V1 = { ...table0V1, key: 'table1', version: 1 };
-        await io.createOrExtendTable({ tableCfg: table1V1 });
-        const table1V2 = { ...table1V1, version: 2 };
-        await io.createOrExtendTable({ tableCfg: table1V2 });
+        const tableV1 = addColumnsToTableCfg(tableV0, [
+          { key: 'col1', type: 'string' },
+        ]);
+
+        const tableV2 = addColumnsToTableCfg(tableV1, [
+          { key: 'col2', type: 'string' },
+        ]);
+
+        await io.createOrExtendTable({ tableCfg: tableV0 });
+        await io.createOrExtendTable({ tableCfg: tableV1 });
+        await io.createOrExtendTable({ tableCfg: tableV2 });
 
         // Check the tableCfgs
         const actualTableCfgs = (await io.tableCfgs()).tableCfgs
           ._data as unknown as TableCfg[];
 
-        expect(actualTableCfgs.length).toBe(4);
+        expect(actualTableCfgs.length).toBe(3);
         expect((actualTableCfgs[0] as TableCfg).key).toBe('tableCfgs');
-        expect((actualTableCfgs[0] as TableCfg).version).toBe(1);
         expect((actualTableCfgs[1] as TableCfg).key).toBe('revisions');
-        expect((actualTableCfgs[1] as TableCfg).version).toBe(1);
         expect((actualTableCfgs[2] as TableCfg).key).toBe('table0');
-        expect((actualTableCfgs[2] as TableCfg).version).toBe(2);
-        expect((actualTableCfgs[3] as TableCfg).key).toBe('table1');
-        expect((actualTableCfgs[3] as TableCfg).version).toBe(2);
       });
     });
 
@@ -112,7 +109,7 @@ export const runIoConformanceTests = (
         }
 
         expect(message).toBe(
-          'Hash "wrongHash" does not match the newly calculated one "mFdDpiYMieGfvYkrz5R-Id". ' +
+          'Hash "wrongHash" does not match the newly calculated one "LM5fm8eNChH3kE3D38X0Fa". ' +
             'Please make sure that all systems are producing the same hashes.',
         );
       });
@@ -268,6 +265,21 @@ export const runIoConformanceTests = (
         ]);
       });
 
+      it('should do nothing when the columns do not have changed', async () => {
+        const exampleCfg: TableCfg = exampleTableCfg({ key: 'tableA' });
+        await io.createOrExtendTable({ tableCfg: exampleCfg });
+
+        // Check state before
+        const dumpBefore = await io.dumpTable({ table: 'tableA' });
+
+        // Add same table config again
+        await io.createOrExtendTable({ tableCfg: exampleCfg });
+
+        // Dump again, should be the same
+        const dumpAfter = await io.dumpTable({ table: 'tableA' });
+        expect(dumpBefore).toEqual(dumpAfter);
+      });
+
       it('should extend an existing table', async () => {
         // Create a first table
         const tableCfg: TableCfg = exampleTableCfg({ key: 'tableA' });
@@ -291,20 +303,17 @@ export const runIoConformanceTests = (
               },
             ],
             _type: 'ingredients',
-            _tableCfg: 'SFd5uMSBBlMZCz3SNv50h6',
+            _tableCfg: 'MfpwQygnDmu3ISp6dBjsEf',
           },
         });
 
         // Update the table by adding a new column
-        const tableCfg2: TableCfg = {
-          ...tableCfg,
-          columns: [
-            ...tableCfg.columns,
-            { key: 'keyA1', type: 'string' },
-            { key: 'keyA2', type: 'string' },
-            { key: 'keyB2', type: 'string' },
-          ],
-        };
+        const tableCfg2 = addColumnsToTableCfg(tableCfg, [
+          { key: 'keyA1', type: 'string' },
+          { key: 'keyA2', type: 'string' },
+          { key: 'keyB2', type: 'string' },
+        ]);
+
         await io.createOrExtendTable({ tableCfg: tableCfg2 });
 
         // Check the table contents after. It has not changed.
@@ -316,7 +325,7 @@ export const runIoConformanceTests = (
                 keyA2: 'a2',
               },
             ],
-            _tableCfg: 'SFd5uMSBBlMZCz3SNv50h6',
+            _tableCfg: 'swD0rJhzryBIY7sfxIV8Gl',
             _type: 'ingredients',
           },
         });
@@ -345,7 +354,7 @@ export const runIoConformanceTests = (
                 keyB2: 'b2',
               },
             ],
-            _tableCfg: 'SFd5uMSBBlMZCz3SNv50h6',
+            _tableCfg: 'swD0rJhzryBIY7sfxIV8Gl',
             _type: 'ingredients',
           },
         });

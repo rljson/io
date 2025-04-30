@@ -8,11 +8,11 @@ import { hip, hsh } from '@rljson/hash';
 import { IsReady } from '@rljson/is-ready';
 import { copy, equals, JsonValue } from '@rljson/json';
 import {
+  ContentType,
   Rljson,
   TableCfg,
   TableKey,
   TableType,
-  throwOnInvalidTableCfg,
 } from '@rljson/rljson';
 
 import { IoTools } from './io-tools.ts';
@@ -90,18 +90,17 @@ export class IoMem implements Io {
   async tableCfgs(): Promise<Rljson> {
     const tables = this._mem.tableCfgs._data as TableCfg[];
 
-    // Take the last version of eacth type key
+    // Take the latest version of each type key
     const newestVersion: Record<TableKey, TableCfg> = {};
-    for (const table of tables) {
+    for (let i = tables.length - 1; i >= 0; i--) {
+      const table = tables[i];
       const existing = newestVersion[table.key];
       if (!existing) {
-        newestVersion[table.key] = table;
-      } else if (table.version > existing.version) {
         newestVersion[table.key] = table;
       }
     }
 
-    const resultData = Object.values(newestVersion);
+    const resultData = Object.values(newestVersion).reverse();
 
     return hip({
       tableCfgs: {
@@ -147,42 +146,61 @@ export class IoMem implements Io {
   private async _createOrExtendTable(request: {
     tableCfg: TableCfg;
   }): Promise<void> {
-    // Validate the table config
-    throwOnInvalidTableCfg(request.tableCfg);
-
     // Make sure that the table config is compatible
     // with an potential existing table
-    await this._ioTools.throwWhenTableIsNotCompatible(request.tableCfg);
+    const tableCfg = request.tableCfg;
+    await this._ioTools.throwWhenTableIsNotCompatible(tableCfg);
 
-    const { type, key } = request.tableCfg;
+    const { type, key } = tableCfg;
 
     // Recreate hashes in the case the existing hashes are wrong
-    const newConfig = hsh(request.tableCfg);
+    const newConfig = hsh(tableCfg);
 
     // Find an existing table config with the same hash
-    const existingConfig: TableCfg = this._mem.tableCfgs._data.find(
-      (cfg) => cfg._hash === newConfig._hash,
-    );
+    const existingConfig = await this._ioTools.tableCfgOrNull(key);
 
     // Write the new config into the database
     if (!existingConfig) {
-      this._mem.tableCfgs._data.push(newConfig);
-      this._mem.tableCfgs._hash = '';
-      hip(this._mem.tableCfgs, {
-        updateExistingHashes: false,
-        throwOnWrongHashes: false,
-      });
+      this._createTable(newConfig, type, key);
+    } else {
+      this._extendTable(existingConfig, newConfig);
     }
+  }
 
-    // Create the table annd assign the table config hash
+  // ...........................................................................
+  private _createTable(
+    newConfig: TableCfg,
+    type: ContentType,
+    tableKey: TableKey,
+  ) {
+    // Write the table config into the database
+    newConfig = hsh(newConfig);
+    this._mem.tableCfgs._data.push(newConfig);
+
+    // Create a table and write it into the database
     const table: TableType = {
       _data: [],
       _type: type,
       _tableCfg: newConfig._hash as string,
     };
 
-    // Add hashes to the table
-    this._mem[key] ??= hip(table);
+    this._mem[tableKey] ??= hip(table);
+  }
+
+  // ...........................................................................
+  private _extendTable(existingConfig: TableCfg, newConfig: TableCfg) {
+    // No columns added? Return.
+    if (existingConfig.columns.length === newConfig.columns.length) {
+      return;
+    }
+
+    // Write the new table config into the database
+    newConfig = hsh(newConfig);
+    this._mem.tableCfgs._data.push(newConfig);
+
+    // Update the config of the existing table
+    const table = this._mem[newConfig.key] as TableType;
+    table._tableCfg = newConfig._hash as string;
   }
 
   // ...........................................................................
