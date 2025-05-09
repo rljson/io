@@ -244,6 +244,10 @@ export class IoMem implements Io {
     where: { [column: string]: JsonValue };
   }): Promise<Rljson> {
     await this._ioTools.throwWhenTableDoesNotExist(request.table);
+    await this._ioTools.throwWhenColumnDoesNotExist(
+      request.table,
+      Object.keys(request.where),
+    );
 
     const table = this._mem[request.table] as TableType;
 

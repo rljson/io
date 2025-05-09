@@ -549,6 +549,14 @@ export const runIoConformanceTests = (
                   array: [1, 2, { a: 10 }],
                   object: { a: 1, b: 2 },
                 },
+                {
+                  string: 'third',
+                  number: null,
+                  null: 'test',
+                  boolean: false,
+                  array: [1, 2, { a: 10 }],
+                  object: { a: 1, b: 2 },
+                },
               ],
             },
           };
@@ -629,7 +637,7 @@ export const runIoConformanceTests = (
                 },
                 {
                   array: [1, 2, { a: 10 }],
-                  boolean: true,
+                  boolean: false,
                   null: null,
                   number: 6,
                   object: { a: 1, b: 2 },
