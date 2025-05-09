@@ -163,6 +163,29 @@ export class IoTools {
   }
 
   /**
+   * Throws when a column does not exist in a given table
+   * @param table - The table to check
+   * @param columns - The column to check
+   */
+  async throwWhenColumnDoesNotExist(
+    table: TableKey,
+    columns: string[],
+  ): Promise<void> {
+    const tableCfg = await this.tableCfg(table);
+    const columnKeys = tableCfg.columns.map((column) => column.key);
+    const missingColumns = columns.filter(
+      (column) => !columnKeys.includes(column),
+    );
+    if (missingColumns.length > 0) {
+      throw new Error(
+        `The following columns do not exist in table "${table}": ${missingColumns.join(
+          ', ',
+        )}.`,
+      );
+    }
+  }
+
+  /**
    * Throws when a table update is not compatible with the current table
    * configuration.
    */

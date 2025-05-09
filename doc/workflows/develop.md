@@ -33,12 +33,12 @@ git pull
 
 ## Set pull request title
 
-Replace `Make additional tests when writing data` here and below
+Replace `update conformance checks` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Make additional tests when writing data"
+node scripts/create-branch.js "update conformance checks"
 ```
 
 ## Update-dependencies
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Make additional tests when writing data"
+git commit -am"update conformance checks"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Make additional tests when writing data" --body " "
+gh pr create --base main --title "update conformance checks" --body " "
 ```
 
 ## Code review
