@@ -549,6 +549,14 @@ export const runIoConformanceTests = (
                   array: [1, 2, { a: 10 }],
                   object: { a: 1, b: 2 },
                 },
+                {
+                  string: 'third',
+                  number: null,
+                  null: 'test',
+                  boolean: false,
+                  array: [3, 4, { a: 10 }],
+                  object: { a: 1, b: 2 },
+                },
               ],
             },
           };
@@ -773,6 +781,19 @@ export const runIoConformanceTests = (
           }),
         ).rejects.toThrow('Table "nonexistentTable" not found');
       });
+
+      it('should throw an error if the where clause is invalid', async () => {
+        await createExampleTable('testTable');
+
+        await expect(
+          io.readRows({
+            table: 'testTable',
+            where: { invalidColumn: 'value' },
+          }),
+        ).rejects.toThrow(
+          'The following columns do not exist in table "testTable": invalidColumn.',
+        );
+      });
     });
 
     describe('rowCount(table)', () => {
@@ -800,6 +821,7 @@ export const runIoConformanceTests = (
         expect(count1).toBe(5);
         expect(count2).toBe(2);
       });
+
       it('throws an error if the table does not exist', async () => {
         await expect(io.rowCount('nonexistentTable')).rejects.toThrow(
           'Table "nonexistentTable" not found',

@@ -172,4 +172,37 @@ describe('IoTools', () => {
   describe('throwWhenTableUpdateIsNotCompatible', () => {
     it('is tested in io-conformance.spec.ts, createOrExtendTable', () => {});
   });
+
+  describe('throwWhenColumnDoesNotExist', () => {
+    it('should throw an error if the column does not exist', async () => {
+      const tableCfg = exampleTableCfg();
+      await io.createOrExtendTable({ tableCfg });
+      const columns = ['nonExistentColumn'];
+      await expect(
+        ioTools.throwWhenColumnDoesNotExist(tableCfg.key, columns),
+      ).rejects.toThrow(
+        `The following columns do not exist in table "${tableCfg.key}": nonExistentColumn.`,
+      );
+    });
+
+    it('should throw an error if one column in a list does not exist in the table', async () => {
+      const tableCfg = exampleTableCfg();
+      await io.createOrExtendTable({ tableCfg });
+      const columns = ['a', 'nonExistentColumn'];
+      await expect(
+        ioTools.throwWhenColumnDoesNotExist(tableCfg.key, columns),
+      ).rejects.toThrow(
+        `The following columns do not exist in table "${tableCfg.key}": nonExistentColumn.`,
+      );
+    });
+
+    it('should not throw an error if the column exists', async () => {
+      const tableCfg = exampleTableCfg();
+      await io.createOrExtendTable({ tableCfg });
+      const columns = ['a'];
+      await expect(
+        ioTools.throwWhenColumnDoesNotExist(tableCfg.key, columns),
+      ).resolves.not.toThrow();
+    });
+  });
 });
