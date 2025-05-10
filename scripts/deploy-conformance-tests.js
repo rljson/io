@@ -10,7 +10,7 @@
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
-import { red } from './functions/colors.js';
+import { blue, gray, red } from './functions/colors.js';
 import { distDir, scriptsDir, testDir } from './functions/directories.js';
 import { syncFolders } from './functions/sync-folders.js';
 
@@ -22,6 +22,7 @@ async function _copyGoldens(targetDir) {
     await fs.mkdir(targetGoldensDir, { recursive: true });
   }
 
+  console.log(gray(`cp ${goldensDir} ${targetGoldensDir}`));
   await syncFolders(goldensDir, targetGoldensDir, { excludeHidden: true });
 }
 
@@ -79,12 +80,16 @@ async function _copyConformanceTests(targetDir) {
   }
 
   // Replace true with false
-  content = content.replace(
+  content = content.replaceAll(
     'npmUpdateGoldensEnabled: true',
     'npmUpdateGoldensEnabled: false',
   );
 
+  // Replace all occurrences of '../src/' with '@rljson/io'
+  content = content.replaceAll(/'..\/src\/?'/g, "'@rljson/io'");
+
   // Write result to the target file
+  console.log(gray(`cp ${conformanceTestPath} ${targetDir}`));
   const targetTestPath = path.join(targetDir, 'io-conformance.spec.ts');
   await fs.writeFile(targetTestPath, content, 'utf-8');
 }
@@ -97,7 +102,21 @@ async function _copyInstallConformanceTests(targetDir) {
   }
   const from = path.join(scriptsDir, 'install-conformance-tests.js');
   const to = path.join(targetScriptsDir, 'install-conformance-tests.js');
+  console.log(gray(`cp ${from} ${to}`));
   await fs.copyFile(from, to);
+}
+
+// .............................................................................
+async function _copyIoConformanceSetup(targetDir) {
+  const from = path.join('test', 'io-conformance.setup.ts');
+  const to = path.join(targetDir, 'io-conformance.setup.ts');
+
+  // Update exports of Io, IoTestSetup and IoTools
+  const content = await fs.readFile(from, 'utf-8');
+  const replacedContent = content.replaceAll(/'..\/src\/?'/g, "'@rljson/io'");
+
+  console.log(gray(`cp ${from} ${to}`));
+  await fs.writeFile(to, replacedContent, 'utf-8');
 }
 
 // .............................................................................
@@ -112,10 +131,12 @@ async function _targetDir() {
 // .............................................................................
 try {
   // Create target directory if it doesn't exist
+  console.log(blue('Deploy conformance tests...'));
   const targetDir = await _targetDir();
   await _copyConformanceTests(targetDir);
   await _copyGoldens(targetDir);
   await _copyInstallConformanceTests(targetDir);
+  await _copyIoConformanceSetup(targetDir);
 } catch (err) {
   console.error(
     red('❌ Error while deploying conformance tests:', err.message),
