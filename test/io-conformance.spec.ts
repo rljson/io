@@ -14,26 +14,28 @@ import {
   TableType,
 } from '@rljson/rljson';
 
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { IoMem } from '../src/io-mem';
-import { IoTools } from '../src/io-tools';
-import { Io } from '../src/io.ts';
-
+import { Io, IoTestSetup, IoTools, testSetup } from './io-conformance.setup.ts';
 import { expectGolden } from './setup/goldens.ts';
 
-export const runIoConformanceTests = (
-  createIo: () => Promise<Io> = async () => IoMem.example(),
-) => {
+export const runIoConformanceTests = () => {
   return describe('Io Conformance', async () => {
     let io: Io;
     let ioTools: IoTools;
+    let setup: IoTestSetup;
 
     beforeEach(async () => {
-      io = await createIo();
+      setup = testSetup();
+      await setup.init();
+      io = setup.io;
       await io.init();
       await io.isReady();
       ioTools = new IoTools(io);
+    });
+
+    afterEach(async () => {
+      await setup.tearDown();
     });
 
     describe('isReady()', () => {

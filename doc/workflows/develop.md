@@ -33,12 +33,12 @@ git pull
 
 ## Set pull request title
 
-Replace `update conformance checks` here and below
+Replace `Make copying conformance tests more easy` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "update conformance checks"
+node scripts/create-branch.js "Make copying conformance tests more easy"
 ```
 
 ## Update-dependencies
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"update conformance checks"
+git commit -am"Make copying conformance tests more easy"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "update conformance checks" --body " "
+gh pr create --base main --title "Make copying conformance tests more easy" --body " "
 ```
 
 ## Code review

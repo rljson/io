@@ -15,6 +15,9 @@ export interface Io {
   /** Starts the initialization */
   init(): Promise<void>;
 
+  /** Closes the io */
+  close(): Promise<void>;
+
   /** A promise resolving once the Io interface is ready
    *
    * 💡 Use @rljson/is-ready
