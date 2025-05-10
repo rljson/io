@@ -106,7 +106,7 @@ describe('IoTools', () => {
     it('should return a list of all table names', async () => {
       await io.createOrExtendTable({ tableCfg: exampleTableCfg() });
 
-      expect(ioTools.allTableKeys()).resolves.toEqual([
+      await expect(ioTools.allTableKeys()).resolves.toEqual([
         'tableCfgs',
         'revisions',
         'table',
@@ -123,11 +123,11 @@ describe('IoTools', () => {
     it('should return the configuration of a given table', async () => {
       const tableCfg = hip(exampleTableCfg());
       await io.createOrExtendTable({ tableCfg });
-      expect(ioTools.tableCfg(tableCfg.key)).resolves.toEqual(tableCfg);
+      await expect(ioTools.tableCfg(tableCfg.key)).resolves.toEqual(tableCfg);
     });
 
     it('should throw an error if the table is not found', async () => {
-      expect(ioTools.tableCfg('unknown')).rejects.toThrow(
+      await expect(ioTools.tableCfg('unknown')).rejects.toThrow(
         'Table "unknown" not found',
       );
     });
@@ -155,7 +155,7 @@ describe('IoTools', () => {
     it('should return a list of all column names of a given table', async () => {
       const tableCfg = exampleTableCfg();
       await io.createOrExtendTable({ tableCfg });
-      expect(ioTools.allColumnKeys(tableCfg.key)).resolves.toEqual([
+      await expect(ioTools.allColumnKeys(tableCfg.key)).resolves.toEqual([
         '_hash',
         'a',
         'b',
@@ -163,7 +163,7 @@ describe('IoTools', () => {
     });
 
     it('should throw an error if the table is not found', async () => {
-      expect(ioTools.allColumnKeys('unknown')).rejects.toThrow(
+      await expect(ioTools.allColumnKeys('unknown')).rejects.toThrow(
         'Table "unknown" not found',
       );
     });
