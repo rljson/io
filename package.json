@@ -21,7 +21,7 @@
   ],
   "type": "module",
   "scripts": {
-    "build": "pnpx vite build && tsc && node scripts/copy-readme-to-dist.js && node scripts/copy-file.js src/example.ts dist/src",
+    "build": "pnpx vite build && tsc && node scripts/copy-readme-to-dist.js && node scripts/copy-file.js src/example.ts dist/src && node scripts/deploy-conformance-tests.js",
     "test": "pnpx vitest run --coverage && pnpm run lint",
     "prebuild": "pnpm run test",
     "prepublishOnly": "pnpm run build && pnpm run test",
