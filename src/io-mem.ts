@@ -24,6 +24,10 @@ export class IoMem implements Io {
     return this._init();
   }
 
+  close(): Promise<void> {
+    return Promise.resolve();
+  }
+
   static example = async () => {
     return new IoMem();
   };
