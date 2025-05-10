@@ -4,13 +4,10 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-import { IoMem } from '../src/io-mem';
-import { IoTestSetup } from '../src/io-test-setup.ts';
-
-import { Io } from './io-conformance.setup';
+import { Io, IoMem, IoTestSetup } from '../src';
 
 // ..............................................................................
-class IoMemTestSetup implements IoTestSetup {
+class MyIoTestSetup implements IoTestSetup {
   async init(): Promise<void> {
     this._io = await IoMem.example();
   }
@@ -30,8 +27,4 @@ class IoMemTestSetup implements IoTestSetup {
 }
 
 // .............................................................................
-export const testSetup = () => new IoMemTestSetup();
-
-export { Io } from '../src/io';
-export { IoTestSetup } from '../src/io-test-setup.ts';
-export { IoTools } from '../src/io-tools';
+export const testSetup = () => new MyIoTestSetup();

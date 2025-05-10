@@ -4,8 +4,7 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-import { IoMem } from './io-mem.ts';
-import { Io } from './io.ts';
+import { Io, IoMem } from './index.ts';
 
 // .............................................................................
 /**

@@ -10,8 +10,12 @@
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
-import { red } from './functions/colors.js';
-import { nodeModulesDir, testDir } from './functions/directories.js';
+import { blue, gray, green, red, yellow } from './functions/colors.js';
+import {
+  nodeModulesDir,
+  scriptsDir,
+  testDir,
+} from './functions/directories.js';
 import { syncFolders } from './functions/sync-folders.js';
 
 // .............................................................................
@@ -22,6 +26,7 @@ async function _copyGoldens(srcDir) {
     await fs.mkdir(to, { recursive: true });
   }
 
+  console.log(gray(`cp -r ${from} ${to}`));
   await syncFolders(from, to, { excludeHidden: true });
 }
 
@@ -29,6 +34,7 @@ async function _copyGoldens(srcDir) {
 async function _copyConformanceTests(srcDir) {
   const from = path.join(srcDir, 'io-conformance.spec.ts');
   const to = path.join(testDir, 'io-conformance.spec.ts');
+  console.log(gray(`cp ${from} ${to}`));
   await fs.copyFile(from, to);
 }
 
@@ -48,11 +54,47 @@ async function _srcDir() {
 }
 
 // .............................................................................
+async function _copyInstallScript(srcDir) {
+  const from = path.join(srcDir, 'scripts', 'install-conformance-tests.js');
+  const to = path.join(scriptsDir, 'install-conformance-tests.js');
+  console.log(gray(`cp ${from} ${to}`));
+  await fs.copyFile(from, to);
+}
+
+// .............................................................................
+async function _copySetupScript(srcDir) {
+  const from = path.join(srcDir, 'io-conformance.setup.ts');
+  const to = path.join(testDir, 'io-conformance.setup.ts');
+
+  // Only setup file if not exists
+  if (existsSync(to)) {
+    return;
+  }
+
+  // Update exports of Io, IoTestSetup and IoTools
+  console.log(gray(`cp ${from} ${to}`));
+  await fs.copyFile(from, to);
+
+  console.log(
+    [
+      yellow('Please open'),
+      blue('test/io-conformance.setup.ts'),
+      yellow('and modify'),
+      green('MyIoTestSetup'),
+      yellow('to instantiate your Io implementation.'),
+    ].join(' '),
+  );
+}
+
+// .............................................................................
 try {
   // Create target directory if it doesn't exist
+  console.log(blue('Update conformance tests...'));
   const srcDir = await _srcDir();
   await _copyConformanceTests(srcDir);
   await _copyGoldens(srcDir);
+  await _copyInstallScript(srcDir);
+  await _copySetupScript(srcDir);
 } catch (err) {
   console.error(
     red('❌ Error while deploying conformance tests:', err.message),
