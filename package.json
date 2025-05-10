@@ -1,6 +1,6 @@
 {
   "name": "@rljson/io",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "packageManager": "pnpm@10.9.0",
   "description": "Low level interface for reading and writing RLJSON data",
   "homepage": "https://github.com/rljson/io",
@@ -21,7 +21,7 @@
   ],
   "type": "module",
   "scripts": {
-    "build": "pnpx vite build && tsc && node scripts/copy-readme-to-dist.js && node scripts/copy-file.js src/example.ts dist/src",
+    "build": "pnpx vite build && tsc && node scripts/copy-readme-to-dist.js && node scripts/copy-file.js src/example.ts dist/src && node scripts/deploy-conformance-tests.js",
     "test": "pnpx vitest run --coverage && pnpm run lint",
     "prebuild": "pnpm run test",
     "prepublishOnly": "pnpm run build && pnpm run test",
