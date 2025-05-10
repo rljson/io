@@ -17,4 +17,6 @@ export const workSpaceDir = join(__dirname, '..', '..');
 export const distDir = join(workSpaceDir, 'dist');
 export const srcDir = join(workSpaceDir, 'src');
 export const testDir = join(workSpaceDir, 'test');
+export const scriptsDir = join(workSpaceDir, 'scripts');
+export const goldensDir = join(testDir, 'goldens');
 export const nodeModulesDir = join(workSpaceDir, 'node_modules');

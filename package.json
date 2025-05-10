@@ -1,6 +1,6 @@
 {
   "name": "@rljson/io",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "packageManager": "pnpm@10.9.0",
   "description": "Low level interface for reading and writing RLJSON data",
   "homepage": "https://github.com/rljson/io",

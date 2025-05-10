@@ -11,7 +11,7 @@ import { existsSync } from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
 import { red } from './functions/colors.js';
-import { distDir, testDir } from './functions/directories.js';
+import { distDir, scriptsDir, testDir } from './functions/directories.js';
 import { syncFolders } from './functions/sync-folders.js';
 
 // .............................................................................
@@ -47,9 +47,10 @@ async function _copyConformanceTests(targetDir) {
       'io-conformance.spec.ts does not start with an valid license header',
     );
   }
-  const licenseHeader = lines.slice(0, firstNonCommentLineIndex);
 
-  const fileContent = lines.slice(firstNonCommentLineIndex);
+  // Separate license header from the rest of the file
+  const license = lines.slice(0, firstNonCommentLineIndex);
+  const rest = lines.slice(firstNonCommentLineIndex);
 
   // Add modification hint behind the license header
   const dontModifyHint = [
@@ -64,17 +65,39 @@ async function _copyConformanceTests(targetDir) {
     '//   4. Publish a the new changes to npm',
   ];
 
-  const contentWithDontModifyHint = [
-    ...licenseHeader,
-    '',
-    ...dontModifyHint,
-    '',
-    ...fileContent,
-  ].join('\n');
+  let content = [...license, '', ...dontModifyHint, '', ...rest].join('\n');
+
+  // Don't allow npm updateGoldens
+  // Make sure "npmUpdateGoldensEnabled: true" is set in the config
+  const npmUpdateGoldensEnabled = content.includes(
+    'npmUpdateGoldensEnabled: true',
+  );
+  if (!npmUpdateGoldensEnabled) {
+    throw new Error(
+      'io-conformance.spec.ts does not have npmUpdateGoldensEnabled: true',
+    );
+  }
+
+  // Replace true with false
+  content = content.replace(
+    'npmUpdateGoldensEnabled: true',
+    'npmUpdateGoldensEnabled: false',
+  );
 
   // Write result to the target file
   const targetTestPath = path.join(targetDir, 'io-conformance.spec.ts');
-  await fs.writeFile(targetTestPath, contentWithDontModifyHint, 'utf-8');
+  await fs.writeFile(targetTestPath, content, 'utf-8');
+}
+
+// .............................................................................
+async function _copyInstallConformanceTests(targetDir) {
+  const targetScriptsDir = path.join(targetDir, 'scripts');
+  if (!existsSync(targetScriptsDir)) {
+    await fs.mkdir(targetScriptsDir, { recursive: true });
+  }
+  const from = path.join(scriptsDir, 'install-conformance-tests.js');
+  const to = path.join(targetScriptsDir, 'install-conformance-tests.js');
+  await fs.copyFile(from, to);
 }
 
 // .............................................................................
@@ -92,6 +115,7 @@ try {
   const targetDir = await _targetDir();
   await _copyConformanceTests(targetDir);
   await _copyGoldens(targetDir);
+  await _copyInstallConformanceTests(targetDir);
 } catch (err) {
   console.error(
     red('❌ Error while deploying conformance tests:', err.message),
