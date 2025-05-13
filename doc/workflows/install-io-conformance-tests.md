@@ -105,5 +105,4 @@ In the terminal, run:
 pnpm test
 ```
 
-Alternatively open `test/io-conformance.spec.ts` and run the test using
-Vscode's test explorer.
+Alternatively open `test/io-conformance.spec.ts` and run the test using Vscode's test explorer.

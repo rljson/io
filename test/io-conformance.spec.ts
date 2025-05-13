@@ -586,7 +586,6 @@ export const runIoConformanceTests = () => {
                 {
                   array: [1, 2, { a: 10 }],
                   boolean: true,
-                  null: null,
                   number: 5,
                   object: {
                     a: 1,
@@ -615,7 +614,6 @@ export const runIoConformanceTests = () => {
                 {
                   array: [1, 2, { a: 10 }],
                   boolean: true,
-                  null: null,
                   number: 6,
                   object: { a: 1, b: 2 },
                   string: 'world',
@@ -639,7 +637,6 @@ export const runIoConformanceTests = () => {
                 {
                   array: [1, 2, { a: 10 }],
                   boolean: true,
-                  null: null,
                   number: 5,
                   object: { a: 1, b: { c: 3 } },
                   string: 'hello',
@@ -647,7 +644,6 @@ export const runIoConformanceTests = () => {
                 {
                   array: [1, 2, { a: 10 }],
                   boolean: true,
-                  null: null,
                   number: 6,
                   object: { a: 1, b: 2 },
                   string: 'world',
@@ -671,7 +667,6 @@ export const runIoConformanceTests = () => {
                 {
                   array: [1, 2, { a: 10 }],
                   boolean: true,
-                  null: null,
                   number: 5,
                   object: { a: 1, b: { c: 3 } },
                   string: 'hello',
@@ -679,7 +674,6 @@ export const runIoConformanceTests = () => {
                 {
                   array: [1, 2, { a: 10 }],
                   boolean: true,
-                  null: null,
                   number: 6,
                   object: { a: 1, b: 2 },
                   string: 'world',
@@ -706,7 +700,6 @@ export const runIoConformanceTests = () => {
                 {
                   array: [1, 2, { a: 10 }],
                   boolean: true,
-                  null: null,
                   number: 5,
                   object: { a: 1, b: { c: 3 } },
                   string: 'hello',
@@ -714,7 +707,6 @@ export const runIoConformanceTests = () => {
                 {
                   array: [1, 2, { a: 10 }],
                   boolean: true,
-                  null: null,
                   number: 6,
                   object: { a: 1, b: 2 },
                   string: 'world',
@@ -745,7 +737,6 @@ export const runIoConformanceTests = () => {
                 {
                   array: [1, 2, { a: 10 }],
                   boolean: true,
-                  null: null,
                   number: 5,
                   object: { a: 1, b: { c: 3 } },
                   string: 'hello',

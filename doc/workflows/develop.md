@@ -33,12 +33,12 @@ git pull
 
 ## Set pull request title
 
-Replace `Add documentation for setting up conformance tests` here and below
+Replace `Dont write null values when reading rljson` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Add documentation for setting up conformance tests"
+node scripts/create-branch.js "Dont write null values when reading rljson"
 ```
 
 ## Update-dependencies
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Add documentation for setting up conformance tests"
+git commit -am"Dont write null values when reading rljson"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Add documentation for setting up conformance tests" --body " "
+gh pr create --base main --title "Dont write null values when reading rljson" --body " "
 ```
 
 ## Code review
