@@ -127,7 +127,9 @@ export class IoMem implements Io {
   private async _init() {
     this._ioTools = new IoTools(this);
     this._initTableCfgs();
+    this._updateGlobalHash();
     await this._ioTools.initRevisionsTable();
+    hsh(this._mem);
 
     this._isReady.resolve();
   }
@@ -140,9 +142,22 @@ export class IoMem implements Io {
       _data: [tableCfg],
       _tableCfg: tableCfg._hash as string,
     });
-
-    hip(this._mem, { updateExistingHashes: true, throwOnWrongHashes: false });
   };
+
+  // ...........................................................................
+  private _updateGlobalHash() {
+    (this._mem as any)._hash = '';
+    hip(this._mem, {
+      updateExistingHashes: false,
+    });
+  }
+
+  // ...........................................................................
+  private _updateTableHash(tableKey: TableKey) {
+    const table = this._mem[tableKey] as TableType;
+    table._hash = '';
+    hip(table, { updateExistingHashes: false });
+  }
 
   // ...........................................................................
   private async _createOrExtendTable(request: {
@@ -174,6 +189,7 @@ export class IoMem implements Io {
     // Write the table config into the database
     newConfig = hsh(newConfig);
     this._mem.tableCfgs._data.push(newConfig);
+    this._updateTableHash('tableCfgs');
 
     // Create a table and write it into the database
     const table: TableType = {
@@ -182,6 +198,10 @@ export class IoMem implements Io {
     };
 
     this._mem[tableKey] ??= hip(table);
+
+    // Update hashes
+    this._updateTableHash(tableKey);
+    this._updateGlobalHash();
   }
 
   // ...........................................................................
@@ -198,6 +218,11 @@ export class IoMem implements Io {
     // Update the config of the existing table
     const table = this._mem[newConfig.key] as TableType;
     table._tableCfg = newConfig._hash as string;
+
+    // Update the hashes
+    this._updateTableHash('tableCfgs');
+    this._updateTableHash(newConfig.key);
+    this._updateGlobalHash();
   }
 
   // ...........................................................................
@@ -222,6 +247,7 @@ export class IoMem implements Io {
     const addedData = hsh(request.data);
     this._removeNullValues(addedData);
     const tables = Object.keys(addedData);
+    hsh(addedData);
 
     await this._ioTools.throwWhenTablesDoNotExist(request.data);
     await this._ioTools.throwWhenTableDataDoesNotMatchCfg(request.data);
@@ -242,11 +268,12 @@ export class IoMem implements Io {
           oldTable._data.push(item as any);
         }
       }
+
+      this._updateTableHash(table);
     }
 
     // Recalc main hashes
-    (this._mem as any)._hash = '';
-    hip(this._mem, { updateExistingHashes: false, throwOnWrongHashes: false });
+    this._updateGlobalHash();
   }
 
   // ...........................................................................

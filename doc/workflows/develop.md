@@ -33,12 +33,12 @@ git pull
 
 ## Set pull request title
 
-Replace `Dont write null values when reading rljson` here and below
+Replace `Fix conformance test issues, especially with hashing` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Dont write null values when reading rljson"
+node scripts/create-branch.js "Fix conformance test issues, especially with hashing"
 ```
 
 ## Update-dependencies
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Dont write null values when reading rljson"
+git commit -am"Fix conformance test issues, especially with hashing"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Dont write null values when reading rljson" --body " "
+gh pr create --base main --title "Fix conformance test issues, especially with hashing" --body " "
 ```
 
 ## Code review
