@@ -7,7 +7,13 @@
 import { hip, hsh } from '@rljson/hash';
 import { IsReady } from '@rljson/is-ready';
 import { copy, equals, JsonValue } from '@rljson/json';
-import { Rljson, TableCfg, TableKey, TableType } from '@rljson/rljson';
+import {
+  iterateTablesSync,
+  Rljson,
+  TableCfg,
+  TableKey,
+  TableType,
+} from '@rljson/rljson';
 
 import { IoTools } from './io-tools.ts';
 import { Io } from './io.ts';
@@ -214,6 +220,7 @@ export class IoMem implements Io {
   // ...........................................................................
   private async _write(request: { data: Rljson }): Promise<void> {
     const addedData = hsh(request.data);
+    this._removeNullValues(addedData);
     const tables = Object.keys(addedData);
 
     await this._ioTools.throwWhenTablesDoNotExist(request.data);
@@ -261,6 +268,10 @@ export class IoMem implements Io {
           for (const column in request.where) {
             const a = row[column];
             const b = request.where[column];
+            if (b === null && a === undefined) {
+              return true;
+            }
+
             if (!equals(a, b)) {
               return false;
             }
@@ -271,5 +282,19 @@ export class IoMem implements Io {
     } as any;
 
     return result;
+  }
+
+  _removeNullValues(rljson: Rljson) {
+    iterateTablesSync(rljson, (table) => {
+      const data = rljson[table]._data;
+
+      for (const row of data) {
+        for (const key in row) {
+          if (row[key] === null) {
+            delete row[key];
+          }
+        }
+      }
+    });
   }
 }
