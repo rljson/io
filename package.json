@@ -1,6 +1,6 @@
 {
   "name": "@rljson/io",
-  "version": "0.0.33",
+  "version": "0.0.34",
   "packageManager": "pnpm@10.9.0",
   "description": "Low level interface for reading and writing RLJSON data",
   "homepage": "https://github.com/rljson/io",
@@ -56,10 +56,10 @@
     "overrides": {}
   },
   "dependencies": {
-    "@rljson/hash": "^0.0.15",
+    "@rljson/hash": "^0.0.16",
     "@rljson/is-ready": "^0.0.17",
     "@rljson/json": "^0.0.21",
-    "@rljson/rljson": "^0.0.50",
+    "@rljson/rljson": "^0.0.51",
     "@rljson/validate": "^0.0.10"
   }
 }

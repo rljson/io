@@ -4,7 +4,7 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-import { hip, rmhsh } from '@rljson/hash';
+import { hip, hsh, rmhsh } from '@rljson/hash';
 import {
   addColumnsToTableCfg,
   exampleTableCfg,
@@ -831,13 +831,16 @@ export const runIoConformanceTests = () => {
 
     describe('dump()', () => {
       it('returns a copy of the complete database', async () => {
-        await expectGolden('io-conformance/dump/empty.json', ego).toBe(
-          await io.dump(),
-        );
+        const dump = await io.dump();
+        hsh(dump);
+
+        await expectGolden('io-conformance/dump/empty.json', ego).toBe(dump);
         await createExampleTable('table1');
         await createExampleTable('table2');
+
+        const dump2 = await io.dump();
         await expectGolden('io-conformance/dump/two-tables.json', ego).toBe(
-          await io.dump(),
+          dump2,
         );
       });
     });
@@ -854,8 +857,11 @@ export const runIoConformanceTests = () => {
           },
         });
 
+        const result = await io.dumpTable({ table: 'table1' });
+        hsh(result);
+
         await expectGolden('io-conformance/dumpTable/table1.json', ego).toBe(
-          await io.dumpTable({ table: 'table1' }),
+          result,
         );
       });
 

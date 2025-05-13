@@ -4,10 +4,11 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
+import { equals, JsonValue } from '@rljson/json';
+
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import { dirname, join, relative } from 'path';
 import { expect } from 'vitest';
-
 
 /// If this is set to true, the golden files will be updated.
 export const shouldUpdateGoldens = () => {
@@ -40,13 +41,11 @@ export const expectGolden = (
   options: ExpectGoldenOptions = defaultExpectGoldensOptions(),
 ) => {
   return {
-    toBe: async (expected: any) => {
+    toBe: async (expected: JsonValue) => {
       const { npmUpdateGoldensEnabled } = options;
 
       // Stringify json
-      if (typeof expected !== 'string') {
-        expected = JSON.stringify(expected, null, 2);
-      }
+      const expectedStr = JSON.stringify(expected, null, 2);
 
       // Get golden file path
       const goldensDir = join(__dirname, '..', 'goldens');
@@ -56,14 +55,17 @@ export const expectGolden = (
       // Write golden file
       if (npmUpdateGoldensEnabled && shouldUpdateGoldens()) {
         await mkdir(dirname(filePath), { recursive: true });
-        await writeFile(filePath, expected);
+        await writeFile(filePath, expectedStr);
       }
 
       // Check if golden file exists
       let needsGoldenUpdate: boolean = true;
-      let golden: string = '';
+      let goldenStr: string = '';
+      let golden: JsonValue = '';
       try {
-        golden = await readFile(filePath, 'utf8');
+        goldenStr = await readFile(filePath, 'utf8');
+        golden = JSON.parse(goldenStr);
+
         needsGoldenUpdate = false;
       } catch {
         needsGoldenUpdate = true;
@@ -71,7 +73,7 @@ export const expectGolden = (
 
       // npm updateGoldens enabled? Show an hint to run the command.
       if (npmUpdateGoldensEnabled) {
-        needsGoldenUpdate = golden !== expected;
+        needsGoldenUpdate = equals(expected, golden) === false;
 
         if (needsGoldenUpdate) {
           expect.fail(
@@ -84,7 +86,7 @@ export const expectGolden = (
       // Expect the golden file to be the same as the expected content.
       else {
         expect(needsGoldenUpdate).toBeFalsy();
-        expect(expected).toBe(golden);
+        expect(expected).toEqual(golden);
       }
     },
   };

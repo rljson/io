@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@rljson/hash':
-        specifier: ^0.0.15
-        version: 0.0.15
+        specifier: ^0.0.16
+        version: 0.0.16
       '@rljson/is-ready':
         specifier: ^0.0.17
         version: 0.0.17
@@ -18,8 +18,8 @@ importers:
         specifier: ^0.0.21
         version: 0.0.21
       '@rljson/rljson':
-        specifier: ^0.0.50
-        version: 0.0.50
+        specifier: ^0.0.51
+        version: 0.0.51
       '@rljson/validate':
         specifier: ^0.0.10
         version: 0.0.10
@@ -403,8 +403,8 @@ packages:
     resolution: {integrity: sha512-6K3ASn2PnyWOdqgU1/FtaU8vNUcHubcm7MlrhUUE63UOizBheoApYaMY91r3SaIRI0hbvR8NOa2k30PR/Ms/cw==}
     engines: {node: '>=22.14.0'}
 
-  '@rljson/hash@0.0.15':
-    resolution: {integrity: sha512-F7KsvOd6zPQ+AOpBM0gudnhe/3yhDj6qM/yAQItAgGBHMavlEgUFfOdU4JW0qn2I9kMsLeaM3yXs8nBhswVwCg==}
+  '@rljson/hash@0.0.16':
+    resolution: {integrity: sha512-RbMQUEP4uhSTVArvRRXR73bXyQRbghuYzhzQiJyDyTsyFJiDbEcSKEyU1VYbJ3PPEu6HUklRx6ieZC0kPGDEcQ==}
     engines: {node: '>=22.14.0'}
 
   '@rljson/is-ready@0.0.17':
@@ -423,8 +423,8 @@ packages:
     resolution: {integrity: sha512-tt5wJv7sW9Cb9p8sLefrkVbZ3S7/ntVKuss6K+QpmoFks1dSDwzUqsHCIthEGt0s2yirGgNO1a++9rzNOq75dQ==}
     engines: {node: '>=22.14.0'}
 
-  '@rljson/rljson@0.0.50':
-    resolution: {integrity: sha512-ONlrAYzPBza6qJx/cAEb2xu3dyt5+K9j7O/iopmmcRBwA9dOf0ukyHElz0huIM7w2DjBDd0DfnW63O4lyaxhwg==}
+  '@rljson/rljson@0.0.51':
+    resolution: {integrity: sha512-7GpjUq0+L/4xW4YuZUppAq1edp8cuJxE1quGAmKr1UWBobugnWmfcM+i6p3JgTZo6wPvqZ4xzUuRxiaEfTi3xA==}
     engines: {node: '>=22.14.0'}
 
   '@rljson/validate@0.0.10':
@@ -910,8 +910,8 @@ packages:
   de-indent@1.0.2:
     resolution: {integrity: sha512-e/1zu3xH5MQryN2zdVaF0OrdNLUbvWxzMbi+iNA6Bky7l1RoP8a2fIbRocyHclXt/arDrrR6lL3TqFD9pMQTsg==}
 
-  debug@4.4.0:
-    resolution: {integrity: sha512-6WTZ/IxCY/T6BALoZHaE4ctp9xm+Z5kY/pzYaCHRFeyVhojxlrm+46y68HA6hr0TcwEssoxNiDEUJQjfPZ/RYA==}
+  debug@4.4.1:
+    resolution: {integrity: sha512-KcKCqiftBJcZr++7ykoDIEwSa3XWowTfNPo92BYxjXiyYEVrUQh2aLyhxBCwww+heortUFxEJYcRzosstTEBYQ==}
     engines: {node: '>=6.0'}
     peerDependencies:
       supports-color: '*'
@@ -2187,7 +2187,7 @@ snapshots:
   '@eslint/config-array@0.20.0':
     dependencies:
       '@eslint/object-schema': 2.1.6
-      debug: 4.4.0
+      debug: 4.4.1
       minimatch: 3.1.2
     transitivePeerDependencies:
       - supports-color
@@ -2201,7 +2201,7 @@ snapshots:
   '@eslint/eslintrc@3.3.1':
     dependencies:
       ajv: 6.12.6
-      debug: 4.4.0
+      debug: 4.4.1
       espree: 10.3.0
       globals: 14.0.0
       ignore: 5.3.2
@@ -2337,7 +2337,7 @@ snapshots:
       '@rljson/json': 0.0.18
       js-base64: 3.7.7
 
-  '@rljson/hash@0.0.15':
+  '@rljson/hash@0.0.16':
     dependencies:
       '@aws-crypto/sha256-js': 5.2.0
       '@rljson/json': 0.0.21
@@ -2354,9 +2354,9 @@ snapshots:
       '@rljson/hash': 0.0.13
       '@rljson/json': 0.0.18
 
-  '@rljson/rljson@0.0.50':
+  '@rljson/rljson@0.0.51':
     dependencies:
-      '@rljson/hash': 0.0.15
+      '@rljson/hash': 0.0.16
       '@rljson/json': 0.0.21
 
   '@rljson/validate@0.0.10':
@@ -2529,7 +2529,7 @@ snapshots:
       '@typescript-eslint/types': 8.32.1
       '@typescript-eslint/typescript-estree': 8.32.1(typescript@5.8.3)
       '@typescript-eslint/visitor-keys': 8.32.1
-      debug: 4.4.0
+      debug: 4.4.1
       eslint: 9.26.0
       typescript: 5.8.3
     transitivePeerDependencies:
@@ -2544,7 +2544,7 @@ snapshots:
     dependencies:
       '@typescript-eslint/typescript-estree': 8.32.1(typescript@5.8.3)
       '@typescript-eslint/utils': 8.32.1(eslint@9.26.0)(typescript@5.8.3)
-      debug: 4.4.0
+      debug: 4.4.1
       eslint: 9.26.0
       ts-api-utils: 2.1.0(typescript@5.8.3)
       typescript: 5.8.3
@@ -2557,7 +2557,7 @@ snapshots:
     dependencies:
       '@typescript-eslint/types': 8.32.1
       '@typescript-eslint/visitor-keys': 8.32.1
-      debug: 4.4.0
+      debug: 4.4.1
       fast-glob: 3.3.3
       is-glob: 4.0.3
       minimatch: 9.0.5
@@ -2587,7 +2587,7 @@ snapshots:
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@bcoe/v8-coverage': 1.0.2
-      debug: 4.4.0
+      debug: 4.4.1
       istanbul-lib-coverage: 3.2.2
       istanbul-lib-report: 3.0.1
       istanbul-lib-source-maps: 5.0.6
@@ -2758,7 +2758,7 @@ snapshots:
     dependencies:
       bytes: 3.1.2
       content-type: 1.0.5
-      debug: 4.4.0
+      debug: 4.4.1
       http-errors: 2.0.0
       iconv-lite: 0.6.3
       on-finished: 2.4.1
@@ -2863,7 +2863,7 @@ snapshots:
 
   de-indent@1.0.2: {}
 
-  debug@4.4.0:
+  debug@4.4.1:
     dependencies:
       ms: 2.1.3
 
@@ -2942,7 +2942,7 @@ snapshots:
       '@es-joy/jsdoccomment': 0.49.0
       are-docs-informative: 0.0.2
       comment-parser: 1.4.1
-      debug: 4.4.0
+      debug: 4.4.1
       escape-string-regexp: 4.0.0
       eslint: 9.26.0
       espree: 10.3.0
@@ -2986,7 +2986,7 @@ snapshots:
       ajv: 6.12.6
       chalk: 4.1.2
       cross-spawn: 7.0.6
-      debug: 4.4.0
+      debug: 4.4.1
       escape-string-regexp: 4.0.0
       eslint-scope: 8.3.0
       eslint-visitor-keys: 4.2.0
@@ -3055,7 +3055,7 @@ snapshots:
       content-type: 1.0.5
       cookie: 0.7.2
       cookie-signature: 1.2.2
-      debug: 4.4.0
+      debug: 4.4.1
       encodeurl: 2.0.0
       escape-html: 1.0.3
       etag: 1.8.1
@@ -3113,7 +3113,7 @@ snapshots:
 
   finalhandler@2.1.0:
     dependencies:
-      debug: 4.4.0
+      debug: 4.4.1
       encodeurl: 2.0.0
       escape-html: 1.0.3
       on-finished: 2.4.1
@@ -3279,7 +3279,7 @@ snapshots:
   istanbul-lib-source-maps@5.0.6:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.25
-      debug: 4.4.0
+      debug: 4.4.1
       istanbul-lib-coverage: 3.2.2
     transitivePeerDependencies:
       - supports-color
@@ -3657,7 +3657,7 @@ snapshots:
 
   router@2.2.0:
     dependencies:
-      debug: 4.4.0
+      debug: 4.4.1
       depd: 2.0.0
       is-promise: 4.0.0
       parseurl: 1.3.3
@@ -3681,7 +3681,7 @@ snapshots:
 
   send@1.2.0:
     dependencies:
-      debug: 4.4.0
+      debug: 4.4.1
       encodeurl: 2.0.0
       escape-html: 1.0.3
       etag: 1.8.1
@@ -3904,7 +3904,7 @@ snapshots:
   vite-node@3.1.3(@types/node@22.15.17):
     dependencies:
       cac: 6.7.14
-      debug: 4.4.0
+      debug: 4.4.1
       es-module-lexer: 1.7.0
       pathe: 2.0.3
       vite: 6.3.5(@types/node@22.15.17)
@@ -3929,7 +3929,7 @@ snapshots:
       '@volar/typescript': 2.4.13
       '@vue/language-core': 2.2.0(typescript@5.8.3)
       compare-versions: 6.1.1
-      debug: 4.4.0
+      debug: 4.4.1
       kolorist: 1.8.0
       local-pkg: 1.1.1
       magic-string: 0.30.17
@@ -3943,7 +3943,7 @@ snapshots:
 
   vite-tsconfig-paths@5.1.4(typescript@5.8.3)(vite@6.3.5(@types/node@22.15.17)):
     dependencies:
-      debug: 4.4.0
+      debug: 4.4.1
       globrex: 0.1.2
       tsconfck: 3.1.5(typescript@5.8.3)
     optionalDependencies:
@@ -3984,7 +3984,7 @@ snapshots:
       '@vitest/spy': 3.1.3
       '@vitest/utils': 3.1.3
       chai: 5.2.0
-      debug: 4.4.0
+      debug: 4.4.1
       expect-type: 1.2.1
       magic-string: 0.30.17
       pathe: 2.0.3
