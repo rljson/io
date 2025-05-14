@@ -27,11 +27,17 @@ export class IoMem implements Io {
   constructor() {}
 
   init(): Promise<void> {
+    this._isOpen = true;
     return this._init();
   }
 
   close(): Promise<void> {
+    this._isOpen = false;
     return Promise.resolve();
+  }
+
+  get isOpen(): boolean {
+    return this._isOpen;
   }
 
   static example = async () => {
@@ -120,6 +126,7 @@ export class IoMem implements Io {
   private _ioTools!: IoTools;
 
   private _isReady = new IsReady();
+  private _isOpen = false;
 
   private _mem: Rljson = hip({} as Rljson);
 

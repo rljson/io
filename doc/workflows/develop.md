@@ -33,12 +33,12 @@ git pull
 
 ## Set pull request title
 
-Replace `Fix conformance test issues, especially with hashing` here and below
+Replace `Fix an async bug in conformance tests` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Fix conformance test issues, especially with hashing"
+node scripts/create-branch.js "Fix an async bug in conformance tests"
 ```
 
 ## Update-dependencies
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Fix conformance test issues, especially with hashing"
+git commit -am"Fix an async bug in conformance tests"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Fix conformance test issues, especially with hashing" --body " "
+gh pr create --base main --title "Fix an async bug in conformance tests" --body " "
 ```
 
 ## Code review
