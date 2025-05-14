@@ -8,7 +8,6 @@ import { hip, hsh, rmhsh } from '@rljson/hash';
 import {
   addColumnsToTableCfg,
   exampleTableCfg,
-  IngredientsTable,
   Rljson,
   TableCfg,
   TableType,
@@ -112,13 +111,11 @@ export const runIoConformanceTests = () => {
         await io.createOrExtendTable({ tableCfg: tableV2 });
 
         // Check the tableCfgs
-        const actualTableCfgs = (await io.tableCfgs()).tableCfgs
-          ._data as unknown as TableCfg[];
+        const actualTableCfgs = await ioTools.tableCfgs();
 
-        expect(actualTableCfgs.length).toBe(3);
-        expect((actualTableCfgs[0] as TableCfg).key).toBe('tableCfgs');
-        expect((actualTableCfgs[1] as TableCfg).key).toBe('revisions');
-        expect((actualTableCfgs[2] as TableCfg).key).toBe('table0');
+        await expectGolden('io-conformance/tableCfgs-1.json', ego).toBe(
+          actualTableCfgs,
+        );
       });
     });
 
@@ -248,10 +245,8 @@ export const runIoConformanceTests = () => {
 
       it('should add a table and a table config', async () => {
         const tablesFromConfig = async () => {
-          const tables = (await io.tableCfgs())
-            .tableCfgs as IngredientsTable<TableCfg>;
-
-          return tables._data.map((e) => e.key);
+          const tables = await ioTools.tableCfgs();
+          return tables.map((e) => e.key);
         };
 
         const physicalTables = async () => await ioTools.allTableKeys();
@@ -260,33 +255,33 @@ export const runIoConformanceTests = () => {
         await createExampleTable('table1');
 
         expect(await tablesFromConfig()).toEqual([
-          'tableCfgs',
           'revisions',
           'table',
           'table1',
+          'tableCfgs',
         ]);
         expect(await physicalTables()).toEqual([
-          'tableCfgs',
           'revisions',
           'table',
           'table1',
+          'tableCfgs',
         ]);
 
         // Create a second table
         await createExampleTable('table2');
         expect(await tablesFromConfig()).toEqual([
-          'tableCfgs',
           'revisions',
           'table',
           'table1',
           'table2',
+          'tableCfgs',
         ]);
         expect(await physicalTables()).toEqual([
-          'tableCfgs',
           'revisions',
           'table',
           'table1',
           'table2',
+          'tableCfgs',
         ]);
       });
 
@@ -653,16 +648,16 @@ export const runIoConformanceTests = () => {
                 {
                   array: [1, 2, { a: 10 }],
                   boolean: true,
-                  number: 5,
-                  object: { a: 1, b: { c: 3 } },
-                  string: 'hello',
+                  number: 6,
+                  object: { a: 1, b: 2 },
+                  string: 'world',
                 },
                 {
                   array: [1, 2, { a: 10 }],
                   boolean: true,
-                  number: 6,
-                  object: { a: 1, b: 2 },
-                  string: 'world',
+                  number: 5,
+                  object: { a: 1, b: { c: 3 } },
+                  string: 'hello',
                 },
               ],
             },
@@ -683,16 +678,16 @@ export const runIoConformanceTests = () => {
                 {
                   array: [1, 2, { a: 10 }],
                   boolean: true,
-                  number: 5,
-                  object: { a: 1, b: { c: 3 } },
-                  string: 'hello',
+                  number: 6,
+                  object: { a: 1, b: 2 },
+                  string: 'world',
                 },
                 {
                   array: [1, 2, { a: 10 }],
                   boolean: true,
-                  number: 6,
-                  object: { a: 1, b: 2 },
-                  string: 'world',
+                  number: 5,
+                  object: { a: 1, b: { c: 3 } },
+                  string: 'hello',
                 },
               ],
             },
@@ -716,16 +711,16 @@ export const runIoConformanceTests = () => {
                 {
                   array: [1, 2, { a: 10 }],
                   boolean: true,
-                  number: 5,
-                  object: { a: 1, b: { c: 3 } },
-                  string: 'hello',
+                  number: 6,
+                  object: { a: 1, b: 2 },
+                  string: 'world',
                 },
                 {
                   array: [1, 2, { a: 10 }],
                   boolean: true,
-                  number: 6,
-                  object: { a: 1, b: 2 },
-                  string: 'world',
+                  number: 5,
+                  object: { a: 1, b: { c: 3 } },
+                  string: 'hello',
                 },
               ],
             },
