@@ -33,12 +33,12 @@ git pull
 
 ## Set pull request title
 
-Replace `Fix an async bug in conformance tests` here and below
+Replace `Fix raw values` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Fix an async bug in conformance tests"
+node scripts/create-branch.js "Fix raw values"
 ```
 
 ## Update-dependencies
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Fix an async bug in conformance tests"
+git commit -am"Fix raw values"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Fix an async bug in conformance tests" --body " "
+gh pr create --base main --title "Fix raw values" --body " "
 ```
 
 ## Code review

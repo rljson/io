@@ -96,6 +96,11 @@ export class IoMem implements Io {
     return this._createOrExtendTable(request);
   }
 
+  async rawTableCfgs(): Promise<TableCfg[]> {
+    const tables = this._mem.tableCfgs._data as TableCfg[];
+    return tables;
+  }
+
   // ######################
   // Private
   // ######################
