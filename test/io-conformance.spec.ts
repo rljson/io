@@ -51,6 +51,22 @@ export const runIoConformanceTests = () => {
       });
     });
 
+    describe('isOpen()', () => {
+      it('should return false before init, true after and false after close', async () => {
+        const setup = testSetup();
+        await setup.init();
+
+        const io = setup.io;
+        expect(io.isOpen).toBe(false);
+
+        await io.init();
+        expect(io.isOpen).toBe(true);
+
+        await io.close();
+        expect(io.isOpen).toBe(false);
+      });
+    });
+
     const createExampleTable = async (key: string) => {
       // Register a new table config and generate the table
       const tableCfg: TableCfg = exampleTableCfg({ key });
@@ -497,7 +513,7 @@ export const runIoConformanceTests = () => {
         expect(rowCountAfterFirstWrite).toEqual(2);
 
         // Write the same item again
-        expect(io.write({ data: testData }));
+        await io.write({ data: testData });
 
         // Nothing changes because the data is the same
         const rowCountAfterSecondWrite = await io.rowCount(tableName);

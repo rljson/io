@@ -18,6 +18,9 @@ export interface Io {
   /** Closes the io */
   close(): Promise<void>;
 
+  /** Returns true if io is opened */
+  isOpen: boolean;
+
   /** A promise resolving once the Io interface is ready
    *
    * 💡 Use @rljson/is-ready
