@@ -2,6 +2,46 @@
   "tableCfgs": {
     "_data": [
       {
+        "key": "revisions",
+        "type": "ingredients",
+        "isHead": true,
+        "isRoot": true,
+        "isShared": false,
+        "columns": [
+          {
+            "key": "_hash",
+            "type": "string",
+            "_hash": "df4oYftB-71Njv9FprRCeg"
+          },
+          {
+            "key": "table",
+            "type": "string",
+            "_hash": "FmsYjsit04XJi02Sihdwl-"
+          },
+          {
+            "key": "predecessor",
+            "type": "string",
+            "_hash": "RlAk7Lj-lZf2KDlUk5fekZ"
+          },
+          {
+            "key": "successor",
+            "type": "string",
+            "_hash": "MJlFtQVty5oUJKVzzj5hyB"
+          },
+          {
+            "key": "timestamp",
+            "type": "number",
+            "_hash": "XpKYGh23thW6vONgQuoMHf"
+          },
+          {
+            "key": "id",
+            "type": "string",
+            "_hash": "eq2P3RIaSgy81i7PomNUvn"
+          }
+        ],
+        "_hash": "CubBZQUGTMLa5wMqqzHLXz"
+      },
+      {
         "_hash": "oS4O57K1hbZY9hQzRID9nO",
         "key": "tableCfgs",
         "type": "ingredients",
@@ -51,49 +91,9 @@
             "_hash": "aPmGTcNng9E1RvlEj1LtxB"
           }
         ]
-      },
-      {
-        "key": "revisions",
-        "type": "ingredients",
-        "isHead": true,
-        "isRoot": true,
-        "isShared": false,
-        "columns": [
-          {
-            "key": "_hash",
-            "type": "string",
-            "_hash": "df4oYftB-71Njv9FprRCeg"
-          },
-          {
-            "key": "table",
-            "type": "string",
-            "_hash": "FmsYjsit04XJi02Sihdwl-"
-          },
-          {
-            "key": "predecessor",
-            "type": "string",
-            "_hash": "RlAk7Lj-lZf2KDlUk5fekZ"
-          },
-          {
-            "key": "successor",
-            "type": "string",
-            "_hash": "MJlFtQVty5oUJKVzzj5hyB"
-          },
-          {
-            "key": "timestamp",
-            "type": "number",
-            "_hash": "XpKYGh23thW6vONgQuoMHf"
-          },
-          {
-            "key": "id",
-            "type": "string",
-            "_hash": "eq2P3RIaSgy81i7PomNUvn"
-          }
-        ],
-        "_hash": "CubBZQUGTMLa5wMqqzHLXz"
       }
     ],
     "_tableCfg": "oS4O57K1hbZY9hQzRID9nO",
-    "_hash": "Yd82KsMDBGtpbGxISEZQ-n"
+    "_hash": "Rq-oDdFCeBCeW3HTiFMhhN"
   }
 }

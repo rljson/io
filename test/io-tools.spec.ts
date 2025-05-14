@@ -107,15 +107,15 @@ describe('IoTools', () => {
       await io.createOrExtendTable({ tableCfg: exampleTableCfg() });
 
       await expect(ioTools.allTableKeys()).resolves.toEqual([
-        'tableCfgs',
         'revisions',
         'table',
+        'tableCfgs',
       ]);
     });
 
     it('should return an empty array if no tables are created', async () => {
       const tables = await ioTools.allTableKeys();
-      expect(tables).toEqual(['tableCfgs', 'revisions']);
+      expect(tables).toEqual(['revisions', 'tableCfgs']);
     });
   });
 

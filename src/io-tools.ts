@@ -10,6 +10,7 @@ import {
   Rljson,
   TableCfg,
   TableKey,
+  TableType,
   throwOnInvalidTableCfg,
   validateRljsonAgainstTableCfg,
 } from '@rljson/rljson';
@@ -122,12 +123,43 @@ export class IoTools {
   }
 
   /**
+   * Returns the current table cfgs of all tables
+   * @returns The table configuration of all tables
+   */
+  async tableCfgs(): Promise<TableCfg[]> {
+    const tableCfgDump = await this.io.dumpTable({ table: 'tableCfgs' });
+    const tables = tableCfgDump.tableCfgs._data as TableCfg[];
+
+    // Take the latest version of each type key
+    const newestVersion: Record<TableKey, TableCfg> = {};
+    for (let i = tables.length - 1; i >= 0; i--) {
+      const table = tables[i];
+      const existing = newestVersion[table.key];
+      if (!existing || existing.columns.length < table.columns.length) {
+        newestVersion[table.key] = table;
+      }
+    }
+
+    const resultData = Object.values(newestVersion).sort((a, b) => {
+      if (a.key < b.key) {
+        return -1;
+      }
+      if (a.key > b.key) {
+        return 1;
+        /* v8 ignore start */
+      }
+
+      return 0;
+      /* v8 ignore end */
+    });
+    return resultData;
+  }
+
+  /**
    * Returns a list with all table names
    */
   async allTableKeys(): Promise<string[]> {
-    const result = (await this.io.tableCfgs()).tableCfgs._data.map(
-      (e) => e.key,
-    );
+    const result = (await this.tableCfgs()).map((e) => e.key);
     return result;
   }
 
@@ -148,8 +180,8 @@ export class IoTools {
 
    */
   async tableCfgOrNull(table: TableKey): Promise<TableCfg | null> {
-    const tableCfgs = await this.io.tableCfgs();
-    const tableCfg = tableCfgs.tableCfgs._data.find((e) => e.key === table);
+    const tableCfgs = await this.tableCfgs();
+    const tableCfg = tableCfgs.find((e) => e.key === table);
     return tableCfg ?? null;
   }
 
@@ -261,5 +293,31 @@ export class IoTools {
           .join('\n')}`,
       );
     }
+  }
+
+  /**
+   * Sorts the data of a table by the hash and updates the table hash in place
+   */
+  sortTableDataAndUpdateHash(table: TableType): void {
+    table._data.sort((a, b) => {
+      const hashA = a._hash as string;
+      const hashB = b._hash as string;
+      if (hashA < hashB) {
+        return -1;
+      }
+      if (hashA > hashB) {
+        return 1;
+        /* v8 ignore start */
+      }
+
+      return 0;
+      /* v8 ignore end */
+    });
+
+    table._hash = '';
+    hip(table, {
+      updateExistingHashes: false,
+      throwOnWrongHashes: false,
+    });
   }
 }
