@@ -53,11 +53,6 @@ export interface Io {
    */
   createOrExtendTable(request: { tableCfg: TableCfg }): Promise<void>;
 
-  /**
-   * Returns a json structure returning current table configurations
-   */
-  tableCfgs(): Promise<Rljson>;
-
   // ...........................................................................
   // Write
 
