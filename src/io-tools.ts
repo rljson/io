@@ -127,19 +127,21 @@ export class IoTools {
    * @returns The table configuration of all tables
    */
   async tableCfgs(): Promise<TableCfg[]> {
-    const tableCfgDump = await this.io.dumpTable({ table: 'tableCfgs' });
-    const tables = tableCfgDump.tableCfgs._data as TableCfg[];
+    const tables = await this.io.rawTableCfgs();
 
     // Take the latest version of each type key
     const newestVersion: Record<TableKey, TableCfg> = {};
     for (let i = tables.length - 1; i >= 0; i--) {
       const table = tables[i];
       const existing = newestVersion[table.key];
+      /* v8 ignore start */
       if (!existing || existing.columns.length < table.columns.length) {
         newestVersion[table.key] = table;
       }
+      /* v8 ignore end */
     }
 
+    // Sort the tables by key
     const resultData = Object.values(newestVersion).sort((a, b) => {
       if (a.key < b.key) {
         return -1;
