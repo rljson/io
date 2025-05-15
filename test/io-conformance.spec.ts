@@ -780,6 +780,7 @@ export const runIoConformanceTests = () => {
         expect(result).toEqual({
           testTable: {
             _data: [],
+            _hash: 'An2XIY8nP9xH6Lfb_Ohy6d',
           },
         });
       });

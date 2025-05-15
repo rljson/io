@@ -33,12 +33,12 @@ git pull
 
 ## Set pull request title
 
-Replace `Fix raw values` here and below
+Replace `Add a missing hash to a filtered table` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Fix raw values"
+node scripts/create-branch.js "Add a missing hash to a filtered table"
 ```
 
 ## Update-dependencies
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Fix raw values"
+git commit -am"Add a missing hash to a filtered table"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Fix raw values" --body " "
+gh pr create --base main --title "Add a missing hash to a filtered table" --body " "
 ```
 
 ## Code review
