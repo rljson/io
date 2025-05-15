@@ -276,26 +276,35 @@ export class IoMem implements Io {
       Object.keys(request.where),
     );
 
+    // Read table from data
     const table = this._mem[request.table] as TableType;
 
-    const result: Rljson = {
-      [request.table]: {
-        _data: table._data.filter((row) => {
-          for (const column in request.where) {
-            const a = row[column];
-            const b = request.where[column];
-            if (b === null && a === undefined) {
-              return true;
-            }
-
-            if (!equals(a, b)) {
-              return false;
-            }
-          }
+    // Filter table data
+    const tableDataFiltered = table._data.filter((row) => {
+      for (const column in request.where) {
+        const a = row[column];
+        const b = request.where[column];
+        if (b === null && a === undefined) {
           return true;
-        }),
-      },
-    } as any;
+        }
+
+        if (!equals(a, b)) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    // Create an table
+    const tableFiltered: TableType = {
+      _data: tableDataFiltered,
+    };
+
+    this._ioTools.sortTableDataAndUpdateHash(tableFiltered);
+
+    const result: Rljson = {
+      [request.table]: tableFiltered,
+    };
 
     return result;
   }
