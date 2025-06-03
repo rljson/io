@@ -8,20 +8,20 @@ import { Io, IoMem, IoTestSetup } from '../src';
 
 // ..............................................................................
 class MyIoTestSetup implements IoTestSetup {
-  async mainSetup(): Promise<void> {
+  async beforeAll(): Promise<void> {
     // This method can be used for any additional setup required before init.
     // Currently, it does nothing.
   }
-  async init(): Promise<void> {
+  async beforeEach(): Promise<void> {
     this._io = await IoMem.example();
   }
 
-  async tearDown(): Promise<void> {
+  async afterEach(): Promise<void> {
     await this.io.close();
   }
 
-  async mainFinish(): Promise<void> {
-    // This method can be used for any additional cleanup after tearDown.
+  async afterAll(): Promise<void> {
+    // This method can be used for any additional cleanup after afterEach.
   }
 
   get io(): Io {

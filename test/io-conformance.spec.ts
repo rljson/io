@@ -40,12 +40,11 @@ export const runIoConformanceTests = () => {
 
     beforeAll(async () => {
       setup = testSetup();
-      await setup.mainSetup();
+      await setup.beforeAll();
     });
 
     beforeEach(async () => {
-      //setup = testSetup();
-      await setup.init();
+      await setup.beforeEach();
       io = setup.io;
       await io.init();
       await io.isReady();
@@ -54,11 +53,11 @@ export const runIoConformanceTests = () => {
 
     afterEach(async () => {
       await io.close();
-      await setup.tearDown();
+      await setup.afterEach();
     });
 
     afterAll(async () => {
-      await setup.mainFinish();
+      await setup.afterAll();
     });
 
     describe('isReady()', () => {
@@ -70,7 +69,7 @@ export const runIoConformanceTests = () => {
     describe('isOpen()', () => {
       it('should return false before init, true after and false after close', async () => {
         const setup = testSetup();
-        await setup.init();
+        await setup.beforeEach();
 
         const io = setup.io;
         expect(io.isOpen).toBe(false);
