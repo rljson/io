@@ -11,19 +11,19 @@ import { exampleTestSetup } from '../src/io-test-setup.ts';
 describe('TestSetup', () => {
   it('exampleTestSetup', async () => {
     const testSetup = exampleTestSetup();
-    await testSetup.init();
+    await testSetup.beforeEach();
     expect(testSetup.io).toBeDefined();
 
-    testSetup.tearDown();
+    testSetup.afterEach();
   });
 
-  it('mainSetup resolves without error', async () => {
+  it('beforeAll resolves without error', async () => {
     const testSetup = exampleTestSetup();
-    await expect(testSetup.mainSetup()).resolves.toBeUndefined();
+    await expect(testSetup.beforeAll()).resolves.toBeUndefined();
   });
 
-  it('mainFinish resolves without error', async () => {
+  it('afterAll resolves without error', async () => {
     const testSetup = exampleTestSetup();
-    await expect(testSetup.mainFinish()).resolves.toBeUndefined();
+    await expect(testSetup.afterAll()).resolves.toBeUndefined();
   });
 });
