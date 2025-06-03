@@ -33,12 +33,12 @@ git pull
 
 ## Set pull request title
 
-Replace `Add a missing hash to a filtered table` here and below
+Replace `Add before and after all to conformance spec` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Add a missing hash to a filtered table"
+node scripts/create-branch.js "Add before and after all to conformance spec"
 ```
 
 ## Update-dependencies
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Add a missing hash to a filtered table"
+git commit -am"Add before and after all to conformance spec"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Add a missing hash to a filtered table" --body " "
+gh pr create --base main --title "Add before and after all to conformance spec" --body " "
 ```
 
 ## Code review
