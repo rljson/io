@@ -16,4 +16,14 @@ describe('TestSetup', () => {
 
     testSetup.tearDown();
   });
+
+  it('mainSetup resolves without error', async () => {
+    const testSetup = exampleTestSetup();
+    await expect(testSetup.mainSetup()).resolves.toBeUndefined();
+  });
+
+  it('mainFinish resolves without error', async () => {
+    const testSetup = exampleTestSetup();
+    await expect(testSetup.mainFinish()).resolves.toBeUndefined();
+  });
 });

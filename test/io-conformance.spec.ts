@@ -13,7 +13,15 @@ import {
   TableType,
 } from '@rljson/rljson';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from 'vitest';
 
 import { Io, IoTestSetup, IoTools } from '../src';
 
@@ -30,8 +38,13 @@ export const runIoConformanceTests = () => {
     let ioTools: IoTools;
     let setup: IoTestSetup;
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       setup = testSetup();
+      await setup.mainSetup();
+    });
+
+    beforeEach(async () => {
+      //setup = testSetup();
       await setup.init();
       io = setup.io;
       await io.init();
@@ -42,6 +55,10 @@ export const runIoConformanceTests = () => {
     afterEach(async () => {
       await io.close();
       await setup.tearDown();
+    });
+
+    afterAll(async () => {
+      await setup.mainFinish();
     });
 
     describe('isReady()', () => {

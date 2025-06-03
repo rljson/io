@@ -12,6 +12,9 @@ import { Io, IoMem } from './index.ts';
  * conformance tests.
  */
 export interface IoTestSetup {
+  /** setup before the single setups */
+  mainSetup: () => Promise<void>;
+
   /**
    * Initializes the io implementation.
    * @returns The io implementation.
@@ -23,6 +26,9 @@ export interface IoTestSetup {
    * @returns The io implementation.
    */
   tearDown: () => Promise<void>;
+
+  /** cleanup after all tests */
+  mainFinish: () => Promise<void>;
 
   /**
    * The io implementation to be used in the conformance tests.
@@ -40,6 +46,14 @@ export const exampleTestSetup = (): IoTestSetup => {
     },
     tearDown: async () => {
       // Tear down the io implementation
+    },
+    mainSetup: async () => {
+      // This method can be used for any additional setup required before init.
+      // Currently, it does nothing.
+    },
+
+    mainFinish: async () => {
+      // This method can be used for any additional cleanup after tearDown.
     },
   };
 };
