@@ -33,12 +33,12 @@ git pull
 
 ## Set pull request title
 
-Replace `Add before and after all to conformance spec` here and below
+Replace `Update conformance.spec (before-after)` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Add before and after all to conformance spec"
+node scripts/create-branch.js "Update conformance.spec (before-after)"
 ```
 
 ## Update-dependencies
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Add before and after all to conformance spec"
+git commit -am"Update conformance.spec (before-after)"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Add before and after all to conformance spec" --body " "
+gh pr create --base main --title "Update conformance.spec (before-after)" --body " "
 ```
 
 ## Code review
