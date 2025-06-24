@@ -68,7 +68,6 @@ export const runIoConformanceTests = () => {
 
     describe('isOpen()', () => {
       it('should return false before init, true after and false after close', async () => {
-        await io.init();
         expect(io.isOpen).toBe(true);
 
         await io.close();

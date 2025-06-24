@@ -33,12 +33,12 @@ git pull
 
 ## Set pull request title
 
-Replace `Update conformance.spec (before-after)` here and below
+Replace `Update conformance.spec (init to each)` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Update conformance.spec (before-after)"
+node scripts/create-branch.js "Update conformance.spec (init to each)"
 ```
 
 ## Update-dependencies
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Update conformance.spec (before-after)"
+git commit -am"Update conformance.spec (init to each)"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Update conformance.spec (before-after)" --body " "
+gh pr create --base main --title "Update conformance.spec (init to each)" --body " "
 ```
 
 ## Code review
