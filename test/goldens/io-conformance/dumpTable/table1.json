@@ -1,5 +1,6 @@
 {
   "table1": {
+    "_type": "components",
     "_data": [
       {
         "a": "a2",
@@ -7,6 +8,6 @@
       }
     ],
     "_tableCfg": "uX24nHRtwkXRsq8l46cNRZ",
-    "_hash": "nksvrEpFX4r9hmf9TvOeuQ"
+    "_hash": "zn4-cNVdMm7j0BvlnL_jPp"
   }
 }

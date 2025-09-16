@@ -1,6 +1,7 @@
 {
-  "_hash": "MnbkSncTz0EZfoUkzier50",
+  "_hash": "DnOQ09ZDCOEkup_X_wE2xn",
   "tableCfgs": {
+    "_type": "tableCfgs",
     "_data": [
       {
         "_hash": "SXZfuoskGujJUM0IEhnK-Y",
@@ -95,11 +96,12 @@
       }
     ],
     "_tableCfg": "SXZfuoskGujJUM0IEhnK-Y",
-    "_hash": "yBiqSEArDuVNCZsaRvQKpx"
+    "_hash": "x9NU2Q0A51eLFtY9q9DOTn"
   },
   "revisions": {
+    "_type": "components",
     "_data": [],
     "_tableCfg": "qSiBIKgtygLMo0I-af3Aas",
-    "_hash": "ITOky2JDO7Bd6lX9zXLRry"
+    "_hash": "gCVGDOiCejkqf_-KGsWHc9"
   }
 }

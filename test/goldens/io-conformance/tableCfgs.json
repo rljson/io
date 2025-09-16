@@ -1,5 +1,6 @@
 {
   "tableCfgs": {
+    "_type": "tableCfgs",
     "_data": [
       {
         "_hash": "SXZfuoskGujJUM0IEhnK-Y",
@@ -94,6 +95,6 @@
       }
     ],
     "_tableCfg": "SXZfuoskGujJUM0IEhnK-Y",
-    "_hash": "yBiqSEArDuVNCZsaRvQKpx"
+    "_hash": "x9NU2Q0A51eLFtY9q9DOTn"
   }
 }

@@ -128,6 +128,7 @@ export class IoMem implements Io {
     const tableCfg = IoTools.tableCfgsTableCfg;
 
     this._mem.tableCfgs = hip({
+      _type: 'tableCfgs',
       _data: [tableCfg],
       _tableCfg: tableCfg._hash as string,
     });
@@ -182,6 +183,7 @@ export class IoMem implements Io {
 
     // Create a table and write it into the database
     const table: TableType = {
+      _type: newConfig.type,
       _data: [],
       _tableCfg: newConfig._hash as string,
     };
@@ -297,6 +299,7 @@ export class IoMem implements Io {
 
     // Create an table
     const tableFiltered: TableType = {
+      _type: table._type,
       _data: tableDataFiltered,
     };
 

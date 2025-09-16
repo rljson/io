@@ -1,6 +1,7 @@
 {
-  "_hash": "gczIFk-4qaD0yHsiHv44JV",
+  "_hash": "bMObanl67TGzyfpznDg1UE",
   "tableCfgs": {
+    "_type": "tableCfgs",
     "_data": [
       {
         "key": "table2",
@@ -145,21 +146,24 @@
       }
     ],
     "_tableCfg": "SXZfuoskGujJUM0IEhnK-Y",
-    "_hash": "r57th7EqumDEo02vbkkFKi"
+    "_hash": "-4Sy6fomZQVgHSN_7MHYdb"
   },
   "revisions": {
+    "_type": "components",
     "_data": [],
     "_tableCfg": "qSiBIKgtygLMo0I-af3Aas",
-    "_hash": "ITOky2JDO7Bd6lX9zXLRry"
+    "_hash": "gCVGDOiCejkqf_-KGsWHc9"
   },
   "table1": {
+    "_type": "components",
     "_data": [],
     "_tableCfg": "uX24nHRtwkXRsq8l46cNRZ",
-    "_hash": "X9wsnad1qv6mTqdcBHcVc4"
+    "_hash": "pYe_-T9K-7wMRpTbHgqOfP"
   },
   "table2": {
+    "_type": "components",
     "_data": [],
     "_tableCfg": "DLDX4scFVGDPf4JOqBJ1Dx",
-    "_hash": "rsZKaJL34TIr_YehbZFOGO"
+    "_hash": "Yc2y8em-BFHUmYReVQtpQe"
   }
 }

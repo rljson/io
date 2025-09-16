@@ -355,6 +355,7 @@ export const runIoConformanceTests = () => {
               },
             ],
             _tableCfg: '_SmasX0fD_A_0sshe6lnTt',
+            _type: 'components',
           },
         };
         expect(dump).toEqual(dumpExpected);
@@ -410,6 +411,7 @@ export const runIoConformanceTests = () => {
               },
             ],
             _tableCfg: 'E1tCMshAuHRJg5Gz6M-Fqd',
+            _type: 'components',
           },
         });
       });
@@ -645,6 +647,7 @@ export const runIoConformanceTests = () => {
                   string: 'hello',
                 },
               ],
+              _type: 'components',
             },
           });
         });
@@ -668,6 +671,7 @@ export const runIoConformanceTests = () => {
                   string: 'world',
                 },
               ],
+              _type: 'components',
             },
           });
         });
@@ -698,6 +702,7 @@ export const runIoConformanceTests = () => {
                   string: 'hello',
                 },
               ],
+              _type: 'components',
             },
           });
         });
@@ -728,6 +733,7 @@ export const runIoConformanceTests = () => {
                   string: 'hello',
                 },
               ],
+              _type: 'components',
             },
           });
         });
@@ -761,6 +767,8 @@ export const runIoConformanceTests = () => {
                   string: 'hello',
                 },
               ],
+
+              _type: 'components',
             },
           });
         });
@@ -791,6 +799,7 @@ export const runIoConformanceTests = () => {
                   string: 'hello',
                 },
               ],
+              _type: 'components',
             },
           });
         });
@@ -802,11 +811,12 @@ export const runIoConformanceTests = () => {
         await io.write({
           data: {
             testTable: {
-              _type: 'components',
               _data: [
                 { a: 'value1', b: 2 },
                 { a: 'value3', b: 4 },
               ],
+              _hash: 'dth8Ear2g__PlkgIscPXwB',
+              _type: 'components',
             },
           },
         });
@@ -819,7 +829,8 @@ export const runIoConformanceTests = () => {
         expect(result).toEqual({
           testTable: {
             _data: [],
-            _hash: 'An2XIY8nP9xH6Lfb_Ohy6d',
+            _hash: 'tpbDwaQADV4jPexwWgCTBJ',
+            _type: 'components',
           },
         });
       });
