@@ -1,50 +1,11 @@
 {
   "tableCfgs": {
+    "_type": "tableCfgs",
     "_data": [
       {
-        "key": "revisions",
-        "type": "ingredients",
-        "isHead": true,
-        "isRoot": true,
-        "isShared": false,
-        "columns": [
-          {
-            "key": "_hash",
-            "type": "string",
-            "_hash": "df4oYftB-71Njv9FprRCeg"
-          },
-          {
-            "key": "table",
-            "type": "string",
-            "_hash": "FmsYjsit04XJi02Sihdwl-"
-          },
-          {
-            "key": "predecessor",
-            "type": "string",
-            "_hash": "RlAk7Lj-lZf2KDlUk5fekZ"
-          },
-          {
-            "key": "successor",
-            "type": "string",
-            "_hash": "MJlFtQVty5oUJKVzzj5hyB"
-          },
-          {
-            "key": "timestamp",
-            "type": "number",
-            "_hash": "XpKYGh23thW6vONgQuoMHf"
-          },
-          {
-            "key": "id",
-            "type": "string",
-            "_hash": "eq2P3RIaSgy81i7PomNUvn"
-          }
-        ],
-        "_hash": "CubBZQUGTMLa5wMqqzHLXz"
-      },
-      {
-        "_hash": "oS4O57K1hbZY9hQzRID9nO",
+        "_hash": "SXZfuoskGujJUM0IEhnK-Y",
         "key": "tableCfgs",
-        "type": "ingredients",
+        "type": "components",
         "isHead": false,
         "isRoot": false,
         "isShared": true,
@@ -91,9 +52,49 @@
             "_hash": "aPmGTcNng9E1RvlEj1LtxB"
           }
         ]
+      },
+      {
+        "key": "revisions",
+        "type": "components",
+        "isHead": true,
+        "isRoot": true,
+        "isShared": false,
+        "columns": [
+          {
+            "key": "_hash",
+            "type": "string",
+            "_hash": "df4oYftB-71Njv9FprRCeg"
+          },
+          {
+            "key": "table",
+            "type": "string",
+            "_hash": "FmsYjsit04XJi02Sihdwl-"
+          },
+          {
+            "key": "predecessor",
+            "type": "string",
+            "_hash": "RlAk7Lj-lZf2KDlUk5fekZ"
+          },
+          {
+            "key": "successor",
+            "type": "string",
+            "_hash": "MJlFtQVty5oUJKVzzj5hyB"
+          },
+          {
+            "key": "timestamp",
+            "type": "number",
+            "_hash": "XpKYGh23thW6vONgQuoMHf"
+          },
+          {
+            "key": "id",
+            "type": "string",
+            "_hash": "eq2P3RIaSgy81i7PomNUvn"
+          }
+        ],
+        "_hash": "qSiBIKgtygLMo0I-af3Aas"
       }
     ],
-    "_tableCfg": "oS4O57K1hbZY9hQzRID9nO",
-    "_hash": "Rq-oDdFCeBCeW3HTiFMhhN"
+    "_tableCfg": "SXZfuoskGujJUM0IEhnK-Y",
+    "_hash": "x9NU2Q0A51eLFtY9q9DOTn"
   }
 }

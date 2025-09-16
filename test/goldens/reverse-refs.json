@@ -8,7 +8,7 @@
   "slices": {
     "wyYfK5E4ArrMKQ_zvi2-EE": {}
   },
-  "ingredientTypes": {
+  "ComponentTypes": {
     "UNxHIyPK7AACyUsbISW7bp": {}
   },
   "layers": {
@@ -17,10 +17,10 @@
   "recipes": {
     "gqLuZbpbjOMyk0DjQ3AFFy": {}
   },
-  "recipeIngredients": {
+  "recipecomponents": {
     "4coxp7hPCsH7hSnAVeUVZj": {}
   },
-  "ingredients": {
+  "components": {
     "A5d-4if1fQpQERfwFsjKqb": {}
   },
   "nutritionalValues": {
