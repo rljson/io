@@ -97,7 +97,7 @@ export const runIoConformanceTests = () => {
         //create four tables with two versions each
         const tableV0: TableCfg = {
           key: 'table0',
-          type: 'ingredients',
+          type: 'components',
           isHead: false,
           isRoot: false,
           isShared: true,
@@ -140,7 +140,7 @@ export const runIoConformanceTests = () => {
         }
 
         expect(message).toBe(
-          'Hash "wrongHash" does not match the newly calculated one "LM5fm8eNChH3kE3D38X0Fa". ' +
+          'Hash "wrongHash" does not match the newly calculated one "uX24nHRtwkXRsq8l46cNRZ". ' +
             'Please make sure that all systems are producing the same hashes.',
         );
       });
@@ -338,6 +338,7 @@ export const runIoConformanceTests = () => {
         await io.write({
           data: {
             tableA: {
+              _type: 'components',
               _data: [{ a: 'hello', b: 5 }],
             },
           },
@@ -353,7 +354,8 @@ export const runIoConformanceTests = () => {
                 b: 5,
               },
             ],
-            _tableCfg: 'MfpwQygnDmu3ISp6dBjsEf',
+            _tableCfg: '_SmasX0fD_A_0sshe6lnTt',
+            _type: 'components',
           },
         };
         expect(dump).toEqual(dumpExpected);
@@ -387,6 +389,7 @@ export const runIoConformanceTests = () => {
         await io.write({
           data: {
             tableA: {
+              _type: 'components',
               _data: [{ keyA1: 'a1', keyA2: 'a2', keyB2: 'b2' }],
             },
           },
@@ -407,7 +410,8 @@ export const runIoConformanceTests = () => {
                 keyB2: 'b2',
               },
             ],
-            _tableCfg: 'swD0rJhzryBIY7sfxIV8Gl',
+            _tableCfg: 'E1tCMshAuHRJg5Gz6M-Fqd',
+            _type: 'components',
           },
         });
       });
@@ -436,6 +440,7 @@ export const runIoConformanceTests = () => {
         await io.write({
           data: {
             tableA: {
+              _type: 'components',
               _data: [{ keyA2: 'a2' }],
             },
           },
@@ -456,6 +461,7 @@ export const runIoConformanceTests = () => {
         await io.write({
           data: {
             tableA: {
+              _type: 'components',
               _data: [{ keyB2: 'b2' }],
             },
           },
@@ -525,6 +531,7 @@ export const runIoConformanceTests = () => {
 
         const testData: Rljson = {
           testTable: {
+            _type: 'components',
             _data: rows,
           },
         };
@@ -552,6 +559,7 @@ export const runIoConformanceTests = () => {
             io.write({
               data: {
                 tableA: {
+                  _type: 'components',
                   _data: [{ keyA2: 'a2' }],
                 },
               },
@@ -583,6 +591,7 @@ export const runIoConformanceTests = () => {
 
           const testData: Rljson = {
             testTable: {
+              _type: 'components',
               _data: [
                 {
                   string: 'hello',
@@ -638,6 +647,7 @@ export const runIoConformanceTests = () => {
                   string: 'hello',
                 },
               ],
+              _type: 'components',
             },
           });
         });
@@ -661,6 +671,7 @@ export const runIoConformanceTests = () => {
                   string: 'world',
                 },
               ],
+              _type: 'components',
             },
           });
         });
@@ -691,6 +702,7 @@ export const runIoConformanceTests = () => {
                   string: 'hello',
                 },
               ],
+              _type: 'components',
             },
           });
         });
@@ -721,6 +733,7 @@ export const runIoConformanceTests = () => {
                   string: 'hello',
                 },
               ],
+              _type: 'components',
             },
           });
         });
@@ -754,6 +767,8 @@ export const runIoConformanceTests = () => {
                   string: 'hello',
                 },
               ],
+
+              _type: 'components',
             },
           });
         });
@@ -784,6 +799,7 @@ export const runIoConformanceTests = () => {
                   string: 'hello',
                 },
               ],
+              _type: 'components',
             },
           });
         });
@@ -799,6 +815,8 @@ export const runIoConformanceTests = () => {
                 { a: 'value1', b: 2 },
                 { a: 'value3', b: 4 },
               ],
+              _hash: 'dth8Ear2g__PlkgIscPXwB',
+              _type: 'components',
             },
           },
         });
@@ -811,7 +829,8 @@ export const runIoConformanceTests = () => {
         expect(result).toEqual({
           testTable: {
             _data: [],
-            _hash: 'An2XIY8nP9xH6Lfb_Ohy6d',
+            _hash: 'tpbDwaQADV4jPexwWgCTBJ',
+            _type: 'components',
           },
         });
       });
@@ -846,6 +865,7 @@ export const runIoConformanceTests = () => {
         await io.write({
           data: {
             table1: {
+              _type: 'components',
               _data: [
                 { a: 'a1' },
                 { a: 'a2' },
@@ -855,6 +875,7 @@ export const runIoConformanceTests = () => {
               ],
             },
             table2: {
+              _type: 'components',
               _data: [{ a: 'a1' }, { a: 'a2' }],
             },
           },
@@ -895,6 +916,7 @@ export const runIoConformanceTests = () => {
         await io.write({
           data: {
             table1: {
+              _type: 'components',
               _data: [{ a: 'a2' }],
             },
           },

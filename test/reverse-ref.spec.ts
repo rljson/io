@@ -27,18 +27,18 @@ describe.skip('ReverseRefs', () => {
     });
 
     describe('writes the reverse references for elements referenced by', () => {
-      describe('ingredients', () => {
-        it('nutritionalValues row 0 is referenced by ingredients row 0', () => {
+      describe('components', () => {
+        it('nutritionalValues row 0 is referenced by components row 0', () => {
           // Get the hash of the nutritionalValues child row
           const childRow = bakery.nutritionalValues._data[0]._hash;
 
-          // Get the hash of the ingredients parent row
-          const parentRow = bakery.ingredients._data[0]._hash;
+          // Get the hash of the components parent row
+          const parentRow = bakery.components._data[0]._hash;
 
           // The reverse reference object should tell that the child row
           // is referenced by the parent row
           expect(reverseRefs.nutritionalValues[childRow]).toEqual({
-            ingredients: {
+            components: {
               // parent table name
               // parent table row hash
               [parentRow]: {},
@@ -48,17 +48,17 @@ describe.skip('ReverseRefs', () => {
           expect(reverseRefs).not.toBeUndefined();
         });
 
-        it('ingredients row 0 is referenced by recipeIngredients', () => {
-          // Get the hash of the ingredients child row
-          const childRow = bakery.ingredients._data[0]._hash;
+        it('components row 0 is referenced by recipecomponents', () => {
+          // Get the hash of the components child row
+          const childRow = bakery.components._data[0]._hash;
 
-          // Get the hash of the recipeIngredients parent row
-          const parentRow = bakery.recipeIngredients._data[0]._hash;
+          // Get the hash of the recipecomponents parent row
+          const parentRow = bakery.recipecomponents._data[0]._hash;
 
           // The reverse reference object should tell that the child row
           // is referenced by the parent row
-          expect(reverseRefs.ingredients[childRow]).toEqual({
-            recipeIngredients: {
+          expect(reverseRefs.components[childRow]).toEqual({
+            recipecomponents: {
               // parent table name
               // parent table row hash
               [parentRow]: {},
@@ -66,16 +66,16 @@ describe.skip('ReverseRefs', () => {
           });
         });
 
-        it('recipeIngredients row 0 is referenced by recipes', () => {
-          // Get the hash of the recipeIngredients child row
-          const childRow = bakery.recipeIngredients._data[0]._hash;
+        it('recipecomponents row 0 is referenced by recipes', () => {
+          // Get the hash of the recipecomponents child row
+          const childRow = bakery.recipecomponents._data[0]._hash;
 
-          // Get the hash of the recipeIngredients parent row
+          // Get the hash of the recipecomponents parent row
           const parentRow = bakery.recipes._data[0]._hash;
 
           // The reverse reference object should tell that the child row
           // is referenced by the parent row
-          expect(reverseRefs.recipeIngredients[childRow]).toEqual({
+          expect(reverseRefs.recipecomponents[childRow]).toEqual({
             recipes: {
               // parent table name
               // parent table row hash
@@ -84,7 +84,7 @@ describe.skip('ReverseRefs', () => {
           });
         });
 
-        it('nutritionalValues row 1 is not referenced by any ingredients row', () => {
+        it('nutritionalValues row 1 is not referenced by any components row', () => {
           // Get the hash of the nutritionalValues child row
           const childRow = bakery.nutritionalValues._data[1]._hash;
 

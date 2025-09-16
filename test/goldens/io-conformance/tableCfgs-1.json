@@ -1,7 +1,7 @@
 [
   {
     "key": "revisions",
-    "type": "ingredients",
+    "type": "components",
     "isHead": true,
     "isRoot": true,
     "isShared": false,
@@ -37,11 +37,11 @@
         "_hash": "eq2P3RIaSgy81i7PomNUvn"
       }
     ],
-    "_hash": "CubBZQUGTMLa5wMqqzHLXz"
+    "_hash": "qSiBIKgtygLMo0I-af3Aas"
   },
   {
     "key": "table0",
-    "type": "ingredients",
+    "type": "components",
     "isHead": false,
     "isRoot": false,
     "isShared": true,
@@ -67,12 +67,12 @@
         "_hash": "yd4AdprM2Z0vqKieWOibX5"
       }
     ],
-    "_hash": "SmI9Z47zQXdHKsZYDCLRVN"
+    "_hash": "wfRMrOPA2C9ogANQmzsI7K"
   },
   {
-    "_hash": "oS4O57K1hbZY9hQzRID9nO",
+    "_hash": "SXZfuoskGujJUM0IEhnK-Y",
     "key": "tableCfgs",
-    "type": "ingredients",
+    "type": "components",
     "isHead": false,
     "isRoot": false,
     "isShared": true,

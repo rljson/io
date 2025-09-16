@@ -35,7 +35,7 @@ export class IoTools {
     const tableCfg = hip<TableCfg>({
       _hash: '',
       key: 'tableCfgs',
-      type: 'ingredients',
+      type: 'components',
       isHead: false,
       isRoot: false,
       isShared: true,
@@ -62,7 +62,7 @@ export class IoTools {
   initRevisionsTable = async () => {
     const tableCfg: TableCfg = {
       key: 'revisions',
-      type: 'ingredients',
+      type: 'components',
       isHead: true,
       isRoot: true,
       isShared: false,

@@ -1,12 +1,13 @@
 {
   "table1": {
+    "_type": "components",
     "_data": [
       {
         "a": "a2",
         "_hash": "coOa9IUeUZ7j2a7U-tReeu"
       }
     ],
-    "_tableCfg": "LM5fm8eNChH3kE3D38X0Fa",
-    "_hash": "WoKkXWprEkOMg1gwxjE3oH"
+    "_tableCfg": "uX24nHRtwkXRsq8l46cNRZ",
+    "_hash": "zn4-cNVdMm7j0BvlnL_jPp"
   }
 }

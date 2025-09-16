@@ -5,7 +5,7 @@
       {
         "version": 1,
         "key": "tableCfgs",
-        "type": "ingredients",
+        "type": "components",
         "isHead": false,
         "isRoot": false,
         "isShared": true,
@@ -26,7 +26,7 @@
       {
         "version": 1,
         "key": "revisions",
-        "type": "ingredients",
+        "type": "components",
         "isHead": false,
         "isRoot": false,
         "isShared": true,
@@ -74,7 +74,7 @@
             "_hash": "dHYaVsRiXeP_WY7Qrd5Y8J"
           }
         ],
-        "type": "ingredients",
+        "type": "components",
         "isHead": true,
         "isRoot": true,
         "isShared": false,
@@ -95,32 +95,32 @@
             "_hash": "dHYaVsRiXeP_WY7Qrd5Y8J"
           }
         ],
-        "type": "ingredients",
+        "type": "components",
         "isHead": true,
         "isRoot": true,
         "isShared": false,
         "_hash": "8vexUV1bO47-sKX6dirV2U"
       }
     ],
-    "_type": "ingredients",
+    "_type": "components",
     "_tableCfg": "kfolqEwyK1k5O7lq9w7TYf",
     "_hash": "wlzkZlyALExh4Oan43YMGj"
   },
   "revisions": {
     "_data": [],
-    "_type": "ingredients",
+    "_type": "components",
     "_tableCfg": "MMO6CzLeZiHsQIa9AbdqHs",
     "_hash": "3wrA9dDshRmoqfw_O5m6jk"
   },
   "table1": {
     "_data": [],
-    "_type": "ingredients",
+    "_type": "components",
     "_tableCfg": "V9NqVeFM0OLG4kObpo4JQQ",
     "_hash": "uT8lSXJQ_kJfahxRI382ZO"
   },
   "table2": {
     "_data": [],
-    "_type": "ingredients",
+    "_type": "components",
     "_tableCfg": "8vexUV1bO47-sKX6dirV2U",
     "_hash": "jUswYcbZFNR37rE4AMjTW7"
   }
