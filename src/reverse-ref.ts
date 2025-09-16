@@ -79,7 +79,7 @@ export const calcReverseRefs = (rljson: Rljson): ReverseRefs => {
       // Find out whe other tables & rows are referenced by this row
       // Write these information intto result
       switch (parentTable._type) {
-        case 'ingredients':
+        case 'components':
           _writeIngredientRefs(parentTableKey, parentTableRow, result);
           break;
 
@@ -147,15 +147,15 @@ const _writeLayerRefs = (
   parentRow: Layer,
   result: ReverseRefs,
 ) => {
-  const childTableName = parentRow.ingredientsTable;
+  const childTableName = parentRow.componentsTable;
   const parentRowHash = parentRow._hash as string;
 
-  for (const sliceId in parentRow.assign) {
+  for (const sliceId in parentRow.add) {
     if (sliceId.startsWith('_')) {
       continue;
     }
 
-    const sliceHash = parentRow.assign[sliceId] as string;
+    const sliceHash = parentRow.add[sliceId] as string;
 
     _write(result, childTableName, sliceHash, parentTableName, parentRowHash);
   }
@@ -170,7 +170,7 @@ const _writeCakeRefs = (
   const parentRowHash = parentRow._hash as string;
 
   for (const layer in parentRow.layers) {
-    const childTableName = parentRow.layersTable;
+    const childTableName = layer;
     const childRowHash = parentRow.layers[layer] as string;
     _write(
       result,

@@ -1,47 +1,7 @@
 {
-  "_hash": "YqwSqooi7GRv1Fnl7zWaV9",
+  "_hash": "gczIFk-4qaD0yHsiHv44JV",
   "tableCfgs": {
     "_data": [
-      {
-        "key": "revisions",
-        "type": "ingredients",
-        "isHead": true,
-        "isRoot": true,
-        "isShared": false,
-        "columns": [
-          {
-            "key": "_hash",
-            "type": "string",
-            "_hash": "df4oYftB-71Njv9FprRCeg"
-          },
-          {
-            "key": "table",
-            "type": "string",
-            "_hash": "FmsYjsit04XJi02Sihdwl-"
-          },
-          {
-            "key": "predecessor",
-            "type": "string",
-            "_hash": "RlAk7Lj-lZf2KDlUk5fekZ"
-          },
-          {
-            "key": "successor",
-            "type": "string",
-            "_hash": "MJlFtQVty5oUJKVzzj5hyB"
-          },
-          {
-            "key": "timestamp",
-            "type": "number",
-            "_hash": "XpKYGh23thW6vONgQuoMHf"
-          },
-          {
-            "key": "id",
-            "type": "string",
-            "_hash": "eq2P3RIaSgy81i7PomNUvn"
-          }
-        ],
-        "_hash": "CubBZQUGTMLa5wMqqzHLXz"
-      },
       {
         "key": "table2",
         "columns": [
@@ -61,41 +21,16 @@
             "_hash": "dHYaVsRiXeP_WY7Qrd5Y8J"
           }
         ],
-        "type": "ingredients",
+        "type": "components",
         "isHead": true,
         "isRoot": true,
         "isShared": false,
-        "_hash": "GGPEyV5H-4C3fZr_emK8iC"
+        "_hash": "DLDX4scFVGDPf4JOqBJ1Dx"
       },
       {
-        "key": "table1",
-        "columns": [
-          {
-            "key": "_hash",
-            "type": "string",
-            "_hash": "df4oYftB-71Njv9FprRCeg"
-          },
-          {
-            "key": "a",
-            "type": "string",
-            "_hash": "4sOy83iAANZEj6_Lmlg0d3"
-          },
-          {
-            "key": "b",
-            "type": "number",
-            "_hash": "dHYaVsRiXeP_WY7Qrd5Y8J"
-          }
-        ],
-        "type": "ingredients",
-        "isHead": true,
-        "isRoot": true,
-        "isShared": false,
-        "_hash": "LM5fm8eNChH3kE3D38X0Fa"
-      },
-      {
-        "_hash": "oS4O57K1hbZY9hQzRID9nO",
+        "_hash": "SXZfuoskGujJUM0IEhnK-Y",
         "key": "tableCfgs",
-        "type": "ingredients",
+        "type": "components",
         "isHead": false,
         "isRoot": false,
         "isShared": true,
@@ -142,24 +77,89 @@
             "_hash": "aPmGTcNng9E1RvlEj1LtxB"
           }
         ]
+      },
+      {
+        "key": "revisions",
+        "type": "components",
+        "isHead": true,
+        "isRoot": true,
+        "isShared": false,
+        "columns": [
+          {
+            "key": "_hash",
+            "type": "string",
+            "_hash": "df4oYftB-71Njv9FprRCeg"
+          },
+          {
+            "key": "table",
+            "type": "string",
+            "_hash": "FmsYjsit04XJi02Sihdwl-"
+          },
+          {
+            "key": "predecessor",
+            "type": "string",
+            "_hash": "RlAk7Lj-lZf2KDlUk5fekZ"
+          },
+          {
+            "key": "successor",
+            "type": "string",
+            "_hash": "MJlFtQVty5oUJKVzzj5hyB"
+          },
+          {
+            "key": "timestamp",
+            "type": "number",
+            "_hash": "XpKYGh23thW6vONgQuoMHf"
+          },
+          {
+            "key": "id",
+            "type": "string",
+            "_hash": "eq2P3RIaSgy81i7PomNUvn"
+          }
+        ],
+        "_hash": "qSiBIKgtygLMo0I-af3Aas"
+      },
+      {
+        "key": "table1",
+        "columns": [
+          {
+            "key": "_hash",
+            "type": "string",
+            "_hash": "df4oYftB-71Njv9FprRCeg"
+          },
+          {
+            "key": "a",
+            "type": "string",
+            "_hash": "4sOy83iAANZEj6_Lmlg0d3"
+          },
+          {
+            "key": "b",
+            "type": "number",
+            "_hash": "dHYaVsRiXeP_WY7Qrd5Y8J"
+          }
+        ],
+        "type": "components",
+        "isHead": true,
+        "isRoot": true,
+        "isShared": false,
+        "_hash": "uX24nHRtwkXRsq8l46cNRZ"
       }
     ],
-    "_tableCfg": "oS4O57K1hbZY9hQzRID9nO",
-    "_hash": "hiWhWYx-PreD9EvDuG64rT"
+    "_tableCfg": "SXZfuoskGujJUM0IEhnK-Y",
+    "_hash": "r57th7EqumDEo02vbkkFKi"
   },
   "revisions": {
     "_data": [],
-    "_tableCfg": "CubBZQUGTMLa5wMqqzHLXz",
-    "_hash": "dppr2oAzB9-npmA3E7ZLNI"
+    "_tableCfg": "qSiBIKgtygLMo0I-af3Aas",
+    "_hash": "ITOky2JDO7Bd6lX9zXLRry"
   },
   "table1": {
     "_data": [],
-    "_tableCfg": "LM5fm8eNChH3kE3D38X0Fa",
-    "_hash": "jpM5ZNlmmoojoYcdPN7htq"
+    "_tableCfg": "uX24nHRtwkXRsq8l46cNRZ",
+    "_hash": "X9wsnad1qv6mTqdcBHcVc4"
   },
   "table2": {
     "_data": [],
-    "_tableCfg": "GGPEyV5H-4C3fZr_emK8iC",
-    "_hash": "yCGKKwr92WWo7rdRSUzon9"
+    "_tableCfg": "DLDX4scFVGDPf4JOqBJ1Dx",
+    "_hash": "rsZKaJL34TIr_YehbZFOGO"
   }
 }

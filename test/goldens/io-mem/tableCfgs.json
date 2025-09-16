@@ -4,7 +4,7 @@
       {
         "version": 1,
         "key": "tableCfgs",
-        "type": "ingredients",
+        "type": "components",
         "isHead": false,
         "isRoot": false,
         "isShared": true,
@@ -25,7 +25,7 @@
       {
         "version": 1,
         "key": "revisions",
-        "type": "ingredients",
+        "type": "components",
         "isHead": false,
         "isRoot": false,
         "isShared": true,
@@ -59,7 +59,7 @@
         "_hash": "MMO6CzLeZiHsQIa9AbdqHs"
       }
     ],
-    "_type": "ingredients",
+    "_type": "components",
     "_tableCfg": "kfolqEwyK1k5O7lq9w7TYf",
     "_hash": "9B3KB4aZcmTBNf64v6OBFS"
   }
