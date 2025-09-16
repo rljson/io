@@ -80,7 +80,7 @@ export const calcReverseRefs = (rljson: Rljson): ReverseRefs => {
       // Write these information intto result
       switch (parentTable._type) {
         case 'components':
-          _writeIngredientRefs(parentTableKey, parentTableRow, result);
+          _writeComponentRefs(parentTableKey, parentTableRow, result);
           break;
 
         case 'layers': {
@@ -112,7 +112,7 @@ export const calcReverseRefs = (rljson: Rljson): ReverseRefs => {
 /* v8 ignore end */
 
 // .............................................................................
-const _writeIngredientRefs = (
+const _writeComponentRefs = (
   parentTableName: TableKey,
   parentRow: Json,
   result: ReverseRefs,
