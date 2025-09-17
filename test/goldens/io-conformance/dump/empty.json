@@ -1,12 +1,52 @@
 {
-  "_hash": "DnOQ09ZDCOEkup_X_wE2xn",
+  "_hash": "Lf-TTU_gym_sZTMaNY9ifV",
   "tableCfgs": {
     "_type": "tableCfgs",
     "_data": [
       {
-        "_hash": "SXZfuoskGujJUM0IEhnK-Y",
+        "key": "revisions",
+        "type": "revisions",
+        "isHead": true,
+        "isRoot": true,
+        "isShared": false,
+        "columns": [
+          {
+            "key": "_hash",
+            "type": "string",
+            "_hash": "df4oYftB-71Njv9FprRCeg"
+          },
+          {
+            "key": "table",
+            "type": "string",
+            "_hash": "FmsYjsit04XJi02Sihdwl-"
+          },
+          {
+            "key": "predecessor",
+            "type": "string",
+            "_hash": "RlAk7Lj-lZf2KDlUk5fekZ"
+          },
+          {
+            "key": "successor",
+            "type": "string",
+            "_hash": "MJlFtQVty5oUJKVzzj5hyB"
+          },
+          {
+            "key": "timestamp",
+            "type": "number",
+            "_hash": "XpKYGh23thW6vONgQuoMHf"
+          },
+          {
+            "key": "id",
+            "type": "string",
+            "_hash": "eq2P3RIaSgy81i7PomNUvn"
+          }
+        ],
+        "_hash": "2ztQLyMtsFFIs0z_rvT6UL"
+      },
+      {
+        "_hash": "er5aXXmEqihTA7Y1glILb4",
         "key": "tableCfgs",
-        "type": "components",
+        "type": "tableCfgs",
         "isHead": false,
         "isRoot": false,
         "isShared": true,
@@ -53,55 +93,15 @@
             "_hash": "aPmGTcNng9E1RvlEj1LtxB"
           }
         ]
-      },
-      {
-        "key": "revisions",
-        "type": "components",
-        "isHead": true,
-        "isRoot": true,
-        "isShared": false,
-        "columns": [
-          {
-            "key": "_hash",
-            "type": "string",
-            "_hash": "df4oYftB-71Njv9FprRCeg"
-          },
-          {
-            "key": "table",
-            "type": "string",
-            "_hash": "FmsYjsit04XJi02Sihdwl-"
-          },
-          {
-            "key": "predecessor",
-            "type": "string",
-            "_hash": "RlAk7Lj-lZf2KDlUk5fekZ"
-          },
-          {
-            "key": "successor",
-            "type": "string",
-            "_hash": "MJlFtQVty5oUJKVzzj5hyB"
-          },
-          {
-            "key": "timestamp",
-            "type": "number",
-            "_hash": "XpKYGh23thW6vONgQuoMHf"
-          },
-          {
-            "key": "id",
-            "type": "string",
-            "_hash": "eq2P3RIaSgy81i7PomNUvn"
-          }
-        ],
-        "_hash": "qSiBIKgtygLMo0I-af3Aas"
       }
     ],
-    "_tableCfg": "SXZfuoskGujJUM0IEhnK-Y",
-    "_hash": "x9NU2Q0A51eLFtY9q9DOTn"
+    "_tableCfg": "er5aXXmEqihTA7Y1glILb4",
+    "_hash": "_u8EEswMCQtr4EKdi4F2Ti"
   },
   "revisions": {
-    "_type": "components",
+    "_type": "revisions",
     "_data": [],
-    "_tableCfg": "qSiBIKgtygLMo0I-af3Aas",
-    "_hash": "gCVGDOiCejkqf_-KGsWHc9"
+    "_tableCfg": "2ztQLyMtsFFIs0z_rvT6UL",
+    "_hash": "QaE-R7nOANTF7AshcaAQFr"
   }
 }
