@@ -1,6 +1,6 @@
 {
   "name": "@rljson/io",
-  "version": "0.0.41",
+  "version": "0.0.42",
   "packageManager": "pnpm@10.16.1",
   "description": "Low level interface for reading and writing RLJSON data",
   "homepage": "https://github.com/rljson/io",
@@ -29,7 +29,7 @@
     "updateGoldens": "cross-env UPDATE_GOLDENS=true pnpm test"
   },
   "devDependencies": {
-    "@types/node": "^24.5.0",
+    "@types/node": "^24.5.1",
     "@typescript-eslint/eslint-plugin": "^8.44.0",
     "@typescript-eslint/parser": "^8.44.0",
     "@vitest/coverage-v8": "^3.2.4",
@@ -58,7 +58,7 @@
     "@rljson/hash": "^0.0.16",
     "@rljson/is-ready": "^0.0.17",
     "@rljson/json": "^0.0.21",
-    "@rljson/rljson": "^0.0.52",
+    "@rljson/rljson": "^0.0.53",
     "@rljson/validate": "^0.0.10"
   }
 }
