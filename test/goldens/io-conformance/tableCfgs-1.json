@@ -1,7 +1,7 @@
 [
   {
     "key": "revisions",
-    "type": "components",
+    "type": "revisions",
     "isHead": true,
     "isRoot": true,
     "isShared": false,
@@ -37,7 +37,7 @@
         "_hash": "eq2P3RIaSgy81i7PomNUvn"
       }
     ],
-    "_hash": "qSiBIKgtygLMo0I-af3Aas"
+    "_hash": "2ztQLyMtsFFIs0z_rvT6UL"
   },
   {
     "key": "table0",
@@ -70,9 +70,9 @@
     "_hash": "wfRMrOPA2C9ogANQmzsI7K"
   },
   {
-    "_hash": "SXZfuoskGujJUM0IEhnK-Y",
+    "_hash": "er5aXXmEqihTA7Y1glILb4",
     "key": "tableCfgs",
-    "type": "components",
+    "type": "tableCfgs",
     "isHead": false,
     "isRoot": false,
     "isShared": true,
