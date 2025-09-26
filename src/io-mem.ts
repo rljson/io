@@ -7,16 +7,11 @@
 import { hip, hsh } from '@rljson/hash';
 import { IsReady } from '@rljson/is-ready';
 import { copy, equals, JsonValue } from '@rljson/json';
-import {
-  iterateTablesSync,
-  Rljson,
-  TableCfg,
-  TableKey,
-  TableType,
-} from '@rljson/rljson';
+import { iterateTablesSync, Rljson, TableCfg, TableKey, TableType } from '@rljson/rljson';
 
 import { IoTools } from './io-tools.ts';
 import { Io } from './io.ts';
+
 
 /**
  * In-Memory implementation of the Rljson Io interface.
@@ -40,7 +35,9 @@ export class IoMem implements Io {
   }
 
   static example = async () => {
-    return new IoMem();
+    const io = new IoMem();
+    await io.init();
+    return io;
   };
 
   // ...........................................................................

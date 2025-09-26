@@ -285,6 +285,10 @@ export class IoTools {
     await iterateTables(data, async (tableKey) => {
       const tableCfg = await this.tableCfg(tableKey);
       const table = data[tableKey];
+
+      // Ignore tableCfgs table
+      if (table._type === 'tableCfgs') return;
+
       errors.push(...validateRljsonAgainstTableCfg(table._data, tableCfg));
     });
 
