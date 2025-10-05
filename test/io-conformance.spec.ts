@@ -5,28 +5,15 @@
 // found in the LICENSE file in the root of this package.
 
 import { hip, hsh, rmhsh } from '@rljson/hash';
-import {
-  addColumnsToTableCfg,
-  exampleTableCfg,
-  Rljson,
-  TableCfg,
-  TableType,
-} from '@rljson/rljson';
+import { addColumnsToTableCfg, exampleTableCfg, Rljson, TableCfg, TableType } from '@rljson/rljson';
 
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { Io, IoTestSetup, IoTools } from '../src';
 
 import { testSetup } from './io-conformance.setup.ts';
 import { expectGolden, ExpectGoldenOptions } from './setup/goldens.ts';
+
 
 const ego: ExpectGoldenOptions = {
   npmUpdateGoldensEnabled: true,
@@ -934,6 +921,24 @@ export const runIoConformanceTests = () => {
         await expect(
           io.dumpTable({ table: 'nonexistentTable' }),
         ).rejects.toThrow('Table "nonexistentTable" not found');
+      });
+    });
+
+    describe('contentType()', () => {
+      it('returns the content type of the given table', async () => {
+        await createExampleTable('table1');
+
+        await io.write({
+          data: {
+            table1: {
+              _type: 'components',
+              _data: [{ a: 'a2' }],
+            },
+          },
+        });
+
+        const contentType = await io.contentType({ table: 'table1' });
+        expect(contentType).toBe('components');
       });
     });
   });
