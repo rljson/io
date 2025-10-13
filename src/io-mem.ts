@@ -7,7 +7,9 @@
 import { hip, hsh } from '@rljson/hash';
 import { IsReady } from '@rljson/is-ready';
 import { copy, equals, JsonValue } from '@rljson/json';
-import { iterateTablesSync, Rljson, TableCfg, TableKey, TableType } from '@rljson/rljson';
+import {
+  ContentType, iterateTablesSync, Rljson, TableCfg, TableKey, TableType
+} from '@rljson/rljson';
 
 import { IoTools } from './io-tools.ts';
 import { Io } from './io.ts';
@@ -55,6 +57,13 @@ export class IoMem implements Io {
 
   async dumpTable(request: { table: string }): Promise<Rljson> {
     return this._dumpTable(request);
+  }
+
+  // ...........................................................................
+  // Meta Data
+
+  async contentType(request: { table: string }): Promise<ContentType> {
+    return this._contentType(request);
   }
 
   // ...........................................................................
@@ -228,6 +237,13 @@ export class IoMem implements Io {
     return {
       [request.table]: copy(table),
     };
+  }
+
+  // ...........................................................................
+  private async _contentType(request: { table: string }): Promise<ContentType> {
+    await this._ioTools.throwWhenTableDoesNotExist(request.table);
+
+    return (this._mem[request.table] as TableType)._type;
   }
 
   // ...........................................................................
