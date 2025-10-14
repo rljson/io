@@ -5,16 +5,15 @@
 // found in the LICENSE file in the root of this package.
 
 import { Io, IoMem, IoTestSetup } from '../src';
+import { IoPeer } from '../src/io-peer';
 
 // ..............................................................................
-class MyIoTestSetup implements IoTestSetup {
+abstract class GenericIoTestSetup implements IoTestSetup {
   async beforeAll(): Promise<void> {
     // This method can be used for any additional setup required before init.
     // Currently, it does nothing.
   }
-  async beforeEach(): Promise<void> {
-    this._io = await IoMem.example();
-  }
+  async beforeEach(): Promise<void> {}
 
   async afterEach(): Promise<void> {
     await this.io.close();
@@ -31,8 +30,21 @@ class MyIoTestSetup implements IoTestSetup {
     return this._io;
   }
 
-  private _io: Io | null = null;
+  protected _io: Io | null = null;
+}
+
+class IoMemTestSetup extends GenericIoTestSetup {
+  async beforeEach(): Promise<void> {
+    this._io = await IoMem.example();
+  }
+}
+
+class IoPeerTestSetup extends GenericIoTestSetup {
+  async beforeEach(): Promise<void> {
+    this._io = await IoPeer.example();
+  }
 }
 
 // .............................................................................
-export const testSetup = () => new MyIoTestSetup();
+export const testMemSetup = () => new IoMemTestSetup();
+export const testPeerSetup = () => new IoPeerTestSetup();

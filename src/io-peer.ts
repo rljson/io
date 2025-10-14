@@ -1,0 +1,240 @@
+// @license
+// Copyright (c) 2025 Rljson
+//
+// Use of this source code is governed by terms that can be
+// found in the LICENSE file in the root of this package.
+
+import { JsonValue } from '@rljson/json';
+import { ContentType, Rljson, TableCfg, TableKey } from '@rljson/rljson';
+
+import { IoMem } from './io-mem.ts';
+import { Io } from './io.ts';
+import { MockSocket } from './mock-socket.ts';
+import { Socket } from './socket.ts';
+
+export class IoPeer implements Io {
+  isOpen: boolean = false;
+  constructor(private _socket: Socket) {}
+
+  // ...........................................................................
+  /**
+   *
+   * Initializes the Peer connection.
+   * @returns
+   */
+  async init(): Promise<void> {
+    // Update isOpen on connect/disconnect
+    this._socket.on('connect', () => {
+      this.isOpen = true;
+    });
+    this._socket.on('disconnect', () => {
+      this.isOpen = false;
+    });
+
+    // Connect the socket
+    this._socket.connect();
+
+    return;
+  }
+
+  // ...........................................................................
+  /**
+   * Closes the Peer connection.
+   * @returns
+   */
+
+  async close(): Promise<void> {
+    // Disconnect the socket
+    if (!this._socket.connected) return;
+    this._socket.disconnect();
+    return;
+  }
+
+  // ...........................................................................
+  /**
+   * Returns a promise that resolves once the Peer connection is ready.
+   * @returns
+   */
+  async isReady(): Promise<void> {
+    return this._socket.connected ? Promise.resolve() : Promise.reject();
+  }
+
+  // ...........................................................................
+  /**
+   * Dumps the entire database content.
+   * @returns A promise that resolves to the dumped database content.
+   */
+  async dump(): Promise<Rljson> {
+    return new Promise((resolve) => {
+      // Request dump, resolve once the data is received (ack)
+      this._socket.emit('dump', (data: Rljson) => {
+        resolve(data);
+      });
+    });
+  }
+
+  // ...........................................................................
+  /**
+   * Dumps a specific table from the database.
+   * @param request An object containing the table name to dump.
+   * @returns A promise that resolves to the dumped table data.
+   */
+  dumpTable(request: { table: string }): Promise<Rljson> {
+    return new Promise((resolve) => {
+      // Request dumpTable, resolve once the data is received (ack)
+      this._socket.emit('dumpTable', request.table, (data: Rljson) => {
+        resolve(data);
+      });
+    });
+  }
+
+  // ...........................................................................
+  /**
+   * Gets the content type of a specific table.
+   * @param request An object containing the table name to get the content type for.
+   * @returns A promise that resolves to the content type of the specified table.
+   */
+  contentType(request: { table: string }): Promise<ContentType> {
+    return new Promise((resolve) => {
+      // Request contentType, resolve once the data is received (ack)
+      this._socket.emit('contentType', request.table, (data: ContentType) => {
+        resolve(data);
+      });
+    });
+  }
+
+  // ...........................................................................
+  /**
+   * Checks if a specific table exists in the database.
+   * @param tableKey The key of the table to check for existence.
+   * @returns A promise that resolves to true if the table exists, false otherwise.
+   */
+  tableExists(tableKey: TableKey): Promise<boolean> {
+    return new Promise((resolve) => {
+      // Request tableExists, resolve once the data is received (ack)
+      this._socket.emit('tableExists', tableKey, (exists: boolean) => {
+        resolve(exists);
+      });
+    });
+  }
+
+  // ...........................................................................
+  /**
+   * Creates or extends a table with the given configuration.
+   * @param request An object containing the table configuration.
+   * @returns A promise that resolves once the table is created or extended.
+   */
+  createOrExtendTable(request: { tableCfg: TableCfg }): Promise<void> {
+    return new Promise((resolve) => {
+      // Request createOrExtendTable, resolve once the data is received (ack)
+      this._socket.emit(
+        'createOrExtendTable',
+        request.tableCfg,
+        (created: boolean) => {
+          if (!created) throw new Error('Create or extend table failed');
+          resolve();
+        },
+      );
+    });
+  }
+
+  // ...........................................................................
+  /**
+   * Retrieves the raw table configurations from the database.
+   * @returns A promise that resolves to an array of table configurations.
+   */
+  rawTableCfgs(): Promise<TableCfg[]> {
+    return new Promise((resolve) => {
+      // Request rawTableCfgs, resolve once the data is received (ack)
+      this._socket.emit('rawTableCfgs', (data: TableCfg[]) => {
+        resolve(data);
+      });
+    });
+  }
+
+  // ...........................................................................
+  /**
+   * Writes data to the database.
+   * @param request An object containing the data to write.
+   * @returns A promise that resolves once the data is written.
+   */
+  write(request: { data: Rljson }): Promise<void> {
+    return new Promise((resolve) => {
+      // Request write, resolve once the data is received (ack)
+      this._socket.emit('write', request.data, (written: boolean) => {
+        if (!written) throw new Error('Write failed');
+        resolve();
+      });
+    });
+  }
+
+  // ...........................................................................
+  /**
+   * Reads rows from a specific table that match the given criteria.
+   * @param request An object containing the table name and the criteria for selecting rows.
+   * @returns A promise that resolves to the selected rows.
+   */
+  readRows(request: {
+    table: string;
+    where: { [column: string]: JsonValue | null };
+  }): Promise<Rljson> {
+    return new Promise((resolve) => {
+      // Request readRows, resolve once the data is received (ack)
+      this._socket.emit(
+        'readRows',
+        request.table,
+        request.where,
+        (data: Rljson) => {
+          resolve(data);
+        },
+      );
+    });
+  }
+
+  // ...........................................................................
+  /**
+   * Retrieves the number of rows in a specific table.
+   * @param table The name of the table to count rows in.
+   * @returns A promise that resolves to the number of rows in the specified table.
+   */
+  rowCount(table: string): Promise<number> {
+    return new Promise((resolve) => {
+      // Request rowCount, resolve once the data is received (ack)
+      this._socket.emit('rowCount', table, (count: number) => {
+        resolve(count);
+      });
+    });
+  }
+
+  // ...........................................................................
+  // Observe
+
+  /** Start observing changes on a specific table */
+  observeTable(table: string, callback: (data: Rljson) => void): void {
+    this._socket.on(table, callback);
+  }
+
+  /** Stop observing changes on a specific table */
+  unobserveTable(table: string, callback: (data: Rljson) => void): void {
+    this._socket.off(table, callback);
+  }
+
+  /** Stop observing all changes on a specific table */
+  unobserveAll(table: string): void {
+    this._socket.removeAllListeners(table);
+  }
+
+  /** Returns all observers for a specific table */
+  observers(table: string): ((data: Rljson) => void)[] {
+    return this._socket.listeners(table) as ((data: Rljson) => void)[];
+  }
+
+  // ...........................................................................
+  static example = async () => {
+    const ioMem = await IoMem.example();
+    const socket = new MockSocket(ioMem);
+    const io = new IoPeer(socket);
+    await io.init();
+    return io;
+  };
+}

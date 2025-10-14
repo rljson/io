@@ -5,15 +5,28 @@
 // found in the LICENSE file in the root of this package.
 
 import { hip, hsh, rmhsh } from '@rljson/hash';
-import { addColumnsToTableCfg, exampleTableCfg, Rljson, TableCfg, TableType } from '@rljson/rljson';
+import {
+  addColumnsToTableCfg,
+  exampleTableCfg,
+  Rljson,
+  TableCfg,
+  TableType,
+} from '@rljson/rljson';
 
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from 'vitest';
 
 import { Io, IoTestSetup, IoTools } from '../src';
 
-import { testSetup } from './io-conformance.setup.ts';
+import { testPeerSetup } from './io-conformance.setup.ts';
 import { expectGolden, ExpectGoldenOptions } from './setup/goldens.ts';
-
 
 const ego: ExpectGoldenOptions = {
   npmUpdateGoldensEnabled: true,
@@ -26,7 +39,7 @@ export const runIoConformanceTests = () => {
     let setup: IoTestSetup;
 
     beforeAll(async () => {
-      setup = testSetup();
+      setup = testPeerSetup();
       await setup.beforeAll();
     });
 
