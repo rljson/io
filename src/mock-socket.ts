@@ -71,13 +71,19 @@ export class MockSocket implements Socket {
     return this.listeners(eventName);
   }
   emit(eventName: string | symbol, ...args: any[]): boolean {
-    const cb = args[args.length - 1];
-    if (typeof cb === 'function') {
-      const result: Promise<any> = (this._io as any)[eventName]?.(
-        ...args.slice(0, -1),
-      );
-      result.then((data: any) => cb(data));
+    const fn = (this._io as any)[eventName] as (...args: any[]) => Promise<any>;
+    if (typeof fn !== 'function') {
+      throw new Error(`Event ${eventName.toString()} not supported`);
     }
+    const cb = args[args.length - 1];
+    fn.apply(this._io, args.slice(0, -1))
+      .then((result) => {
+        cb(result, null);
+      })
+      .catch((err) => {
+        cb(null, err);
+      });
+
     return true;
   }
   listenerCount(

@@ -65,9 +65,10 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to the dumped database content.
    */
   async dump(): Promise<Rljson> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       // Request dump, resolve once the data is received (ack)
-      this._socket.emit('dump', (data: Rljson) => {
+      this._socket.emit('dump', (data: Rljson, error?: Error) => {
+        if (error) reject(error);
         resolve(data);
       });
     });
@@ -80,9 +81,10 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to the dumped table data.
    */
   dumpTable(request: { table: string }): Promise<Rljson> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       // Request dumpTable, resolve once the data is received (ack)
-      this._socket.emit('dumpTable', request.table, (data: Rljson) => {
+      this._socket.emit('dumpTable', request, (data: Rljson, error?: Error) => {
+        if (error) reject(error);
         resolve(data);
       });
     });
@@ -95,11 +97,16 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to the content type of the specified table.
    */
   contentType(request: { table: string }): Promise<ContentType> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       // Request contentType, resolve once the data is received (ack)
-      this._socket.emit('contentType', request.table, (data: ContentType) => {
-        resolve(data);
-      });
+      this._socket.emit(
+        'contentType',
+        request,
+        (data: ContentType, error?: Error) => {
+          if (error) reject(error);
+          resolve(data);
+        },
+      );
     });
   }
 
@@ -110,11 +117,16 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to true if the table exists, false otherwise.
    */
   tableExists(tableKey: TableKey): Promise<boolean> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       // Request tableExists, resolve once the data is received (ack)
-      this._socket.emit('tableExists', tableKey, (exists: boolean) => {
-        resolve(exists);
-      });
+      this._socket.emit(
+        'tableExists',
+        tableKey,
+        (exists: boolean, error?: Error) => {
+          if (error) reject(error);
+          resolve(exists);
+        },
+      );
     });
   }
 
@@ -125,13 +137,13 @@ export class IoPeer implements Io {
    * @returns A promise that resolves once the table is created or extended.
    */
   createOrExtendTable(request: { tableCfg: TableCfg }): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       // Request createOrExtendTable, resolve once the data is received (ack)
       this._socket.emit(
         'createOrExtendTable',
-        request.tableCfg,
-        (created: boolean) => {
-          if (!created) throw new Error('Create or extend table failed');
+        request,
+        (_?: boolean, error?: Error) => {
+          if (error) reject(error);
           resolve();
         },
       );
@@ -144,9 +156,10 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to an array of table configurations.
    */
   rawTableCfgs(): Promise<TableCfg[]> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       // Request rawTableCfgs, resolve once the data is received (ack)
-      this._socket.emit('rawTableCfgs', (data: TableCfg[]) => {
+      this._socket.emit('rawTableCfgs', (data: TableCfg[], error?: Error) => {
+        if (error) reject(error);
         resolve(data);
       });
     });
@@ -159,10 +172,10 @@ export class IoPeer implements Io {
    * @returns A promise that resolves once the data is written.
    */
   write(request: { data: Rljson }): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       // Request write, resolve once the data is received (ack)
-      this._socket.emit('write', request.data, (written: boolean) => {
-        if (!written) throw new Error('Write failed');
+      this._socket.emit('write', request, (_?: boolean, error?: Error) => {
+        if (error) reject(error);
         resolve();
       });
     });
@@ -178,14 +191,14 @@ export class IoPeer implements Io {
     table: string;
     where: { [column: string]: JsonValue | null };
   }): Promise<Rljson> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       // Request readRows, resolve once the data is received (ack)
       this._socket.emit(
         'readRows',
-        request.table,
-        request.where,
-        (data: Rljson) => {
-          resolve(data);
+        request,
+        (result?: Rljson, error?: Error) => {
+          if (error) reject(error);
+          resolve(result!);
         },
       );
     });
@@ -198,10 +211,11 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to the number of rows in the specified table.
    */
   rowCount(table: string): Promise<number> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       // Request rowCount, resolve once the data is received (ack)
-      this._socket.emit('rowCount', table, (count: number) => {
-        resolve(count);
+      this._socket.emit('rowCount', table, (count?: number, error?: Error) => {
+        if (error) reject(error);
+        resolve(count!);
       });
     });
   }

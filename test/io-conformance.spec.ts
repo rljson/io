@@ -25,21 +25,29 @@ import {
 
 import { Io, IoTestSetup, IoTools } from '../src';
 
-import { testPeerSetup } from './io-conformance.setup.ts';
+import { testMemSetup, testPeerSetup } from './io-conformance.setup.ts';
 import { expectGolden, ExpectGoldenOptions } from './setup/goldens.ts';
 
 const ego: ExpectGoldenOptions = {
   npmUpdateGoldensEnabled: true,
 };
 
-export const runIoConformanceTests = () => {
-  return describe('Io Conformance', async () => {
+const setups: Record<string, IoTestSetup> = {
+  IoMem: testMemSetup(),
+  IoPeer: testPeerSetup(),
+};
+
+export const runIoConformanceTests = (
+  setupName: string,
+  ioTestSetup: IoTestSetup,
+) => {
+  return describe('Io Conformance - ' + setupName, async () => {
     let io: Io;
     let ioTools: IoTools;
     let setup: IoTestSetup;
 
     beforeAll(async () => {
-      setup = testPeerSetup();
+      setup = ioTestSetup;
       await setup.beforeAll();
     });
 
@@ -957,4 +965,7 @@ export const runIoConformanceTests = () => {
   });
 };
 
-runIoConformanceTests();
+// Run the tests for all setups
+for (const [setupName, setup] of Object.entries(setups)) {
+  runIoConformanceTests(setupName, setup);
+}
