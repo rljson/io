@@ -6,9 +6,7 @@
 
 import EventEmitter from 'node:events';
 
-import { Socket } from './socket.ts';
-
-export class PeerServerSocketMock extends EventEmitter implements Socket {
+export class PeerServerSocketMock extends EventEmitter {
   connected: boolean = false;
   disconnected: boolean = true;
 

@@ -46,7 +46,10 @@ describe('IoServer', () => {
     await io.createOrExtendTable({ tableCfg: exampleTableCfg });
     await io.write({ data: { nutritionalValues: exampleData } });
 
-    socket = new EventEmitter() as Socket;
+    // Create server with mock socket
+    // Using EventEmitter as Socket mock
+    socket = new EventEmitter() as any as Socket;
+
     server = new IoServer(io);
 
     server.addSocket(socket);
