@@ -26,7 +26,11 @@ import {
 
 import { Io, IoTestSetup, IoTools } from '../src';
 
-import { testMemSetup, testPeerSetup } from './io-conformance.setup.ts';
+import {
+  testMemSetup,
+  testPeerServerSetup,
+  testPeerSetup,
+} from './io-conformance.setup.ts';
 import { expectGolden, ExpectGoldenOptions } from './setup/goldens.ts';
 
 const ego: ExpectGoldenOptions = {
@@ -36,6 +40,7 @@ const ego: ExpectGoldenOptions = {
 const setups: Record<string, IoTestSetup> = {
   IoMem: testMemSetup(),
   IoPeer: testPeerSetup(),
+  IoPeerServer: testPeerServerSetup(),
 };
 
 export const runIoConformanceTests = (
@@ -177,6 +182,14 @@ export const runIoConformanceTests = (
         const tableCfg: TableCfg = hip(exampleTableCfg({ key: 'table1' }));
         tableCfg._hash = 'wrongHash';
         let message: string = '';
+
+        await expect(
+          io.createOrExtendTable({ tableCfg: tableCfg }),
+        ).rejects.toThrow(
+          'Hash "wrongHash" does not match the newly calculated one "uX24nHRtwkXRsq8l46cNRZ". ' +
+            'Please make sure that all systems are producing the same hashes.',
+        );
+
         try {
           await io.createOrExtendTable({ tableCfg: tableCfg });
         } catch (err: any) {

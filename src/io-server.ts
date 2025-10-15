@@ -20,9 +20,9 @@ export class IoServer {
    * Adds a socket to the IoServer instance.
    * @param socket - The socket to add.
    */
-  addSocket(socket: Socket): void {
+  async addSocket(socket: Socket): Promise<void> {
     // Add transport layer to the socket
-    this._addTransportLayer(socket);
+    await this._addTransportLayer(socket);
 
     // Add socket to the list of sockets
     this._sockets.push(socket);
@@ -42,72 +42,80 @@ export class IoServer {
    * Adds a transport layer to the given socket.
    * @param socket - The socket to add the transport layer to.
    */
-  private _addTransportLayer(socket: Socket): void {
+  private async _addTransportLayer(socket: Socket): Promise<void> {
     // CRUD operations
-    const crud = generateTransportLayerCRUD(this._io);
+    const crud = this._generateTransportLayerCRUD(this._io);
     for (const [key, fn] of Object.entries(crud)) {
       socket.on(key, (...args: any[]) => {
         const cb = args[args.length - 1];
 
         fn.apply(this, args.slice(0, -1))
           .then((result) => {
-            cb(result);
+            cb(result, null);
           })
           .catch((err) => {
-            cb(err);
+            cb(null, err);
           });
       });
     }
 
-    // Event operations
-    const event = generateTransportLayerEvent(this._io);
-    for (const [key, fn] of Object.entries(event)) {
-      socket.on(key, (...args: any[]) => {
-        fn.apply(this, args);
+    // Event operations on initial dump
+    const dump = await this._io.dump();
+    for (const tableKey of Object.keys(dump)) {
+      if (tableKey.startsWith('_')) {
+        continue;
+      }
+
+      this._io.observeTable(tableKey, (data) => {
+        socket.emit(tableKey, data);
       });
     }
   }
+
+  // ...........................................................................
+  /**
+   * Creates or extends a table with the given configuration.
+   * Also sets up observation for the new or extended table on all connected sockets.
+   * @param request - An object containing the table configuration.
+   */
+  private async createOrExtendTable(request: {
+    tableCfg: TableCfg;
+  }): Promise<void> {
+    return this._io.createOrExtendTable(request).then(() => {
+      const tableKey = request.tableCfg.key;
+      this._sockets.forEach((socket) => {
+        this._io.observeTable(tableKey, (data) => {
+          socket.emit(tableKey, data);
+        });
+      });
+    });
+  }
+
+  // ...........................................................................
+  /**
+   * Generates a transport layer object for the given Io instance.
+   * @param io - The Io instance to generate the transport layer for.
+   * @returns An object containing methods that correspond to the Io interface.
+   */
+  private _generateTransportLayerCRUD = (io: Io) =>
+    ({
+      init: () => io.init(),
+      close: () => io.close(),
+      isOpen: () =>
+        new Promise((resolve) => resolve(io.isOpen)) as Promise<boolean>,
+      isReady: () => io.isReady(),
+      dump: () => io.dump(),
+      dumpTable: (request: { table: string }) => io.dumpTable(request),
+      contentType: (request: { table: string }) => io.contentType(request),
+      tableExists: (tableKey: TableKey) => io.tableExists(tableKey),
+      createOrExtendTable: (request: { tableCfg: TableCfg }) =>
+        this.createOrExtendTable(request),
+      rawTableCfgs: () => io.rawTableCfgs(),
+      write: (request: { data: Rljson }) => io.write(request),
+      readRows: (request: {
+        table: string;
+        where: { [column: string]: JsonValue | null };
+      }) => io.readRows(request),
+      rowCount: (table: string) => io.rowCount(table),
+    } as { [key: string]: (...args: any[]) => Promise<any> });
 }
-
-// ...........................................................................
-/**
- * Generates a transport layer object for the given Io instance.
- * @param io - The Io instance to generate the transport layer for.
- * @returns An object containing methods that correspond to the Io interface.
- */
-const generateTransportLayerCRUD = (io: Io) =>
-  ({
-    init: () => io.init(),
-    close: () => io.close(),
-    isOpen: () =>
-      new Promise((resolve) => resolve(io.isOpen)) as Promise<boolean>,
-    isReady: () => io.isReady(),
-    dump: () => io.dump(),
-    dumpTable: (request: { table: string }) => io.dumpTable(request),
-    contentType: (request: { table: string }) => io.contentType(request),
-    tableExists: (tableKey: TableKey) => io.tableExists(tableKey),
-    createOrExtendTable: (request: { tableCfg: TableCfg }) =>
-      io.createOrExtendTable(request),
-    rawTableCfgs: () => io.rawTableCfgs(),
-    write: (request: { data: Rljson }) => io.write(request),
-    readRows: (request: {
-      table: string;
-      where: { [column: string]: JsonValue | null };
-    }) => io.readRows(request),
-    rowCount: (table: string) => io.rowCount(table),
-  } as { [key: string]: (...args: any[]) => Promise<any> });
-
-// ...........................................................................
-/**
- * Generates a transport layer object for the given Io instance.
- * @param io - The Io instance to generate the transport layer for.
- * @returns An object containing methods that correspond to the Io event interface.
- */
-const generateTransportLayerEvent = (io: Io) =>
-  ({
-    observeTable: (table: string, callback: (data: Rljson) => void) =>
-      io.observeTable(table, callback),
-    unobserveTable: (table: string, callback: (data: Rljson) => void) =>
-      io.unobserveTable(table, callback),
-    unobserveAll: (table: string) => io.unobserveAll(table),
-  } as { [key: string]: (...args: any[]) => void });

@@ -10,7 +10,7 @@ import { ContentType, Rljson, TableCfg, TableKey } from '@rljson/rljson';
 import { IoMem } from './io-mem.ts';
 import { IoTools } from './io-tools.ts';
 import { Io } from './io.ts';
-import { MockSocket } from './mock-socket.ts';
+import { PeerSocketMock } from './peer-socket-mock.ts';
 import { Socket } from './socket.ts';
 
 export class IoPeer implements Io {
@@ -258,7 +258,7 @@ export class IoPeer implements Io {
   // ...........................................................................
   static example = async () => {
     const ioMem = await IoMem.example();
-    const socket = new MockSocket(ioMem);
+    const socket = new PeerSocketMock(ioMem);
     const io = new IoPeer(socket);
     await io.init();
     return io;

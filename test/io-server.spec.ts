@@ -121,7 +121,7 @@ describe('IoServer', () => {
 
   it('should add socket', async () => {
     expect((server as any)._sockets.length).toBe(1);
-    server.addSocket(socket);
+    await server.addSocket(socket);
     expect((server as any)._sockets.length).toBe(2);
   });
 
@@ -169,9 +169,14 @@ describe('IoServer', () => {
     const error: Error = await vi.waitFor(
       () =>
         new Promise((r) => {
-          socket.emit('dumpTable', { table: 'unknown' }, (data: any) => {
-            r(data);
-          });
+          socket.emit(
+            'dumpTable',
+            { table: 'unknown' },
+            (data: any, error: Error) => {
+              if (error) r(error);
+              r(data);
+            },
+          );
         }),
       { timeout: 5000 },
     );
@@ -345,7 +350,7 @@ describe('IoServer', () => {
     const callback = vi.fn();
 
     // Call server to observe
-    socket.emit('observeTable', 'nutritionalValues', callback);
+    socket.on('nutritionalValues', callback);
 
     // Write new data
     const newData = {
@@ -383,7 +388,7 @@ describe('IoServer', () => {
     expect(callback).toHaveBeenCalled();
 
     // Unobserve
-    socket.emit('unobserveTable', 'nutritionalValues', callback);
+    socket.off('nutritionalValues', callback);
 
     // Write new data again
     const newData2 = {
@@ -425,7 +430,7 @@ describe('IoServer', () => {
     const callback = vi.fn();
 
     // Call server to observe
-    socket.emit('observeTable', 'nutritionalValues', callback);
+    socket.on('nutritionalValues', callback);
 
     // Write new data
     const newData = {
@@ -463,7 +468,7 @@ describe('IoServer', () => {
     expect(callback).toHaveBeenCalled();
 
     // Unobserve all
-    socket.emit('unobserveAll', 'nutritionalValues');
+    socket.removeAllListeners('nutritionalValues');
 
     // Write new data again
     const newData2 = {

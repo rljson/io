@@ -6,6 +6,8 @@
 
 import { Io, IoMem, IoTestSetup } from '../src';
 import { IoPeer } from '../src/io-peer';
+import { IoServer } from '../src/io-server';
+import { PeerServerSocketMock } from '../src/peer-server-socket-mock';
 
 // ..............................................................................
 abstract class GenericIoTestSetup implements IoTestSetup {
@@ -45,6 +47,27 @@ class IoPeerTestSetup extends GenericIoTestSetup {
   }
 }
 
+class IoPeerServerTestSetup extends GenericIoTestSetup {
+  async beforeEach(): Promise<void> {
+    //Io of Server --> IoMem
+    const ioMemServer = await IoMem.example();
+
+    //Socket between Server and Peer
+    const socket = new PeerServerSocketMock();
+
+    //IoPeer of Peer --> Socket
+    const ioServer = new IoServer(ioMemServer);
+    ioServer.addSocket(socket);
+
+    //IoPeer of Peer --> Socket
+    const io = new IoPeer(socket);
+    await io.init();
+
+    this._io = io;
+  }
+}
+
 // .............................................................................
 export const testMemSetup = () => new IoMemTestSetup();
 export const testPeerSetup = () => new IoPeerTestSetup();
+export const testPeerServerSetup = () => new IoPeerServerTestSetup();
