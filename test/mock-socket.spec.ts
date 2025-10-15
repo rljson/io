@@ -10,7 +10,7 @@ import { Io, IoMem } from '../src';
 import { PeerSocketMock } from '../src/peer-socket-mock';
 import { Socket } from '../src/socket';
 
-describe('MockSocket', () => {
+describe('PeerSocketMock', () => {
   let socket: Socket;
   let io: Io;
 
@@ -185,24 +185,5 @@ describe('MockSocket', () => {
     expect(() => socket.emit('unsupportedEvent')).toThrowError(
       'Event unsupportedEvent not supported',
     );
-  });
-
-  it('Not implemented Methods', () => {
-    expect(() => socket.setMaxListeners(10)).toThrowError(
-      'Method not implemented.',
-    );
-    expect(() => socket.getMaxListeners()).toThrowError(
-      'Method not implemented.',
-    );
-    expect(() => socket.listenerCount('eventName', () => {})).toThrowError(
-      'Method not implemented.',
-    );
-    expect(() => socket.prependListener('eventName', () => {})).toThrowError(
-      'Method not implemented.',
-    );
-    expect(() =>
-      socket.prependOnceListener('eventName', () => {}),
-    ).toThrowError('Method not implemented.');
-    expect(() => socket.eventNames()).toThrowError('Method not implemented.');
   });
 });

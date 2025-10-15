@@ -146,20 +146,6 @@ export class PeerSocketMock implements Socket {
   // ............................................................................
   // The following methods are part of the EventEmitter interface but are not implemented in this mock.
   // They throw an error if called, indicating that they are not supported.
-  setMaxListeners(n: number): this {
-    throw new Error(`Method not implemented. ${n}`);
-  }
-
-  // ............................................................................
-  // The following methods are part of the EventEmitter interface but are not implemented in this mock.
-  // They throw an error if called, indicating that they are not supported.
-  getMaxListeners(): number {
-    throw new Error('Method not implemented.');
-  }
-
-  // ............................................................................
-  // The following methods are part of the EventEmitter interface but are not implemented in this mock.
-  // They throw an error if called, indicating that they are not supported.
   listeners(eventName: string | symbol) {
     return this._io.observers(eventName.toString());
   }
@@ -193,49 +179,5 @@ export class PeerSocketMock implements Socket {
       });
 
     return true;
-  }
-
-  // ............................................................................
-  // The following methods are part of the EventEmitter interface but are not implemented in this mock.
-  // They throw an error if called, indicating that they are not supported.
-  listenerCount(
-    eventName: string | symbol,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-    listener?: Function | undefined,
-  ): number {
-    throw new Error(
-      `Method not implemented. ${eventName.toString} ${listener}`,
-    );
-  }
-
-  // ............................................................................
-  // The following methods are part of the EventEmitter interface but are not implemented in this mock.
-  // They throw an error if called, indicating that they are not supported.
-  prependListener(
-    eventName: string | symbol,
-    listener: (...args: any[]) => void,
-  ): this {
-    throw new Error(
-      `Method not implemented. ${eventName.toString} ${listener}`,
-    );
-  }
-
-  // ............................................................................
-  // The following methods are part of the EventEmitter interface but are not implemented in this mock.
-  // They throw an error if called, indicating that they are not supported.
-  prependOnceListener(
-    eventName: string | symbol,
-    listener: (...args: any[]) => void,
-  ): this {
-    throw new Error(
-      `Method not implemented. ${eventName.toString} ${listener}`,
-    );
-  }
-
-  // ............................................................................
-  // The following methods are part of the EventEmitter interface but are not implemented in this mock.
-  // They throw an error if called, indicating that they are not supported.
-  eventNames(): (string | symbol)[] {
-    throw new Error('Method not implemented.');
   }
 }
