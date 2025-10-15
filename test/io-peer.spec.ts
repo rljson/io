@@ -11,7 +11,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { Io } from '../src/io';
 import { IoPeer } from '../src/io-peer';
 import { IoTools } from '../src/io-tools';
-import { MockSocket } from '../src/mock-socket';
+import { PeerSocketMock } from '../src/peer-socket-mock';
 import { Socket } from '../src/socket';
 
 describe('IoPeer', () => {
@@ -45,7 +45,7 @@ describe('IoPeer', () => {
     await io.createOrExtendTable({ tableCfg: exampleTableCfg });
     await io.write({ data: { nutritionalValues: exampleData } });
 
-    socket = new MockSocket(io);
+    socket = new PeerSocketMock(io);
 
     peer = new IoPeer(socket);
     await peer.init();

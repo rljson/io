@@ -7,7 +7,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Io, IoMem } from '../src';
-import { MockSocket } from '../src/mock-socket';
+import { PeerSocketMock } from '../src/peer-socket-mock';
 import { Socket } from '../src/socket';
 
 describe('MockSocket', () => {
@@ -16,7 +16,7 @@ describe('MockSocket', () => {
 
   beforeEach(async () => {
     io = await IoMem.example();
-    socket = new MockSocket(io);
+    socket = new PeerSocketMock(io);
   });
 
   it('should be defined', () => {
