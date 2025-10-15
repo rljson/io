@@ -8,12 +8,16 @@ import { JsonValue } from '@rljson/json';
 import { ContentType, Rljson, TableCfg, TableKey } from '@rljson/rljson';
 
 import { IoMem } from './io-mem.ts';
+import { IoTools } from './io-tools.ts';
 import { Io } from './io.ts';
 import { MockSocket } from './mock-socket.ts';
 import { Socket } from './socket.ts';
 
 export class IoPeer implements Io {
   isOpen: boolean = false;
+
+  private _ioTools!: IoTools;
+
   constructor(private _socket: Socket) {}
 
   // ...........................................................................
@@ -23,6 +27,9 @@ export class IoPeer implements Io {
    * @returns
    */
   async init(): Promise<void> {
+    // Initialize IoTools
+    this._ioTools = new IoTools(this);
+
     // Update isOpen on connect/disconnect
     this._socket.on('connect', () => {
       this.isOpen = true;
@@ -65,10 +72,9 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to the dumped database content.
    */
   async dump(): Promise<Rljson> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       // Request dump, resolve once the data is received (ack)
-      this._socket.emit('dump', (data: Rljson, error?: Error) => {
-        if (error) reject(error);
+      this._socket.emit('dump', (data: Rljson) => {
         resolve(data);
       });
     });
@@ -117,16 +123,11 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to true if the table exists, false otherwise.
    */
   tableExists(tableKey: TableKey): Promise<boolean> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       // Request tableExists, resolve once the data is received (ack)
-      this._socket.emit(
-        'tableExists',
-        tableKey,
-        (exists: boolean, error?: Error) => {
-          if (error) reject(error);
-          resolve(exists);
-        },
-      );
+      this._socket.emit('tableExists', tableKey, (exists: boolean) => {
+        resolve(exists);
+      });
     });
   }
 
@@ -156,10 +157,9 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to an array of table configurations.
    */
   rawTableCfgs(): Promise<TableCfg[]> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       // Request rawTableCfgs, resolve once the data is received (ack)
-      this._socket.emit('rawTableCfgs', (data: TableCfg[], error?: Error) => {
-        if (error) reject(error);
+      this._socket.emit('rawTableCfgs', (data: TableCfg[]) => {
         resolve(data);
       });
     });
@@ -176,6 +176,15 @@ export class IoPeer implements Io {
       // Request write, resolve once the data is received (ack)
       this._socket.emit('write', request, (_?: boolean, error?: Error) => {
         if (error) reject(error);
+
+        // Notify observers
+        const tables = Object.keys(request.data);
+        for (const table of tables) {
+          this._ioTools.notifyObservers(table, {
+            [table]: request.data[table],
+          } as Rljson);
+        }
+
         resolve();
       });
     });
@@ -224,7 +233,10 @@ export class IoPeer implements Io {
   // Observe
 
   /** Start observing changes on a specific table */
-  observeTable(table: string, callback: (data: Rljson) => void): void {
+  async observeTable(
+    table: string,
+    callback: (data: Rljson) => void,
+  ): Promise<void> {
     this._socket.on(table, callback);
   }
 

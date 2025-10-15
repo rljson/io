@@ -8,6 +8,9 @@ import { Io } from './io.ts';
 import { Socket } from './socket.ts';
 
 export class MockSocket implements Socket {
+  private _onceListeners: { [event: string]: ((...args: any[]) => void)[] } =
+    {};
+
   connected: boolean = false;
   disconnected: boolean = true;
 
@@ -17,13 +20,20 @@ export class MockSocket implements Socket {
     this.connected = true;
     this.disconnected = false;
 
-    this.listeners('connect').forEach((cb) => cb({}));
+    const listeners = this.listeners('connect');
+    for (const cb of listeners) {
+      cb({});
+    }
   }
+
   disconnect(): void {
     this.connected = false;
     this.disconnected = true;
 
-    this.listeners('disconnect').forEach((cb) => cb({}));
+    const listeners = this.listeners('disconnect');
+    for (const cb of listeners) {
+      cb({});
+    }
   }
 
   addListener(
@@ -34,14 +44,28 @@ export class MockSocket implements Socket {
     return this;
   }
   on(eventName: string | symbol, listener: (...args: any[]) => void): this {
-    this._io.observeTable(eventName.toString(), listener);
+    this.addListener(eventName, listener);
     return this;
   }
   once(eventName: string | symbol, listener: (...args: any[]) => void): this {
-    return this.on(eventName, (...args: any[]) => {
-      this.off(eventName, listener);
+    //Helping structure --> Add listener to once list
+    this.on(eventName, (...args: any[]) => {
+      if (
+        this._onceListeners[eventName.toString()] &&
+        this._onceListeners[eventName.toString()].includes(listener)
+      )
+        return;
+
+      //Call the listener
       listener(...args);
+
+      //Add listener to once list
+      this._onceListeners[eventName.toString()] = [
+        ...(this._onceListeners[eventName.toString()] || []),
+        listener,
+      ];
     });
+    return this;
   }
   removeListener(
     eventName: string | symbol,
@@ -55,7 +79,7 @@ export class MockSocket implements Socket {
     return this;
   }
   removeAllListeners(eventName?: string | symbol | undefined): this {
-    this._io.unobserveTable(eventName?.toString() ?? '', () => {});
+    this._io.unobserveAll(eventName?.toString() ?? '');
     return this;
   }
   setMaxListeners(n: number): this {

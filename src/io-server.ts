@@ -43,14 +43,11 @@ export class IoServer {
    * @param socket - The socket to add the transport layer to.
    */
   private _addTransportLayer(socket: Socket): void {
-    const transport = generateTransportLayer(this._io);
-
-    for (const [key, fn] of Object.entries(transport)) {
+    // CRUD operations
+    const crud = generateTransportLayerCRUD(this._io);
+    for (const [key, fn] of Object.entries(crud)) {
       socket.on(key, (...args: any[]) => {
         const cb = args[args.length - 1];
-        if (typeof cb !== 'function') {
-          throw new Error(`Last argument must be a callback function`);
-        }
 
         fn.apply(this, args.slice(0, -1))
           .then((result) => {
@@ -59,6 +56,14 @@ export class IoServer {
           .catch((err) => {
             cb(err);
           });
+      });
+    }
+
+    // Event operations
+    const event = generateTransportLayerEvent(this._io);
+    for (const [key, fn] of Object.entries(event)) {
+      socket.on(key, (...args: any[]) => {
+        fn.apply(this, args);
       });
     }
   }
@@ -70,7 +75,7 @@ export class IoServer {
  * @param io - The Io instance to generate the transport layer for.
  * @returns An object containing methods that correspond to the Io interface.
  */
-export const generateTransportLayer = (io: Io) =>
+const generateTransportLayerCRUD = (io: Io) =>
   ({
     init: () => io.init(),
     close: () => io.close(),
@@ -81,8 +86,8 @@ export const generateTransportLayer = (io: Io) =>
     dumpTable: (request: { table: string }) => io.dumpTable(request),
     contentType: (request: { table: string }) => io.contentType(request),
     tableExists: (tableKey: TableKey) => io.tableExists(tableKey),
-    createOrExtendTable: (params: { tableCfg: TableCfg }) =>
-      io.createOrExtendTable(params),
+    createOrExtendTable: (request: { tableCfg: TableCfg }) =>
+      io.createOrExtendTable(request),
     rawTableCfgs: () => io.rawTableCfgs(),
     write: (request: { data: Rljson }) => io.write(request),
     readRows: (request: {
@@ -91,3 +96,18 @@ export const generateTransportLayer = (io: Io) =>
     }) => io.readRows(request),
     rowCount: (table: string) => io.rowCount(table),
   } as { [key: string]: (...args: any[]) => Promise<any> });
+
+// ...........................................................................
+/**
+ * Generates a transport layer object for the given Io instance.
+ * @param io - The Io instance to generate the transport layer for.
+ * @returns An object containing methods that correspond to the Io event interface.
+ */
+const generateTransportLayerEvent = (io: Io) =>
+  ({
+    observeTable: (table: string, callback: (data: Rljson) => void) =>
+      io.observeTable(table, callback),
+    unobserveTable: (table: string, callback: (data: Rljson) => void) =>
+      io.unobserveTable(table, callback),
+    unobserveAll: (table: string) => io.unobserveAll(table),
+  } as { [key: string]: (...args: any[]) => void });

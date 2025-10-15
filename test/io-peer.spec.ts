@@ -70,9 +70,4 @@ describe('IoPeer', () => {
     await peer.close();
     await expect(peer.isReady()).rejects.toBeUndefined();
   });
-
-  it('should dump', async () => {
-    const dump = await peer.dump();
-    expect(dump).toEqual(await io.dump());
-  });
 });

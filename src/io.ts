@@ -90,7 +90,7 @@ export interface Io {
   unobserveTable(table: string, callback: (data: Rljson) => void): void;
 
   /** Stop observing all changes on a specific table */
-  unobserveAll(table: string): void;
+  unobserveAll(table?: string): void;
 
   /** Returns all observers for a specific table */
   observers(table: string): ((data: Rljson) => void)[];

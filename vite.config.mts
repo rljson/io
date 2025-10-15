@@ -22,6 +22,7 @@ export default defineConfig({
         '@rljson/json',
         '@rljson/hash',
         '@rljson/is-ready',
+        'node:events',
       ],
       output: {
         globals: {},

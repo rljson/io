@@ -57,6 +57,48 @@ describe('IoServer', () => {
     expect((server as any)._sockets.length).toBe(1);
   });
 
+  it('should isOpen', async () => {
+    const isOpen = await vi.waitFor(
+      () =>
+        new Promise((r) => {
+          socket.emit('isOpen', (data: any) => {
+            r(data);
+          });
+        }),
+      { timeout: 5000 },
+    );
+
+    expect(isOpen).toBe(true);
+  });
+
+  it('should isReady', async () => {
+    const isReady = await vi.waitFor(
+      () =>
+        new Promise((r) => {
+          socket.emit('isReady', (data: any) => {
+            r(data);
+          });
+        }),
+      { timeout: 5000 },
+    );
+
+    expect(isReady).toBe(undefined);
+  });
+
+  it('should init', async () => {
+    const init = await vi.waitFor(
+      () =>
+        new Promise((r) => {
+          socket.emit('init', (data: any) => {
+            r(data);
+          });
+        }),
+      { timeout: 5000 },
+    );
+
+    expect(init).toBe(undefined);
+  });
+
   it('should close', async () => {
     expect(io.isOpen).toBe(true);
 
@@ -121,6 +163,20 @@ describe('IoServer', () => {
     expect(dumpTable).toEqual(
       await io.dumpTable({ table: 'nutritionalValues' }),
     );
+  });
+
+  it('should return error on wrong dumpTable call', async () => {
+    const error: Error = await vi.waitFor(
+      () =>
+        new Promise((r) => {
+          socket.emit('dumpTable', { table: 'unknown' }, (data: any) => {
+            r(data);
+          });
+        }),
+      { timeout: 5000 },
+    );
+
+    expect(error.message).toEqual('Table "unknown" not found');
   });
 
   it('should get contentType', async () => {
@@ -283,5 +339,165 @@ describe('IoServer', () => {
 
     expect(count).toBeDefined();
     expect(count).toEqual(await io.rowCount('nutritionalValues'));
+  });
+
+  it('should observeTable and unobserveTable', async () => {
+    const callback = vi.fn();
+
+    // Call server to observe
+    socket.emit('observeTable', 'nutritionalValues', callback);
+
+    // Write new data
+    const newData = {
+      _data: [
+        hsh({
+          id: 'bread',
+          energy: 265,
+          fat: 3.2,
+          protein: 9,
+          carbohydrates: 49,
+        }),
+      ],
+    };
+
+    // Wait until write is finished
+    await vi.waitFor(
+      () =>
+        new Promise((r, j) => {
+          socket.emit(
+            'write',
+            { data: { nutritionalValues: newData } },
+            (err: any) => {
+              if (err) {
+                j(err);
+              } else {
+                r(true);
+              }
+            },
+          );
+        }),
+      { timeout: 5000 },
+    );
+
+    // Callback should have been called
+    expect(callback).toHaveBeenCalled();
+
+    // Unobserve
+    socket.emit('unobserveTable', 'nutritionalValues', callback);
+
+    // Write new data again
+    const newData2 = {
+      _data: [
+        hsh({
+          id: 'croissant',
+          energy: 406,
+          fat: 21,
+          protein: 8,
+          carbohydrates: 45,
+        }),
+      ],
+    };
+
+    // Wait until write is finished
+    await vi.waitFor(
+      () =>
+        new Promise((r, j) => {
+          socket.emit(
+            'write',
+            { data: { nutritionalValues: newData2 } },
+            (err: any) => {
+              if (err) {
+                j(err);
+              } else {
+                r(true);
+              }
+            },
+          );
+        }),
+      { timeout: 5000 },
+    );
+
+    // Callback should not be called again
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it('should unobserveAll', async () => {
+    const callback = vi.fn();
+
+    // Call server to observe
+    socket.emit('observeTable', 'nutritionalValues', callback);
+
+    // Write new data
+    const newData = {
+      _data: [
+        hsh({
+          id: 'bread',
+          energy: 265,
+          fat: 3.2,
+          protein: 9,
+          carbohydrates: 49,
+        }),
+      ],
+    };
+
+    // Wait until write is finished
+    await vi.waitFor(
+      () =>
+        new Promise((r, j) => {
+          socket.emit(
+            'write',
+            { data: { nutritionalValues: newData } },
+            (err: any) => {
+              if (err) {
+                j(err);
+              } else {
+                r(true);
+              }
+            },
+          );
+        }),
+      { timeout: 5000 },
+    );
+
+    // Callback should have been called
+    expect(callback).toHaveBeenCalled();
+
+    // Unobserve all
+    socket.emit('unobserveAll', 'nutritionalValues');
+
+    // Write new data again
+    const newData2 = {
+      _data: [
+        hsh({
+          id: 'croissant',
+          energy: 406,
+          fat: 21,
+          protein: 8,
+          carbohydrates: 45,
+        }),
+      ],
+    };
+
+    // Wait until write is finished
+    await vi.waitFor(
+      () =>
+        new Promise((r, j) => {
+          socket.emit(
+            'write',
+            { data: { nutritionalValues: newData2 } },
+            (err: any) => {
+              if (err) {
+                j(err);
+              } else {
+                r(true);
+              }
+            },
+          );
+        }),
+      { timeout: 5000 },
+    );
+
+    // Callback should not be called again
+    expect(callback).toHaveBeenCalledTimes(1);
   });
 });
