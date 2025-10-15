@@ -7,7 +7,6 @@
 import { JsonValue } from '@rljson/json';
 import { ContentType, Rljson, TableCfg, TableKey } from '@rljson/rljson';
 
-
 // .............................................................................
 export interface Io {
   // ...........................................................................
@@ -80,6 +79,21 @@ export interface Io {
 
   /** Returns the number of rows in the given table */
   rowCount(table: string): Promise<number>;
+
+  // ...........................................................................
+  // Observing
+
+  /** Observe changes on a specific table */
+  observeTable(table: string, callback: (data: Rljson) => void): void;
+
+  /** Stop observing changes on a specific table */
+  unobserveTable(table: string, callback: (data: Rljson) => void): void;
+
+  /** Stop observing all changes on a specific table */
+  unobserveAll(table?: string): void;
+
+  /** Returns all observers for a specific table */
+  observers(table: string): ((data: Rljson) => void)[];
 }
 
 // .............................................................................

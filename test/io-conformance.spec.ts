@@ -5,28 +5,55 @@
 // found in the LICENSE file in the root of this package.
 
 import { hip, hsh, rmhsh } from '@rljson/hash';
-import { addColumnsToTableCfg, exampleTableCfg, Rljson, TableCfg, TableType } from '@rljson/rljson';
+import {
+  addColumnsToTableCfg,
+  exampleTableCfg,
+  Rljson,
+  TableCfg,
+  TableType,
+} from '@rljson/rljson';
 
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 
 import { Io, IoTestSetup, IoTools } from '../src';
 
-import { testSetup } from './io-conformance.setup.ts';
+import {
+  testMemSetup,
+  testPeerServerSetup,
+  testPeerSetup,
+} from './io-conformance.setup.ts';
 import { expectGolden, ExpectGoldenOptions } from './setup/goldens.ts';
-
 
 const ego: ExpectGoldenOptions = {
   npmUpdateGoldensEnabled: true,
 };
 
-export const runIoConformanceTests = () => {
-  return describe('Io Conformance', async () => {
+const setups: Record<string, IoTestSetup> = {
+  IoMem: testMemSetup(),
+  IoPeer: testPeerSetup(),
+  IoPeerServer: testPeerServerSetup(),
+};
+
+export const runIoConformanceTests = (
+  setupName: string,
+  ioTestSetup: IoTestSetup,
+) => {
+  return describe('Io Conformance - ' + setupName, async () => {
     let io: Io;
     let ioTools: IoTools;
     let setup: IoTestSetup;
 
     beforeAll(async () => {
-      setup = testSetup();
+      setup = ioTestSetup;
       await setup.beforeAll();
     });
 
@@ -115,11 +142,54 @@ export const runIoConformanceTests = () => {
       });
     });
 
+    describe('rawTableCfgs()', () => {
+      it('returns an array of all table configurations', async () => {
+        //create four tables with two versions each
+        const tableV0: TableCfg = {
+          key: 'table0',
+          type: 'components',
+          isHead: false,
+          isRoot: false,
+          isShared: true,
+          columns: [
+            { key: '_hash', type: 'string' },
+            { key: 'col0', type: 'string' },
+          ],
+        };
+
+        const tableV1 = addColumnsToTableCfg(tableV0, [
+          { key: 'col1', type: 'string' },
+        ]);
+
+        const tableV2 = addColumnsToTableCfg(tableV1, [
+          { key: 'col2', type: 'string' },
+        ]);
+
+        await io.createOrExtendTable({ tableCfg: tableV0 });
+        await io.createOrExtendTable({ tableCfg: tableV1 });
+        await io.createOrExtendTable({ tableCfg: tableV2 });
+
+        // Check the tableCfgs
+        const actualTableCfgs = await io.rawTableCfgs();
+        await expectGolden('io-conformance/rawTableCfgs.json', ego).toBe(
+          actualTableCfgs,
+        );
+      });
+    });
+
     describe('throws an error', async () => {
       it('if the hashes in the tableCfg are wrong', async () => {
         const tableCfg: TableCfg = hip(exampleTableCfg({ key: 'table1' }));
         tableCfg._hash = 'wrongHash';
         let message: string = '';
+
+        await expect(
+          io.createOrExtendTable({ tableCfg: tableCfg }),
+        ).rejects.toThrow(
+          'Hash "wrongHash" does not match the newly calculated one "uX24nHRtwkXRsq8l46cNRZ". ' +
+            'Please make sure that all systems are producing the same hashes.',
+        );
+
         try {
           await io.createOrExtendTable({ tableCfg: tableCfg });
         } catch (err: any) {
@@ -940,8 +1010,123 @@ export const runIoConformanceTests = () => {
         const contentType = await io.contentType({ table: 'table1' });
         expect(contentType).toBe('components');
       });
+
+      it('returns error if table is not existing', async () => {
+        await expect(io.contentType({ table: 'unknown' })).rejects.toThrow(
+          'Table "unknown" not found',
+        );
+      });
+    });
+
+    describe('observeTable(table, callback)', () => {
+      it('should call listener on table changes', async () => {
+        await createExampleTable('table1');
+
+        const cb = vi.fn();
+        const data = {
+          table1: {
+            _type: 'components',
+            _data: [{ a: 'a2' }],
+          },
+        } as Rljson;
+
+        //Subscribe to changes
+        io.observeTable('table1', cb);
+
+        await io.write({
+          data,
+        });
+
+        expect(cb).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('unobserveTable(table, callback) and unobserveAll(table)', () => {
+      it('should not call listener after unobserve', async () => {
+        await createExampleTable('table1');
+
+        const cb = vi.fn();
+        const data = {
+          table1: {
+            _type: 'components',
+            _data: [{ a: 'a2' }],
+          },
+        } as Rljson;
+
+        //Subscribe to changes
+        io.observeTable('table1', cb);
+
+        await io.write({
+          data,
+        });
+
+        //Unsubscribe
+        io.unobserveTable('table1', cb);
+
+        await io.write({
+          data,
+        });
+
+        expect(cb).toHaveBeenCalledTimes(1);
+      });
+    });
+    describe('unobserveAll(table)', () => {
+      it('should not call listener after unobserve all', async () => {
+        await createExampleTable('table1');
+
+        const cb = vi.fn();
+        const data = {
+          table1: {
+            _type: 'components',
+            _data: [{ a: 'a2' }],
+          },
+        } as Rljson;
+
+        //Subscribe to changes
+        io.observeTable('table1', cb);
+
+        await io.write({
+          data,
+        });
+
+        //Unsubscribe all listeners from table1
+        io.unobserveAll('table1');
+
+        await io.write({
+          data,
+        });
+
+        expect(cb).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('observers(table)', () => {
+      it('get a list of all observers', async () => {
+        await createExampleTable('table1');
+        await createExampleTable('table2');
+
+        const cb1 = vi.fn();
+        const cb2 = vi.fn();
+
+        //Subscribe to changes
+        io.observeTable('table1', cb1);
+        io.observeTable('table1', cb2);
+        io.observeTable('table2', cb2);
+
+        const observers = io.observers('table1');
+        expect(observers.length).toBe(2);
+        expect(observers).toContain(cb1);
+        expect(observers).toContain(cb2);
+
+        const observers2 = io.observers('table2');
+        expect(observers2.length).toBe(1);
+        expect(observers2).toContain(cb2);
+      });
     });
   });
 };
 
-runIoConformanceTests();
+// Run the tests for all setups
+for (const [setupName, setup] of Object.entries(setups)) {
+  runIoConformanceTests(setupName, setup);
+}

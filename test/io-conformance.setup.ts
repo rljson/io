@@ -5,16 +5,17 @@
 // found in the LICENSE file in the root of this package.
 
 import { Io, IoMem, IoTestSetup } from '../src';
+import { IoPeer } from '../src/io-peer';
+import { IoServer } from '../src/io-server';
+import { PeerServerSocketMock } from '../src/peer-server-socket-mock';
 
 // ..............................................................................
-class MyIoTestSetup implements IoTestSetup {
+abstract class GenericIoTestSetup implements IoTestSetup {
   async beforeAll(): Promise<void> {
     // This method can be used for any additional setup required before init.
     // Currently, it does nothing.
   }
-  async beforeEach(): Promise<void> {
-    this._io = await IoMem.example();
-  }
+  async beforeEach(): Promise<void> {}
 
   async afterEach(): Promise<void> {
     await this.io.close();
@@ -31,8 +32,42 @@ class MyIoTestSetup implements IoTestSetup {
     return this._io;
   }
 
-  private _io: Io | null = null;
+  protected _io: Io | null = null;
+}
+
+class IoMemTestSetup extends GenericIoTestSetup {
+  async beforeEach(): Promise<void> {
+    this._io = await IoMem.example();
+  }
+}
+
+class IoPeerTestSetup extends GenericIoTestSetup {
+  async beforeEach(): Promise<void> {
+    this._io = await IoPeer.example();
+  }
+}
+
+class IoPeerServerTestSetup extends GenericIoTestSetup {
+  async beforeEach(): Promise<void> {
+    //Io of Server --> IoMem
+    const ioMemServer = await IoMem.example();
+
+    //Socket between Server and Peer
+    const socket = new PeerServerSocketMock();
+
+    //IoPeer of Peer --> Socket
+    const ioServer = new IoServer(ioMemServer);
+    ioServer.addSocket(socket);
+
+    //IoPeer of Peer --> Socket
+    const io = new IoPeer(socket);
+    await io.init();
+
+    this._io = io;
+  }
 }
 
 // .............................................................................
-export const testSetup = () => new MyIoTestSetup();
+export const testMemSetup = () => new IoMemTestSetup();
+export const testPeerSetup = () => new IoPeerTestSetup();
+export const testPeerServerSetup = () => new IoPeerServerTestSetup();
