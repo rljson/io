@@ -1020,9 +1020,21 @@ export const runIoConformanceTests = (
 
     describe('observeTable(table, callback)', () => {
       it('should call listener on table changes', async () => {
+        //Create example table and add initial data
         await createExampleTable('table1');
+        await io.write({
+          data: {
+            table1: {
+              _type: 'components',
+              _data: [{ a: 'a1' }],
+            },
+          },
+        });
 
+        //Create listener
         const cb = vi.fn();
+
+        //Data to write
         const data = {
           table1: {
             _type: 'components',
@@ -1033,11 +1045,14 @@ export const runIoConformanceTests = (
         //Subscribe to changes
         io.observeTable('table1', cb);
 
+        //Write new data triggering the listener
         await io.write({
           data,
         });
 
+        //Check that the listener was called with the latest data only
         expect(cb).toHaveBeenCalledTimes(1);
+        expect(cb).toHaveBeenCalledWith({ table1: hsh(data.table1) });
       });
     });
 

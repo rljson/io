@@ -280,7 +280,7 @@ export class IoMem implements Io {
       this._ioTools.sortTableDataAndUpdateHash(oldTable);
 
       // Notify observers
-      this._ioTools.notifyObservers(table, { [table]: oldTable } as Rljson);
+      this._ioTools.notifyObservers(table, { [table]: newTable } as Rljson);
     }
 
     // Recalc main hashes
