@@ -6,13 +6,17 @@
 
 import { hip } from '@rljson/hash';
 import {
-  iterateTables, Rljson, TableCfg, TableKey, TableType, throwOnInvalidTableCfg,
-  validateRljsonAgainstTableCfg
+  iterateTables,
+  Rljson,
+  TableCfg,
+  TableKey,
+  TableType,
+  throwOnInvalidTableCfg,
+  validateRljsonAgainstTableCfg,
 } from '@rljson/rljson';
 
 import { IoMem } from './io-mem.ts';
 import { Io } from './io.ts';
-
 
 export type IoObserver = (data: Rljson) => void;
 
@@ -40,14 +44,54 @@ export class IoTools {
       previous: '',
 
       columns: [
-        { key: '_hash', type: 'string' },
-        { key: 'key', type: 'string' },
-        { key: 'type', type: 'string' },
-        { key: 'isHead', type: 'boolean' },
-        { key: 'isRoot', type: 'boolean' },
-        { key: 'isShared', type: 'boolean' },
-        { key: 'previous', type: 'string' },
-        { key: 'columns', type: 'jsonArray' },
+        {
+          key: '_hash',
+          type: 'string',
+          titleShort: 'Hash',
+          titleLong: 'Row Hash',
+        },
+        {
+          key: 'key',
+          type: 'string',
+          titleShort: 'Key',
+          titleLong: 'Table Key',
+        },
+        {
+          key: 'type',
+          type: 'string',
+          titleShort: 'Type',
+          titleLong: 'Content Type',
+        },
+        {
+          key: 'isHead',
+          type: 'boolean',
+          titleShort: 'Is Head',
+          titleLong: 'Is Head Table',
+        },
+        {
+          key: 'isRoot',
+          type: 'boolean',
+          titleShort: 'Is Root',
+          titleLong: 'Is Root Table',
+        },
+        {
+          key: 'isShared',
+          type: 'boolean',
+          titleShort: 'Is Shared',
+          titleLong: 'Is Shared Table',
+        },
+        {
+          key: 'previous',
+          type: 'string',
+          titleShort: 'Previous',
+          titleLong: 'Previous Table Configuration Hash',
+        },
+        {
+          key: 'columns',
+          type: 'jsonArray',
+          titleShort: 'Columns',
+          titleLong: 'Column Configurations',
+        },
       ],
     });
 
@@ -66,12 +110,42 @@ export class IoTools {
       isShared: false,
 
       columns: [
-        { key: '_hash', type: 'string' },
-        { key: 'table', type: 'string' },
-        { key: 'predecessor', type: 'string' },
-        { key: 'successor', type: 'string' },
-        { key: 'timestamp', type: 'number' },
-        { key: 'id', type: 'string' },
+        {
+          key: '_hash',
+          type: 'string',
+          titleShort: 'Hash',
+          titleLong: 'Row Hash',
+        },
+        {
+          key: 'table',
+          type: 'string',
+          titleShort: 'Table',
+          titleLong: 'Table Key',
+        },
+        {
+          key: 'predecessor',
+          type: 'string',
+          titleShort: 'Predecessor',
+          titleLong: 'Predecessor Revision Hash',
+        },
+        {
+          key: 'successor',
+          type: 'string',
+          titleShort: 'Successor',
+          titleLong: 'Successor Revision Hash',
+        },
+        {
+          key: 'timestamp',
+          type: 'number',
+          titleShort: 'Timestamp',
+          titleLong: 'Revision Timestamp',
+        },
+        {
+          key: 'id',
+          type: 'string',
+          titleShort: 'ID',
+          titleLong: 'Revision ID',
+        },
       ],
     };
 
