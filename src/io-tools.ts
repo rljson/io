@@ -6,17 +6,13 @@
 
 import { hip } from '@rljson/hash';
 import {
-  iterateTables,
-  Rljson,
-  TableCfg,
-  TableKey,
-  TableType,
-  throwOnInvalidTableCfg,
-  validateRljsonAgainstTableCfg,
+  iterateTables, Rljson, TableCfg, TableKey, TableType, throwOnInvalidTableCfg,
+  validateRljsonAgainstTableCfg
 } from '@rljson/rljson';
 
 import { IoMem } from './io-mem.ts';
 import { Io } from './io.ts';
+
 
 export type IoObserver = (data: Rljson) => void;
 
@@ -24,8 +20,6 @@ export type IoObserver = (data: Rljson) => void;
  * Provides utility functions for the Io interface.
  */
 export class IoTools {
-  private _observers: Map<string, IoObserver[]> = new Map();
-
   /**
    * Constructor
    * @param io The Io interface to use
@@ -198,72 +192,6 @@ export class IoTools {
     const tableCfg = await this.tableCfg(table);
     const result = tableCfg.columns.map((column) => column.key);
     return result;
-  }
-
-  /**
-   * Observes changes to a given table
-   * @param table - The table to observe
-   * @param observer - The observer function to call on changes
-   * @returns
-   */
-  observeTable(table: string, observer: IoObserver): void {
-    if (!this._observers.has(table)) {
-      this._observers.set(table, []);
-    }
-    this._observers.get(table)!.push(observer);
-  }
-
-  /**
-   * Stops observing changes to a given table
-   * @param table - The table to stop observing
-   * @param observer - The observer function to remove
-   * @returns
-   */
-  unobserveTable(table: string, observer: IoObserver): void {
-    if (!this._observers.has(table)) return;
-    const observers = this._observers.get(table)!;
-    const index = observers.indexOf(observer);
-    if (index !== -1) {
-      observers.splice(index, 1);
-    }
-    if (observers.length === 0) {
-      this._observers.delete(table);
-    }
-  }
-
-  /**
-   * Stops observing all tables or all changes on a specific table
-   * @param table - The table to stop observing or undefined to stop observing all tables
-   */
-  unobserveAll(table?: string) {
-    if (table) {
-      this._observers.delete(table);
-      return;
-    }
-    this._observers.clear();
-  }
-
-  /**
-   * Returns all observers of a given table
-   * @param table - The table to get observers for
-   * @returns A list of observers for the given table
-   */
-
-  observers(table: string): IoObserver[] {
-    return this._observers.get(table) ?? [];
-  }
-
-  /**
-   * Notifies all observers of a given table
-   * @param table - The table to notify observers of
-   * @param data - The data to pass to the observers
-   */
-  notifyObservers(table: string, data: Rljson): void {
-    if (!this._observers.has(table)) return;
-    const observers = this._observers.get(table)!;
-    for (const observer of observers) {
-      observer(data);
-    }
   }
 
   /**

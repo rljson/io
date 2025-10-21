@@ -7,14 +7,30 @@
 import { Io } from './io.ts';
 import { Socket } from './socket.ts';
 
+
 export class PeerSocketMock implements Socket {
-  private _onceListeners: { [event: string]: ((...args: any[]) => void)[] } =
-    {};
+  private _listenersMap: Map<string | symbol, Array<(...args: any[]) => void>> =
+    new Map();
 
   connected: boolean = false;
   disconnected: boolean = true;
 
   constructor(private _io: Io) {}
+
+  // ............................................................................
+  /**
+   * Registers an event listener for the specified event.
+   * @param eventName - The name of the event to listen for.
+   * @param listener - The callback function to invoke when the event is emitted.
+   * @returns The PeerSocketMock instance for chaining.
+   */
+  on(eventName: string | symbol, listener: (...args: any[]) => void): this {
+    if (!this._listenersMap.has(eventName)) {
+      this._listenersMap.set(eventName, []);
+    }
+    this._listenersMap.get(eventName)!.push(listener);
+    return this;
+  }
 
   // ...........................................................................
   /**
@@ -26,7 +42,7 @@ export class PeerSocketMock implements Socket {
     this.connected = true;
     this.disconnected = false;
 
-    const listeners = this.listeners('connect');
+    const listeners = this._listenersMap.get('connect') || [];
     for (const cb of listeners) {
       cb({});
     }
@@ -42,119 +58,10 @@ export class PeerSocketMock implements Socket {
     this.connected = false;
     this.disconnected = true;
 
-    const listeners = this.listeners('disconnect');
+    const listeners = this._listenersMap.get('disconnect') || [];
     for (const cb of listeners) {
       cb({});
     }
-  }
-
-  // ............................................................................
-  /**
-   * Adds a listener for the specified event.
-   * @param eventName - The name of the event to listen for.
-   * @param listener - The callback function to invoke when the event is emitted.
-   * @returns The current PeerSocketMock instance.
-   */
-  addListener(
-    eventName: string | symbol,
-    listener: (...args: any[]) => void,
-  ): this {
-    this._io.observeTable(eventName.toString(), listener);
-    return this;
-  }
-
-  // ............................................................................
-  /**
-   * Alias for addListener method.
-   * @param eventName - The name of the event to listen for.
-   * @param listener - The callback function to invoke when the event is emitted.
-   * @returns The current PeerSocketMock instance.
-   */
-  on(eventName: string | symbol, listener: (...args: any[]) => void): this {
-    this.addListener(eventName, listener);
-    return this;
-  }
-
-  // ............................................................................
-  /**
-   * Adds a one-time listener for the specified event.
-   * The listener is invoked only the next time the event is emitted, after which it is removed.
-   * @param eventName - The name of the event to listen for.
-   * @param listener - The callback function to invoke when the event is emitted.
-   * @returns The current PeerSocketMock instance.
-   */
-  once(eventName: string | symbol, listener: (...args: any[]) => void): this {
-    //Helping structure --> Add listener to once list
-    this.on(eventName, (...args: any[]) => {
-      if (
-        this._onceListeners[eventName.toString()] &&
-        this._onceListeners[eventName.toString()].includes(listener)
-      )
-        return;
-
-      //Call the listener
-      listener(...args);
-
-      //Add listener to once list
-      this._onceListeners[eventName.toString()] = [
-        ...(this._onceListeners[eventName.toString()] || []),
-        listener,
-      ];
-    });
-    return this;
-  }
-
-  // ............................................................................
-  /**
-   * Removes a listener for the specified event.
-   * @param eventName - The name of the event to stop listening for.
-   * @param listener - The callback function to remove.
-   * @returns The current PeerSocketMock instance.
-   */
-  removeListener(
-    eventName: string | symbol,
-    listener: (...args: any[]) => void,
-  ): this {
-    this._io.unobserveTable(eventName.toString(), listener);
-    return this;
-  }
-
-  // ............................................................................
-  /**
-   * Alias for removeListener method.
-   * @param eventName - The name of the event to stop listening for.
-   * @param listener - The callback function to remove.
-   * @returns The current PeerSocketMock instance.
-   */
-  off(eventName: string | symbol, listener: (...args: any[]) => void): this {
-    this.removeListener(eventName, listener);
-    return this;
-  }
-
-  // ............................................................................
-  /**
-   * Removes all listeners for the specified event.
-   * If no event is specified, all listeners for all events are removed.
-   * @param eventName - The name of the event to stop listening for (optional).
-   * @returns The current PeerSocketMock instance.
-   */
-  removeAllListeners(eventName?: string | symbol | undefined): this {
-    this._io.unobserveAll(eventName?.toString() ?? '');
-    return this;
-  }
-
-  // ............................................................................
-  // The following methods are part of the EventEmitter interface but are not implemented in this mock.
-  // They throw an error if called, indicating that they are not supported.
-  listeners(eventName: string | symbol) {
-    return this._io.observers(eventName.toString());
-  }
-
-  // ............................................................................
-  // The following methods are part of the EventEmitter interface but are not implemented in this mock.
-  // They throw an error if called, indicating that they are not supported.
-  rawListeners(eventName: string | symbol) {
-    return this.listeners(eventName);
   }
 
   // ............................................................................

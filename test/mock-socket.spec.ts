@@ -10,6 +10,7 @@ import { Io, IoMem } from '../src';
 import { PeerSocketMock } from '../src/peer-socket-mock';
 import { Socket } from '../src/socket';
 
+
 describe('PeerSocketMock', () => {
   let socket: Socket;
   let io: Io;
@@ -33,123 +34,6 @@ describe('PeerSocketMock', () => {
     socket.disconnect();
     expect(socket.connected).toBe(false);
     expect(socket.disconnected).toBe(true);
-  });
-  it('should add and remove listeners', () => {
-    const connectCallback = vi.fn();
-    const disconnectCallback = vi.fn();
-
-    socket.addListener('connect', connectCallback);
-    socket.on('disconnect', disconnectCallback);
-
-    socket.connect();
-    socket.disconnect();
-
-    socket.removeListener('connect', connectCallback);
-    socket.removeListener('disconnect', disconnectCallback);
-
-    socket.connect();
-    socket.disconnect();
-
-    expect(connectCallback).toHaveBeenCalledTimes(1);
-    expect(disconnectCallback).toHaveBeenCalledTimes(1);
-  });
-  it('should add and remove once listeners', () => {
-    const connectCallback = vi.fn();
-    const disconnectCallback = vi.fn();
-
-    socket.once('connect', connectCallback);
-    socket.once('disconnect', disconnectCallback);
-
-    socket.connect();
-    socket.disconnect();
-
-    // Call again to check that once listeners are removed
-    socket.connect();
-    socket.disconnect();
-
-    expect(connectCallback).toHaveBeenCalledTimes(1);
-    expect(disconnectCallback).toHaveBeenCalledTimes(1);
-  });
-  it('should off listeners', () => {
-    const connectCallback = vi.fn();
-    const disconnectCallback = vi.fn();
-
-    socket.on('connect', connectCallback);
-    socket.on('disconnect', disconnectCallback);
-
-    socket.connect();
-    socket.disconnect();
-
-    socket.off('connect', connectCallback);
-    socket.off('disconnect', disconnectCallback);
-
-    socket.connect();
-    socket.disconnect();
-
-    expect(connectCallback).toHaveBeenCalledTimes(1);
-    expect(disconnectCallback).toHaveBeenCalledTimes(1);
-  });
-
-  it('should remove all listeners', () => {
-    const connectCallback = vi.fn();
-    const disconnectCallback = vi.fn();
-
-    socket.on('connect', connectCallback);
-    socket.on('disconnect', disconnectCallback);
-
-    socket.connect();
-    socket.disconnect();
-
-    socket.removeAllListeners('connect');
-    socket.removeAllListeners('disconnect');
-
-    socket.connect();
-    socket.disconnect();
-
-    expect(connectCallback).toHaveBeenCalledTimes(1);
-    expect(disconnectCallback).toHaveBeenCalledTimes(1);
-  });
-
-  it('should remove all listeners w/o table given', () => {
-    const connectCallback = vi.fn();
-    const disconnectCallback = vi.fn();
-
-    socket.on('connect', connectCallback);
-    socket.on('disconnect', disconnectCallback);
-
-    socket.connect();
-    socket.disconnect();
-
-    socket.removeAllListeners();
-
-    socket.connect();
-    socket.disconnect();
-
-    expect(connectCallback).toHaveBeenCalledTimes(1);
-    expect(disconnectCallback).toHaveBeenCalledTimes(1);
-  });
-
-  it('should get all listeners', () => {
-    const connectCallback = () => {
-      // console.log('connected');
-    };
-    const disconnectCallback = () => {
-      // console.log('disconnected');
-    };
-
-    socket.on('connect', connectCallback);
-    socket.on('disconnect', disconnectCallback);
-
-    const connectListeners = socket.listeners('connect');
-    expect(connectListeners.length).toBe(1);
-    expect(connectListeners[0]).toBe(connectCallback);
-
-    const disconnectListeners = socket.rawListeners('disconnect');
-    expect(disconnectListeners.length).toBe(1);
-    expect(disconnectListeners[0]).toBe(disconnectCallback);
-
-    socket.connect();
-    socket.disconnect();
   });
 
   it('should emit events', async () => {

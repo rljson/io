@@ -5,33 +5,15 @@
 // found in the LICENSE file in the root of this package.
 
 import { hip, hsh, rmhsh } from '@rljson/hash';
-import {
-  addColumnsToTableCfg,
-  exampleTableCfg,
-  Rljson,
-  TableCfg,
-  TableType,
-} from '@rljson/rljson';
+import { addColumnsToTableCfg, exampleTableCfg, Rljson, TableCfg, TableType } from '@rljson/rljson';
 
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { Io, IoTestSetup, IoTools } from '../src';
 
-import {
-  testMemSetup,
-  testPeerServerSetup,
-  testPeerSetup,
-} from './io-conformance.setup.ts';
+import { testMemSetup, testPeerServerSetup, testPeerSetup } from './io-conformance.setup.ts';
 import { expectGolden, ExpectGoldenOptions } from './setup/goldens.ts';
+
 
 const ego: ExpectGoldenOptions = {
   npmUpdateGoldensEnabled: true,
@@ -1015,127 +997,6 @@ export const runIoConformanceTests = (
         await expect(io.contentType({ table: 'unknown' })).rejects.toThrow(
           'Table "unknown" not found',
         );
-      });
-    });
-
-    describe('observeTable(table, callback)', () => {
-      it('should call listener on table changes', async () => {
-        //Create example table and add initial data
-        await createExampleTable('table1');
-        await io.write({
-          data: {
-            table1: {
-              _type: 'components',
-              _data: [{ a: 'a1' }],
-            },
-          },
-        });
-
-        //Create listener
-        const cb = vi.fn();
-
-        //Data to write
-        const data = {
-          table1: {
-            _type: 'components',
-            _data: [{ a: 'a2' }],
-          },
-        } as Rljson;
-
-        //Subscribe to changes
-        io.observeTable('table1', cb);
-
-        //Write new data triggering the listener
-        await io.write({
-          data,
-        });
-
-        //Check that the listener was called with the latest data only
-        expect(cb).toHaveBeenCalledTimes(1);
-        expect(cb).toHaveBeenCalledWith({ table1: hsh(data.table1) });
-      });
-    });
-
-    describe('unobserveTable(table, callback) and unobserveAll(table)', () => {
-      it('should not call listener after unobserve', async () => {
-        await createExampleTable('table1');
-
-        const cb = vi.fn();
-        const data = {
-          table1: {
-            _type: 'components',
-            _data: [{ a: 'a2' }],
-          },
-        } as Rljson;
-
-        //Subscribe to changes
-        io.observeTable('table1', cb);
-
-        await io.write({
-          data,
-        });
-
-        //Unsubscribe
-        io.unobserveTable('table1', cb);
-
-        await io.write({
-          data,
-        });
-
-        expect(cb).toHaveBeenCalledTimes(1);
-      });
-    });
-    describe('unobserveAll(table)', () => {
-      it('should not call listener after unobserve all', async () => {
-        await createExampleTable('table1');
-
-        const cb = vi.fn();
-        const data = {
-          table1: {
-            _type: 'components',
-            _data: [{ a: 'a2' }],
-          },
-        } as Rljson;
-
-        //Subscribe to changes
-        io.observeTable('table1', cb);
-
-        await io.write({
-          data,
-        });
-
-        //Unsubscribe all listeners from table1
-        io.unobserveAll('table1');
-
-        await io.write({
-          data,
-        });
-
-        expect(cb).toHaveBeenCalledTimes(1);
-      });
-    });
-
-    describe('observers(table)', () => {
-      it('get a list of all observers', async () => {
-        await createExampleTable('table1');
-        await createExampleTable('table2');
-
-        const cb1 = vi.fn();
-        const cb2 = vi.fn();
-
-        //Subscribe to changes
-        io.observeTable('table1', cb1);
-        io.observeTable('table1', cb2);
-        io.observeTable('table2', cb2);
-
-        const observers = io.observers('table1');
-        expect(observers.length).toBe(2);
-        expect(observers).toContain(cb1);
-        expect(observers).toContain(cb2);
-
-        const observers2 = io.observers('table2');
-        expect(observers2.length).toBe(1);
-        expect(observers2).toContain(cb2);
       });
     });
   });
