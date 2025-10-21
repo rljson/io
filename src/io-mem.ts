@@ -8,16 +8,12 @@ import { hip, hsh } from '@rljson/hash';
 import { IsReady } from '@rljson/is-ready';
 import { copy, equals, JsonValue } from '@rljson/json';
 import {
-  ContentType,
-  iterateTablesSync,
-  Rljson,
-  TableCfg,
-  TableKey,
-  TableType,
+  ContentType, iterateTablesSync, Rljson, TableCfg, TableKey, TableType
 } from '@rljson/rljson';
 
 import { IoTools } from './io-tools.ts';
 import { Io } from './io.ts';
+
 
 /**
  * In-Memory implementation of the Rljson Io interface.
@@ -278,9 +274,6 @@ export class IoMem implements Io {
       }
 
       this._ioTools.sortTableDataAndUpdateHash(oldTable);
-
-      // Notify observers
-      this._ioTools.notifyObservers(table, { [table]: newTable } as Rljson);
     }
 
     // Recalc main hashes
@@ -344,21 +337,5 @@ export class IoMem implements Io {
         }
       }
     });
-  }
-
-  observeTable(table: string, callback: (data: Rljson) => void) {
-    this._ioTools.observeTable(table, callback);
-  }
-
-  unobserveTable(table: string, callback: (data: Rljson) => void) {
-    this._ioTools.unobserveTable(table, callback);
-  }
-
-  unobserveAll(table: string) {
-    this._ioTools.unobserveAll(table);
-  }
-
-  observers(table: string): ((data: Rljson) => void)[] {
-    return this._ioTools.observers(table);
   }
 }
