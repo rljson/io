@@ -5,15 +5,32 @@
 // found in the LICENSE file in the root of this package.
 
 import { hip, hsh, rmhsh } from '@rljson/hash';
-import { addColumnsToTableCfg, exampleTableCfg, Rljson, TableCfg, TableType } from '@rljson/rljson';
+import {
+  addColumnsToTableCfg,
+  exampleTableCfg,
+  Rljson,
+  TableCfg,
+  TableType,
+} from '@rljson/rljson';
 
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from 'vitest';
 
 import { Io, IoTestSetup, IoTools } from '../src';
 
-import { testMemSetup, testPeerServerSetup, testPeerSetup } from './io-conformance.setup.ts';
+import {
+  testMemSetup,
+  testPeerServerSetup,
+  testPeerSetup,
+} from './io-conformance.setup.ts';
 import { expectGolden, ExpectGoldenOptions } from './setup/goldens.ts';
-
 
 const ego: ExpectGoldenOptions = {
   npmUpdateGoldensEnabled: true,
@@ -168,7 +185,7 @@ export const runIoConformanceTests = (
         await expect(
           io.createOrExtendTable({ tableCfg: tableCfg }),
         ).rejects.toThrow(
-          'Hash "wrongHash" does not match the newly calculated one "uX24nHRtwkXRsq8l46cNRZ". ' +
+          'Hash "wrongHash" does not match the newly calculated one "9jZWK-5WPpnlQHCWSPg80D". ' +
             'Please make sure that all systems are producing the same hashes.',
         );
 
@@ -179,7 +196,7 @@ export const runIoConformanceTests = (
         }
 
         expect(message).toBe(
-          'Hash "wrongHash" does not match the newly calculated one "uX24nHRtwkXRsq8l46cNRZ". ' +
+          'Hash "wrongHash" does not match the newly calculated one "9jZWK-5WPpnlQHCWSPg80D". ' +
             'Please make sure that all systems are producing the same hashes.',
         );
       });
@@ -393,7 +410,7 @@ export const runIoConformanceTests = (
                 b: 5,
               },
             ],
-            _tableCfg: '_SmasX0fD_A_0sshe6lnTt',
+            _tableCfg: 'GUGis7DIUDWCLFUJQZwJQ1',
             _type: 'components',
           },
         };
@@ -401,9 +418,24 @@ export const runIoConformanceTests = (
 
         // Update the table by adding a new column
         const tableCfg2 = addColumnsToTableCfg(tableCfg, [
-          { key: 'keyA1', type: 'string' },
-          { key: 'keyA2', type: 'string' },
-          { key: 'keyB2', type: 'string' },
+          {
+            key: 'keyA1',
+            type: 'string',
+            titleShort: 'Key A1',
+            titleLong: 'Key A1',
+          },
+          {
+            key: 'keyA2',
+            type: 'string',
+            titleShort: 'Key A2',
+            titleLong: 'Key A2',
+          },
+          {
+            key: 'keyB2',
+            type: 'string',
+            titleShort: 'Key B2',
+            titleLong: 'Key B2',
+          },
         ]);
 
         await io.createOrExtendTable({ tableCfg: tableCfg2 });
@@ -449,7 +481,7 @@ export const runIoConformanceTests = (
                 keyB2: 'b2',
               },
             ],
-            _tableCfg: 'E1tCMshAuHRJg5Gz6M-Fqd',
+            _tableCfg: '73RBnYL3eR5SRPx7rMFiWN',
             _type: 'components',
           },
         });
@@ -462,10 +494,30 @@ export const runIoConformanceTests = (
         const tableCfg: TableCfg = {
           ...exampleCfg,
           columns: [
-            { key: '_hash', type: 'string' },
-            { key: 'keyA1', type: 'string' },
-            { key: 'keyA2', type: 'string' },
-            { key: 'keyB2', type: 'string' },
+            {
+              key: '_hash',
+              type: 'string',
+              titleShort: 'Hash',
+              titleLong: 'Hash',
+            },
+            {
+              key: 'keyA1',
+              type: 'string',
+              titleShort: 'Key A1',
+              titleLong: 'Key A1',
+            },
+            {
+              key: 'keyA2',
+              type: 'string',
+              titleShort: 'Key A2',
+              titleLong: 'Key A2',
+            },
+            {
+              key: 'keyB2',
+              type: 'string',
+              titleShort: 'Key B2',
+              titleLong: 'Key B2',
+            },
           ],
         };
 
@@ -526,13 +578,48 @@ export const runIoConformanceTests = (
         const tableCfg: TableCfg = {
           ...exampleCfg,
           columns: [
-            { key: '_hash', type: 'string' },
-            { key: 'string', type: 'string' },
-            { key: 'number', type: 'number' },
-            { key: 'null', type: 'string' },
-            { key: 'boolean', type: 'boolean' },
-            { key: 'array', type: 'jsonArray' },
-            { key: 'object', type: 'json' },
+            {
+              key: '_hash',
+              type: 'string',
+              titleShort: 'Hash',
+              titleLong: 'Hash',
+            },
+            {
+              key: 'string',
+              type: 'string',
+              titleShort: 'String',
+              titleLong: 'String',
+            },
+            {
+              key: 'number',
+              type: 'number',
+              titleShort: 'Number',
+              titleLong: 'Number',
+            },
+            {
+              key: 'null',
+              type: 'string',
+              titleShort: 'Null',
+              titleLong: 'Null',
+            },
+            {
+              key: 'boolean',
+              type: 'boolean',
+              titleShort: 'Boolean',
+              titleLong: 'Boolean',
+            },
+            {
+              key: 'array',
+              type: 'jsonArray',
+              titleShort: 'Array',
+              titleLong: 'Array',
+            },
+            {
+              key: 'object',
+              type: 'json',
+              titleShort: 'Object',
+              titleLong: 'Object',
+            },
           ],
         };
 
@@ -616,13 +703,48 @@ export const runIoConformanceTests = (
           const tableCfg: TableCfg = {
             ...exampleCfg,
             columns: [
-              { key: '_hash', type: 'string' },
-              { key: 'string', type: 'string' },
-              { key: 'number', type: 'number' },
-              { key: 'null', type: 'string' },
-              { key: 'boolean', type: 'boolean' },
-              { key: 'array', type: 'jsonArray' },
-              { key: 'object', type: 'json' },
+              {
+                key: '_hash',
+                type: 'string',
+                titleShort: 'Hash',
+                titleLong: 'Hash',
+              },
+              {
+                key: 'string',
+                type: 'string',
+                titleShort: 'String',
+                titleLong: 'String',
+              },
+              {
+                key: 'number',
+                type: 'number',
+                titleShort: 'Number',
+                titleLong: 'Number',
+              },
+              {
+                key: 'null',
+                type: 'string',
+                titleShort: 'Null',
+                titleLong: 'Null',
+              },
+              {
+                key: 'boolean',
+                type: 'boolean',
+                titleShort: 'Boolean',
+                titleLong: 'Boolean',
+              },
+              {
+                key: 'array',
+                type: 'jsonArray',
+                titleShort: 'Array',
+                titleLong: 'Array',
+              },
+              {
+                key: 'object',
+                type: 'json',
+                titleShort: 'Object',
+                titleLong: 'Object',
+              },
             ],
           };
 
