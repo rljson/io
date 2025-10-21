@@ -77,6 +77,7 @@ describe('IoTools', () => {
 
       const data: Rljson = {
         table: {
+          _type: 'components',
           _data: [
             { a: 1, b: 2, c: 3 }, // Extra column 'c'
             { a: '1', b: 2 }, // Fine

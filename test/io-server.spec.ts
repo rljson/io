@@ -15,7 +15,6 @@ import { IoServer } from '../src/io-server';
 import { IoTools } from '../src/io-tools';
 import { Socket } from '../src/socket';
 
-
 describe('IoServer', () => {
   let ioTools: IoTools;
   let io: Io;
@@ -31,12 +30,37 @@ describe('IoServer', () => {
       key: 'nutritionalValues',
       type: 'components',
       columns: [
-        { key: '_hash', type: 'string' },
-        { key: 'id', type: 'string' },
-        { key: 'energy', type: 'number' },
-        { key: 'fat', type: 'number' },
-        { key: 'protein', type: 'number' },
-        { key: 'carbohydrates', type: 'number' },
+        { key: '_hash', type: 'string', titleShort: 'Hash', titleLong: 'Hash' },
+        {
+          key: 'id',
+          type: 'string',
+          titleShort: 'ID',
+          titleLong: 'Identifier',
+        },
+        {
+          key: 'energy',
+          type: 'number',
+          titleShort: 'Energy',
+          titleLong: 'Energy in kcal',
+        },
+        {
+          key: 'fat',
+          type: 'number',
+          titleShort: 'Fat',
+          titleLong: 'Fat in grams',
+        },
+        {
+          key: 'protein',
+          type: 'number',
+          titleShort: 'Protein',
+          titleLong: 'Protein in grams',
+        },
+        {
+          key: 'carbohydrates',
+          type: 'number',
+          titleShort: 'Carbs',
+          titleLong: 'Carbohydrates in grams',
+        },
       ],
       isHead: false,
       isRoot: false,
@@ -227,9 +251,19 @@ describe('IoServer', () => {
       key: 'newTable',
       type: 'components',
       columns: [
-        { key: '_hash', type: 'string' },
-        { key: 'id', type: 'string' },
-        { key: 'value', type: 'number' },
+        { key: '_hash', type: 'string', titleShort: 'Hash', titleLong: 'Hash' },
+        {
+          key: 'id',
+          type: 'string',
+          titleShort: 'ID',
+          titleLong: 'Identifier',
+        },
+        {
+          key: 'value',
+          type: 'number',
+          titleShort: 'Value',
+          titleLong: 'Some Value',
+        },
       ],
       isHead: false,
       isRoot: false,

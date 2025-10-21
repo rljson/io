@@ -115,17 +115,37 @@ export const runIoConformanceTests = (
           isRoot: false,
           isShared: true,
           columns: [
-            { key: '_hash', type: 'string' },
-            { key: 'col0', type: 'string' },
+            {
+              key: '_hash',
+              type: 'string',
+              titleShort: 'Hash',
+              titleLong: 'Hash',
+            },
+            {
+              key: 'col0',
+              type: 'string',
+              titleShort: 'Col 0',
+              titleLong: 'Column 0',
+            },
           ],
         };
 
         const tableV1 = addColumnsToTableCfg(tableV0, [
-          { key: 'col1', type: 'string' },
+          {
+            key: 'col1',
+            type: 'string',
+            titleShort: 'Col 1',
+            titleLong: 'Column 1',
+          },
         ]);
 
         const tableV2 = addColumnsToTableCfg(tableV1, [
-          { key: 'col2', type: 'string' },
+          {
+            key: 'col2',
+            type: 'string',
+            titleShort: 'Col 2',
+            titleLong: 'Column 2',
+          },
         ]);
 
         await io.createOrExtendTable({ tableCfg: tableV0 });
@@ -151,17 +171,37 @@ export const runIoConformanceTests = (
           isRoot: false,
           isShared: true,
           columns: [
-            { key: '_hash', type: 'string' },
-            { key: 'col0', type: 'string' },
+            {
+              key: '_hash',
+              type: 'string',
+              titleShort: 'Hash',
+              titleLong: 'Hash',
+            },
+            {
+              key: 'col0',
+              type: 'string',
+              titleShort: 'Col 0',
+              titleLong: 'Column 0',
+            },
           ],
         };
 
         const tableV1 = addColumnsToTableCfg(tableV0, [
-          { key: 'col1', type: 'string' },
+          {
+            key: 'col1',
+            type: 'string',
+            titleShort: 'Col 1',
+            titleLong: 'Column 1',
+          },
         ]);
 
         const tableV2 = addColumnsToTableCfg(tableV1, [
-          { key: 'col2', type: 'string' },
+          {
+            key: 'col2',
+            type: 'string',
+            titleShort: 'Col 2',
+            titleLong: 'Column 2',
+          },
         ]);
 
         await io.createOrExtendTable({ tableCfg: tableV0 });
@@ -248,6 +288,8 @@ export const runIoConformanceTests = (
               {
                 key: 'x',
                 type: 'unknown' as any,
+                titleShort: 'X',
+                titleLong: 'Column X',
               },
             ],
           });
