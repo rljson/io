@@ -10,6 +10,7 @@ import { Rljson, TableCfg, TableKey } from '@rljson/rljson';
 import { Io } from './io.ts';
 import { Socket } from './socket.ts';
 
+
 export class IoServer {
   private _sockets: Socket[] = [];
 
@@ -58,37 +59,17 @@ export class IoServer {
           });
       });
     }
-
-    // Event operations on initial dump
-    const dump = await this._io.dump();
-    for (const tableKey of Object.keys(dump)) {
-      if (tableKey.startsWith('_')) {
-        continue;
-      }
-
-      this._io.observeTable(tableKey, (data) => {
-        socket.emit(tableKey, data);
-      });
-    }
   }
 
   // ...........................................................................
   /**
    * Creates or extends a table with the given configuration.
-   * Also sets up observation for the new or extended table on all connected sockets.
    * @param request - An object containing the table configuration.
    */
   private async createOrExtendTable(request: {
     tableCfg: TableCfg;
   }): Promise<void> {
-    return this._io.createOrExtendTable(request).then(() => {
-      const tableKey = request.tableCfg.key;
-      this._sockets.forEach((socket) => {
-        this._io.observeTable(tableKey, (data) => {
-          socket.emit(tableKey, data);
-        });
-      });
-    });
+    return this._io.createOrExtendTable(request);
   }
 
   // ...........................................................................

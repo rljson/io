@@ -8,15 +8,13 @@ import { JsonValue } from '@rljson/json';
 import { ContentType, Rljson, TableCfg, TableKey } from '@rljson/rljson';
 
 import { IoMem } from './io-mem.ts';
-import { IoTools } from './io-tools.ts';
 import { Io } from './io.ts';
 import { PeerSocketMock } from './peer-socket-mock.ts';
 import { Socket } from './socket.ts';
 
+
 export class IoPeer implements Io {
   isOpen: boolean = false;
-
-  private _ioTools!: IoTools;
 
   constructor(private _socket: Socket) {}
 
@@ -27,9 +25,6 @@ export class IoPeer implements Io {
    * @returns
    */
   async init(): Promise<void> {
-    // Initialize IoTools
-    this._ioTools = new IoTools(this);
-
     // Update isOpen on connect/disconnect
     this._socket.on('connect', () => {
       this.isOpen = true;
@@ -176,15 +171,6 @@ export class IoPeer implements Io {
       // Request write, resolve once the data is received (ack)
       this._socket.emit('write', request, (_?: boolean, error?: Error) => {
         if (error) reject(error);
-
-        // Notify observers
-        const tables = Object.keys(request.data);
-        for (const table of tables) {
-          this._ioTools.notifyObservers(table, {
-            [table]: request.data[table],
-          } as Rljson);
-        }
-
         resolve();
       });
     });
@@ -227,32 +213,6 @@ export class IoPeer implements Io {
         resolve(count!);
       });
     });
-  }
-
-  // ...........................................................................
-  // Observe
-
-  /** Start observing changes on a specific table */
-  async observeTable(
-    table: string,
-    callback: (data: Rljson) => void,
-  ): Promise<void> {
-    this._socket.on(table, callback);
-  }
-
-  /** Stop observing changes on a specific table */
-  unobserveTable(table: string, callback: (data: Rljson) => void): void {
-    this._socket.off(table, callback);
-  }
-
-  /** Stop observing all changes on a specific table */
-  unobserveAll(table: string): void {
-    this._socket.removeAllListeners(table);
-  }
-
-  /** Returns all observers for a specific table */
-  observers(table: string): ((data: Rljson) => void)[] {
-    return this._socket.listeners(table) as ((data: Rljson) => void)[];
   }
 
   // ...........................................................................
