@@ -206,25 +206,22 @@ export class IoTools {
     for (let i = tables.length - 1; i >= 0; i--) {
       const table = tables[i];
       const existing = newestVersion[table.key];
-      /* v8 ignore start */
       if (!existing || existing.columns.length < table.columns.length) {
         newestVersion[table.key] = table;
       }
-      /* v8 ignore end */
     }
 
     // Sort the tables by key
+    /* v8 ignore next -- @preserve */
     const resultData = Object.values(newestVersion).sort((a, b) => {
       if (a.key < b.key) {
         return -1;
       }
       if (a.key > b.key) {
         return 1;
-        /* v8 ignore start */
       }
 
       return 0;
-      /* v8 ignore end */
     });
     return resultData;
   }
@@ -310,6 +307,7 @@ export class IoTools {
           .filter(
             (key) => !update.columns.some((column) => column.key === key),
           );
+        /* v8 ignore next -- @preserve */
         if (deletedColumnKeys.length > 0) {
           const deletedColumns = deletedColumnKeys.join(', ');
           throw new Error(
@@ -359,6 +357,7 @@ export class IoTools {
       const table = data[tableKey];
 
       // Ignore tableCfgs table
+      /* v8 ignore next -- @preserve */
       if (table._type === 'tableCfgs') return;
 
       errors.push(...validateRljsonAgainstTableCfg(table._data, tableCfg));
@@ -380,16 +379,17 @@ export class IoTools {
     table._data.sort((a, b) => {
       const hashA = a._hash as string;
       const hashB = b._hash as string;
+      /* v8 ignore next -- @preserve */
       if (hashA < hashB) {
         return -1;
       }
+      /* v8 ignore next -- @preserve */
       if (hashA > hashB) {
         return 1;
-        /* v8 ignore start */
       }
 
+      /* v8 ignore next -- @preserve */
       return 0;
-      /* v8 ignore end */
     });
 
     table._hash = '';

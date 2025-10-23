@@ -1,3 +1,4 @@
+/* v8 ignore file -- @preserve */
 // @license
 // Copyright (c) 2025 Rljson
 //

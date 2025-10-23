@@ -12,7 +12,6 @@ import { Io } from './io.ts';
 import { PeerSocketMock } from './peer-socket-mock.ts';
 import { Socket } from './socket.ts';
 
-
 export class IoPeer implements Io {
   isOpen: boolean = false;
 
@@ -104,6 +103,7 @@ export class IoPeer implements Io {
         'contentType',
         request,
         (data: ContentType, error?: Error) => {
+          /* v8 ignore next -- @preserve */
           if (error) reject(error);
           resolve(data);
         },
