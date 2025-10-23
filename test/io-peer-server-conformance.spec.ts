@@ -5,15 +5,34 @@
 // found in the LICENSE file in the root of this package.
 
 import { Io, IoMem, IoTestSetup } from '../src';
+import { IoPeer } from '../src/io-peer';
+import { IoServer } from '../src/io-server';
+import { PeerServerSocketMock } from '../src/peer-server-socket-mock';
+
+import { runIoConformanceTests } from './io-conformance.spec';
 
 // ..............................................................................
-class MyIoTestSetup implements IoTestSetup {
+class IoPeerServerTestSetup implements IoTestSetup {
   async beforeAll(): Promise<void> {
     // This method can be used for any additional setup required before init.
     // Currently, it does nothing.
   }
   async beforeEach(): Promise<void> {
-    this._io = await IoMem.example();
+    //Io of Server --> IoMem
+    const ioMemServer = await IoMem.example();
+
+    //Socket between Server and Peer
+    const socket = new PeerServerSocketMock();
+
+    //IoPeer of Peer --> Socket
+    const ioServer = new IoServer(ioMemServer);
+    ioServer.addSocket(socket);
+
+    //IoPeer of Peer --> Socket
+    const io = new IoPeer(socket);
+    await io.init();
+
+    this._io = io;
   }
 
   async afterEach(): Promise<void> {
@@ -35,4 +54,5 @@ class MyIoTestSetup implements IoTestSetup {
 }
 
 // .............................................................................
-export const testSetup = () => new MyIoTestSetup();
+const runConformanceTests = runIoConformanceTests;
+runConformanceTests(new IoPeerServerTestSetup());

@@ -4,16 +4,19 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-import { Io, IoMem, IoTestSetup } from '../src';
+import { Io, IoTestSetup } from '../src';
+import { IoPeer } from '../src/io-peer';
+
+import { runIoConformanceTests } from './io-conformance.spec';
 
 // ..............................................................................
-class MyIoTestSetup implements IoTestSetup {
+class IoPeerTestSetup implements IoTestSetup {
   async beforeAll(): Promise<void> {
     // This method can be used for any additional setup required before init.
     // Currently, it does nothing.
   }
   async beforeEach(): Promise<void> {
-    this._io = await IoMem.example();
+    this._io = await IoPeer.example();
   }
 
   async afterEach(): Promise<void> {
@@ -35,4 +38,5 @@ class MyIoTestSetup implements IoTestSetup {
 }
 
 // .............................................................................
-export const testSetup = () => new MyIoTestSetup();
+const runConformanceTests = runIoConformanceTests;
+runConformanceTests(new IoPeerTestSetup());
