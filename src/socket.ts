@@ -1,4 +1,3 @@
-/* v8 ignore start */
 // @license
 // Copyright (c) 2025 Rljson
 //
@@ -15,4 +14,28 @@ export interface Socket {
   on(eventName: string | symbol, listener: (...args: any[]) => void): this;
   emit(eventName: string | symbol, ...args: any[]): boolean;
 }
-/* v8 ignore end */
+
+export const socketExample = (): Socket => ({
+  connected: false,
+  disconnected: true,
+  connect() {
+    this.connected = true;
+    this.disconnected = false;
+    this.emit('connect');
+  },
+  disconnect() {
+    this.connected = false;
+    this.disconnected = true;
+    this.emit('disconnect');
+  },
+  /* v8 ignore next -- @preserve */
+  on() {
+    // Implementation of event listener registration
+    return this;
+  },
+  /* v8 ignore next -- @preserve */
+  emit() {
+    // Implementation of event emission
+    return true;
+  },
+});
