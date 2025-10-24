@@ -25,21 +25,23 @@ import {
 
 import { Io, IoTestSetup, IoTools } from '../src';
 
-import { testSetup } from './io-conformance.setup.ts';
+import { testSetup } from './io-conformance.setup';
 import { expectGolden, ExpectGoldenOptions } from './setup/goldens.ts';
 
 const ego: ExpectGoldenOptions = {
   npmUpdateGoldensEnabled: true,
 };
 
-export const runIoConformanceTests = (testSetup: IoTestSetup) => {
+export const runIoConformanceTests = (
+  externalTestSetup?: () => IoTestSetup,
+) => {
   return describe('Io Conformance', async () => {
     let io: Io;
     let ioTools: IoTools;
     let setup: IoTestSetup;
 
     beforeAll(async () => {
-      setup = testSetup;
+      setup = externalTestSetup ? externalTestSetup() : testSetup();
       await setup.beforeAll();
     });
 
@@ -1086,5 +1088,4 @@ export const runIoConformanceTests = (testSetup: IoTestSetup) => {
     });
   });
 };
-
-runIoConformanceTests(testSetup());
+runIoConformanceTests();

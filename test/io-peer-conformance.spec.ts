@@ -38,5 +38,6 @@ class IoPeerTestSetup implements IoTestSetup {
 }
 
 // .............................................................................
-const runConformanceTests = runIoConformanceTests;
-runConformanceTests(new IoPeerTestSetup());
+// Run the conformance tests with the IoPeerTestSetup
+const ioPeerTestSetup = () => new IoPeerTestSetup();
+runIoConformanceTests(ioPeerTestSetup);
