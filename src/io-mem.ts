@@ -189,7 +189,7 @@ export class IoMem implements Io {
 
     // Create a table and write it into the database
     const table: TableType = {
-      _type: newConfig.type,
+      _type: newConfig.type as any,
       _data: [],
       _tableCfg: newConfig._hash as string,
     };
