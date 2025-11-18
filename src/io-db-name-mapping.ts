@@ -7,6 +7,7 @@
 export class IoDbNameMapping {
   // The primary key column is always named '_hash'
   public primaryKeyName: string = '_hash';
+  public dataName: string = '_data';
 
   // Names for the main tables in the database
   public tableNames: { [key: string]: string } = {
