@@ -11,11 +11,11 @@ describe('IoDbNameMapping', () => {
   const nameMapping = new IoDbNameMapping();
 
   test('should have correct primary key name', () => {
-    expect(nameMapping.primaryKeyName).toBe('_hash');
+    expect(nameMapping.primaryKeyColumn).toBe('_hash');
   });
 
   test('should have correct data name', () => {
-    expect(nameMapping.dataName).toBe('_data');
+    expect(nameMapping.dataSection).toBe('_data');
   });
 
   test('should have correct table names', () => {
