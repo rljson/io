@@ -33,12 +33,12 @@ git pull
 
 ## Set pull request title
 
-Replace `Add conversion functions for rel dbs` here and below
+Replace `Add Type and fix double testing` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Add conversion functions for rel dbs"
+node scripts/create-branch.js "Add Type and fix double testing"
 ```
 
 ## Update-dependencies
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Add conversion functions for rel dbs"
+git commit -am"Add Type and fix double testing"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Add conversion functions for rel dbs" --body " "
+gh pr create --base main --title "Add Type and fix double testing" --body " "
 ```
 
 ## Code review
