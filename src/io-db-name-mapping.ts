@@ -9,6 +9,7 @@ export class IoDbNameMapping {
   public primaryKeyColumn: string = '_hash';
   public dataSection: string = '_data';
   public typeColumn: string = 'type';
+  public keyColumn: string = 'key';
 
   // Names for the main tables in the database
   public tableNames: { [key: string]: string } = {
@@ -37,6 +38,10 @@ export class IoDbNameMapping {
     return this._addFix(name, this._suffix.col);
   }
 
+  public addTmpSuffix(name: string): string {
+    return this._addFix(name, this._suffix.tmp);
+  }
+
   private _removeFix(name: string, fix: string): string {
     return name.endsWith(fix) ? name.slice(0, -fix.length) : name;
   }
@@ -47,5 +52,9 @@ export class IoDbNameMapping {
 
   public removeColumnSuffix(name: string): string {
     return this._removeFix(name, this._suffix.col);
+  }
+
+  public removeTmpSuffix(name: string): string {
+    return this._removeFix(name, this._suffix.tmp);
   }
 }
