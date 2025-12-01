@@ -30,9 +30,9 @@
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
-    "@typescript-eslint/eslint-plugin": "^8.47.0",
-    "@typescript-eslint/parser": "^8.47.0",
-    "@vitest/coverage-v8": "^4.0.13",
+    "@typescript-eslint/eslint-plugin": "^8.48.0",
+    "@typescript-eslint/parser": "^8.48.0",
+    "@vitest/coverage-v8": "^4.0.14",
     "cross-env": "^10.1.0",
     "eslint": "^9.39.1",
     "eslint-plugin-jsdoc": "^61.4.1",
@@ -41,12 +41,12 @@
     "jsdoc": "^4.0.5",
     "read-pkg": "^10.0.0",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.47.0",
-    "vite": "^7.2.4",
+    "typescript-eslint": "^8.48.0",
+    "vite": "^7.2.6",
     "vite-node": "^5.2.0",
     "vite-plugin-dts": "^4.5.4",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^4.0.13",
+    "vitest": "^4.0.14",
     "vitest-dom": "^0.1.1"
   },
   "pnpm": {
@@ -58,7 +58,7 @@
     "@rljson/hash": "^0.0.17",
     "@rljson/is-ready": "^0.0.17",
     "@rljson/json": "^0.0.23",
-    "@rljson/rljson": "^0.0.71",
+    "@rljson/rljson": "^0.0.72",
     "@rljson/validate": "^0.0.11"
   }
 }
