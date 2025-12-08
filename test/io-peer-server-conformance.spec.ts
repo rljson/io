@@ -4,10 +4,9 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-import { Io, IoMem, IoTestSetup } from '../src';
+import { Io, IoMem, IoTestSetup, SocketMock } from '../src';
 import { IoPeer } from '../src/io-peer';
 import { IoServer } from '../src/io-server';
-import { PeerServerSocketMock } from '../src/peer-server-socket-mock';
 
 import { runIoConformanceTests } from './io-conformance.spec';
 
@@ -22,7 +21,7 @@ class IoPeerServerTestSetup implements IoTestSetup {
     const ioMemServer = await IoMem.example();
 
     //Socket between Server and Peer
-    const socket = new PeerServerSocketMock();
+    const socket = new SocketMock();
 
     //IoPeer of Peer --> Socket
     const ioServer = new IoServer(ioMemServer);

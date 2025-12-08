@@ -9,4 +9,7 @@ export * from './io-mem.ts';
 export * from './io-test-setup.ts';
 export * from './io-tools.ts';
 export * from './io.ts';
+export * from './peer-socket-mock.ts';
 export * from './reverse-ref.ts';
+export * from './socket-mock.ts';
+export * from './socket.ts';
