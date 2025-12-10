@@ -6,6 +6,8 @@
 
 export * from './io-db-name-mapping.ts';
 export * from './io-mem.ts';
+export * from './io-multi.ts';
+export * from './io-peer.ts';
 export * from './io-test-setup.ts';
 export * from './io-tools.ts';
 export * from './io.ts';
