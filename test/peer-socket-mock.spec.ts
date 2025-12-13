@@ -10,7 +10,6 @@ import { Io, IoMem } from '../src';
 import { PeerSocketMock } from '../src/peer-socket-mock';
 import { Socket } from '../src/socket';
 
-
 describe('PeerSocketMock', () => {
   let socket: Socket;
   let io: Io;
@@ -69,5 +68,68 @@ describe('PeerSocketMock', () => {
     expect(() => socket.emit('unsupportedEvent')).toThrowError(
       'Event unsupportedEvent not supported',
     );
+  });
+
+  it('should register event listeners and invoke them on connect/disconnect', () => {
+    const connectListener = vi.fn();
+    const disconnectListener = vi.fn();
+
+    socket.on('connect', connectListener);
+    socket.on('disconnect', disconnectListener);
+
+    socket.connect();
+    expect(connectListener).toHaveBeenCalledTimes(1);
+    expect(disconnectListener).toHaveBeenCalledTimes(0);
+
+    socket.disconnect();
+    expect(connectListener).toHaveBeenCalledTimes(1);
+    expect(disconnectListener).toHaveBeenCalledTimes(1);
+  });
+
+  it('should remove event listeners', () => {
+    const connectListener = vi.fn();
+    const disconnectListener = vi.fn();
+
+    socket.on('connect', connectListener);
+    socket.on('disconnect', disconnectListener);
+
+    socket.off('connect', connectListener);
+    socket.off('disconnect', disconnectListener);
+
+    socket.connect();
+    expect(connectListener).toHaveBeenCalledTimes(0);
+
+    socket.disconnect();
+    expect(disconnectListener).toHaveBeenCalledTimes(0);
+  });
+
+  it('should remove all listeners for an event', () => {
+    const connectListener1 = vi.fn();
+    const connectListener2 = vi.fn();
+
+    socket.on('connect', connectListener1);
+    socket.on('connect', connectListener2);
+
+    socket.removeAllListeners('connect');
+
+    socket.connect();
+    expect(connectListener1).toHaveBeenCalledTimes(0);
+    expect(connectListener2).toHaveBeenCalledTimes(0);
+  });
+
+  it('should remove all listeners for all events', () => {
+    const connectListener = vi.fn();
+    const disconnectListener = vi.fn();
+
+    socket.on('connect', connectListener);
+    socket.on('disconnect', disconnectListener);
+
+    socket.removeAllListeners();
+
+    socket.connect();
+    expect(connectListener).toHaveBeenCalledTimes(0);
+
+    socket.disconnect();
+    expect(disconnectListener).toHaveBeenCalledTimes(0);
   });
 });
