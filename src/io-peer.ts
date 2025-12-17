@@ -35,7 +35,18 @@ export class IoPeer implements Io {
     // Connect the socket
     this._socket.connect();
 
-    return;
+    // Wait for the socket to connect before returning
+    return new Promise<void>((resolve) => {
+      /* v8 ignore else -- @preserve */
+      if (this._socket.connected) {
+        this.isOpen = true;
+        resolve();
+      } else {
+        this._socket.on('connect', () => {
+          resolve();
+        });
+      }
+    });
   }
 
   // ...........................................................................
@@ -45,10 +56,15 @@ export class IoPeer implements Io {
    */
 
   async close(): Promise<void> {
-    // Disconnect the socket
+    // Disconnect the socket and wait for it to complete
     if (!this._socket.connected) return;
-    this._socket.disconnect();
-    return;
+
+    return new Promise<void>((resolve) => {
+      this._socket.on('disconnect', () => {
+        resolve();
+      });
+      this._socket.disconnect();
+    });
   }
 
   // ...........................................................................
@@ -57,7 +73,10 @@ export class IoPeer implements Io {
    * @returns
    */
   async isReady(): Promise<void> {
-    return this._socket.connected ? Promise.resolve() : Promise.reject();
+    if (!!this._socket && this._socket.connected === true) this.isOpen = true;
+    else this.isOpen = false;
+
+    return !!this.isOpen ? Promise.resolve() : Promise.reject();
   }
 
   // ...........................................................................

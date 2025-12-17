@@ -4,7 +4,8 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-import { JsonValue, merge } from '@rljson/json';
+import { hip } from '@rljson/hash';
+import { Json, JsonValue, merge } from '@rljson/json';
 import {
   ContentType,
   Rljson,
@@ -47,8 +48,8 @@ export class IoMulti implements Io {
    * @returns
    */
   async init(): Promise<void> {
-    for (const ioMultiIo of this._ios) {
-      if (!ioMultiIo.io.isOpen) {
+    for (const { io } of this._ios) {
+      if (io.isOpen === false) {
         throw new Error(
           'All underlying Io instances must be initialized before initializing IoMulti',
         );
@@ -196,16 +197,25 @@ export class IoMulti implements Io {
    * Retrieves the raw table configurations from the highest priority underlying readable Io instance.
    * @returns A promise that resolves to an array of table configurations.
    */
-  rawTableCfgs(): Promise<TableCfg[]> {
+  async rawTableCfgs(): Promise<TableCfg[]> {
     /* v8 ignore next -- @preserve */
     if (this.readables.length === 0) {
       return Promise.reject(new Error('No readable Io available'));
     }
 
-    //Simple strategy: use the highest priority readable Io
-    const readable = this.readables[0];
-
-    return readable.rawTableCfgs();
+    const rawTableCfgs: Map<string, TableCfg> = new Map();
+    for (const readable of this.readables) {
+      const cfgs = await readable.rawTableCfgs();
+      /* v8 ignore else -- @preserve */
+      if (cfgs.length > 0) {
+        for (const tableCfg of cfgs) {
+          if (!rawTableCfgs.has(tableCfg.key)) {
+            rawTableCfgs.set(tableCfg.key, tableCfg);
+          }
+        }
+      }
+    }
+    return Array.from(rawTableCfgs.values());
   }
 
   // ...........................................................................
@@ -241,7 +251,8 @@ export class IoMulti implements Io {
     }
 
     let tableExistsAny = false;
-    const rows: Rljson[] = [];
+    const rows: Map<string, Json> = new Map();
+    let type: ContentType | undefined = undefined;
     for (const readable of this.readables) {
       // Check if table exists in this readable Io
       const tableExists = await readable.tableExists(request.table);
@@ -249,19 +260,40 @@ export class IoMulti implements Io {
 
       if (tableExists) {
         // Read rows from this readable Io
-        const readRows = await readable.readRows(request);
-        const tableData: TableType = readRows[request.table];
+        const {
+          [request.table]: { _data: tableRows, _type: tableType },
+        } = await readable.readRows(request);
+
         /* v8 ignore else -- @preserve */
-        if (tableData) {
-          rows.push(readRows);
+        for (const tableRow of tableRows) {
+          const ref = tableRow._hash;
+          rows.set(ref, tableRow);
         }
+
+        type ??= tableType;
       }
     }
 
     if (!tableExistsAny) {
       return Promise.reject(new Error(`Table "${request.table}" not found`));
     } else {
-      return merge(...rows) as Rljson;
+      const rljson = {
+        [request.table]: hip({ _data: Array.from(rows.values()), _type: type }),
+      } as Rljson;
+
+      // Write merged rows back to all writables (hot-swapping cache)
+      for (const writeable of this.writables) {
+        const tableExists = await writeable.tableExists(request.table);
+        if (!tableExists) {
+          continue;
+        }
+        await writeable.write({
+          data: rljson,
+        });
+      }
+
+      // Return merged rows
+      return rljson;
     }
   }
 
