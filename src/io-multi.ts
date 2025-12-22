@@ -20,6 +20,7 @@ import { PeerSocketMock } from './peer-socket-mock.ts';
  */
 export type IoMultiIo = {
   io: Io;
+  id?: string;
   priority: number;
   read: boolean;
   write: boolean;
@@ -43,12 +44,15 @@ export class IoMulti implements Io {
    * @returns
    */
   async init(): Promise<void> {
-    for (const { io } of this._ios) {
+    for (let idx = 0; idx < this._ios.length; idx++) {
+      const { io } = this._ios[idx];
       if (io.isOpen === false) {
         throw new Error(
           'All underlying Io instances must be initialized before initializing IoMulti',
         );
       }
+
+      this._ios[idx] = { ...this._ios[idx], id: `io-${idx}` };
     }
 
     this.isOpen = true;
@@ -91,7 +95,7 @@ export class IoMulti implements Io {
     }
 
     const dumps = await Promise.all(
-      this.dumpables.map((dumpable) => dumpable.dump()),
+      this.dumpables.map(({ io: dumpable }) => dumpable.dump()),
     );
 
     return merge(...dumps) as Rljson;
@@ -111,7 +115,7 @@ export class IoMulti implements Io {
 
     const dumps: Rljson[] = [];
 
-    for (const dumpable of this.dumpables) {
+    for (const { io: dumpable } of this.dumpables) {
       try {
         const dump = await dumpable.dumpTable(request);
         dumps.push(dump);
@@ -139,7 +143,7 @@ export class IoMulti implements Io {
       throw new Error('No readable Io available');
     }
 
-    for (const readable of this.readables) {
+    for (const { io: readable } of this.readables) {
       return readable.contentType(request);
     }
     /* v8 ignore next -- @preserve */
@@ -159,7 +163,7 @@ export class IoMulti implements Io {
     }
 
     for (let i = 0; i < this.readables.length; i++) {
-      const readable = this.readables[i];
+      const readable = this.readables[i].io;
       const exists = await readable.tableExists(tableKey);
       if (exists) {
         return true;
@@ -180,7 +184,7 @@ export class IoMulti implements Io {
       throw new Error('No writable Io available');
     }
     //Create or extend table in all writables in parallel and resolve when all have completed
-    const creations = this.writables.map((writable) =>
+    const creations = this.writables.map(({ io: writable }) =>
       writable.createOrExtendTable(request),
     );
     return Promise.all(creations).then(() => Promise.resolve());
@@ -198,7 +202,7 @@ export class IoMulti implements Io {
     }
 
     const rawTableCfgs: Map<string, TableCfg> = new Map();
-    for (const readable of this.readables) {
+    for (const { io: readable } of this.readables) {
       const cfgs = await readable.rawTableCfgs();
       /* v8 ignore else -- @preserve */
       if (cfgs.length > 0) {
@@ -225,13 +229,15 @@ export class IoMulti implements Io {
     }
 
     // Write to all writables in parallel and resolve when all have completed
-    const writes = this.writables.map((writable) => writable.write(request));
+    const writes = this.writables.map(({ io: writable }) =>
+      writable.write(request),
+    );
     return Promise.all(writes).then(() => Promise.resolve());
   }
 
   // ...........................................................................
   /**
-   * Reads rows from the first underlying readable Io instance that contains the requested table and has matching rows.
+   * Reads rows from a specific table by merging rows from all underlying readable Io instances.
    * @param request An object containing the table name and where clause.
    * @returns A promise that resolves to the read rows.
    */
@@ -247,6 +253,8 @@ export class IoMulti implements Io {
     let tableExistsAny = false;
     const rows: Map<string, Json> = new Map();
     let type: ContentType | undefined = undefined;
+    let readFrom: string = '';
+
     const errors: Error[] = [];
     for (const readable of this.readables) {
       // Read rows from this readable Io
@@ -254,13 +262,22 @@ export class IoMulti implements Io {
       let tableType: ContentType;
 
       try {
-        const { [request.table]: tableData } = await readable.readRows(request);
+        const { [request.table]: tableData } = await readable.io.readRows(
+          request,
+        );
         tableRows = (tableData as RljsonTable<Json, ContentType>)._data;
         tableType = (tableData as RljsonTable<Json, ContentType>)._type;
         tableExistsAny = true;
+        readFrom = readable.id ?? '';
       } catch (e) {
         errors.push(e as Error);
         continue; // Table does not exist in this readable Io
+      }
+
+      type ??= tableType;
+
+      if (tableRows.length === 0) {
+        continue; // No rows to merge from this readable Io
       }
 
       /* v8 ignore else -- @preserve */
@@ -269,7 +286,7 @@ export class IoMulti implements Io {
         rows.set(ref, tableRow);
       }
 
-      type ??= tableType;
+      break; // Stop after the first readable that has the table
     }
 
     if (!tableExistsAny) {
@@ -292,13 +309,19 @@ export class IoMulti implements Io {
       } as Rljson;
 
       // Write merged rows back to all writables (hot-swapping cache)
-      for (const writeable of this.writables) {
-        try {
-          await writeable.write({
-            data: rljson,
-          });
-        } catch {
-          continue; // Table does not exist in this writable Io
+      if (this.writables.length > 0 && rows.size > 0) {
+        for (const writeable of this.writables) {
+          if (writeable.id === readFrom) {
+            continue; // Skip writing back to the source readable Io
+          }
+          /* v8 ignore next -- @preserve */
+          try {
+            await writeable.io.write({
+              data: rljson,
+            });
+          } catch {
+            continue; // Table does not exist in this writable Io
+          }
         }
       }
 
@@ -332,33 +355,30 @@ export class IoMulti implements Io {
   /**
    * Gets the list of underlying readable Io instances, sorted by priority.
    */
-  get readables(): Array<Io> {
+  get readables(): Array<IoMultiIo> {
     return this._ios
       .filter((ioMultiIo) => ioMultiIo.read)
-      .sort((a, b) => a.priority - b.priority)
-      .map((ioMultiIo) => ioMultiIo.io);
+      .sort((a, b) => a.priority - b.priority);
   }
 
   // ...........................................................................
   /**
    * Gets the list of underlying writable Io instances, sorted by priority.
    */
-  get writables(): Array<Io> {
+  get writables(): Array<IoMultiIo> {
     return this._ios
       .filter((ioMultiIo) => ioMultiIo.write)
-      .sort((a, b) => a.priority - b.priority)
-      .map((ioMultiIo) => ioMultiIo.io);
+      .sort((a, b) => a.priority - b.priority);
   }
 
   // ...........................................................................
   /**
    * Gets the list of underlying dumpable Io instances, sorted by priority.
    */
-  get dumpables(): Array<Io> {
+  get dumpables(): Array<IoMultiIo> {
     return this._ios
       .filter((ioMultiIo) => ioMultiIo.dump)
-      .sort((a, b) => a.priority - b.priority)
-      .map((ioMultiIo) => ioMultiIo.io);
+      .sort((a, b) => a.priority - b.priority);
   }
 
   // ...........................................................................
