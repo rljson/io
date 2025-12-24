@@ -143,12 +143,13 @@ export const runIoConformanceTests = (
 
         // Check the tableCfgs
         // Sort it in advance to have a stable order for the golden file
-        const actualTableCfgs = (await ioTools.tableCfgs()).sort((a, b) =>
-          (a as any)._hash.localeCompare(b._hash),
-        );
+        const actualTableCfgs = await ioTools.tableCfgs();
+        const actualTableCfgsSorted = actualTableCfgs
+          .sort((a, b) => a.key.localeCompare(b.key))
+          .map((cfg) => cfg.key);
 
         await expectGolden('io-conformance/tableCfgs-1.json', ego).toBe(
-          actualTableCfgs,
+          actualTableCfgsSorted,
         );
       });
     });

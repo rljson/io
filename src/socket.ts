@@ -12,7 +12,9 @@ export interface Socket {
   connect(): void;
   disconnect(): void;
   on(eventName: string | symbol, listener: (...args: any[]) => void): this;
-  emit(eventName: string | symbol, ...args: any[]): boolean;
+  emit(eventName: string | symbol, ...args: any[]): boolean | this;
+  off(eventName: string | symbol, listener: (...args: any[]) => void): this;
+  removeAllListeners(eventName?: string | symbol): this;
 }
 
 export const socketExample = (): Socket => ({
@@ -37,5 +39,15 @@ export const socketExample = (): Socket => ({
   emit() {
     // Implementation of event emission
     return true;
+  },
+  /* v8 ignore next -- @preserve */
+  off() {
+    // Implementation of event listener removal
+    return this;
+  },
+  /* v8 ignore next -- @preserve */
+  removeAllListeners() {
+    // Implementation of removing all listeners
+    return this;
   },
 });

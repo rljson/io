@@ -3,13 +3,14 @@ import { resolve } from 'path';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 
+
 export default defineConfig({
-  plugins: [dts({ include: ['src/*'] })],
+  plugins: [dts({ include: ['src/**/*'] })],
 
   build: {
     copyPublicDir: false,
     minify: false,
-    sourcemap: 'inline',
+    sourcemap: true,
 
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
@@ -25,6 +26,13 @@ export default defineConfig({
       ],
       output: {
         globals: {},
+        sourcemapPathTransform: (relativeSourcePath) => {
+          // Make paths absolute so VS Code can find them
+          return relativeSourcePath.replace(
+            '../src/',
+            resolve(__dirname, 'src') + '/',
+          );
+        },
       },
     },
   },
