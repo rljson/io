@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { Io, IoMem, IoMulti, IoMultiIo, IoPeer, PeerSocketMock } from '../src';
 
+
 const createExampleTableWithData = async (
   key: string,
   prefix: string,
@@ -122,21 +123,18 @@ describe('IoMulti', () => {
     ]);
   });
 
-  it('should read rows from readable ios and merge the results', async () => {
+  it('should read rows from readable ios and return first match', async () => {
     const { ['readableTable']: rows } = await ioMulti.readRows({
       table: 'readableTable',
       where: {},
     });
     expect(rows).toBeDefined();
     expect(Array.isArray(rows._data)).toBe(true);
-    expect(rows._data.length).toBe(6);
+    expect(rows._data.length).toBe(3);
     expect(rows._data.map((r) => (r as any)['a']).sort()).toEqual([
       'readableTableValueA0',
       'readableTableValueA1',
       'readableTableValueA2',
-      'readableTableValueB0',
-      'readableTableValueB1',
-      'readableTableValueB2',
     ]);
   });
 

@@ -8,16 +8,12 @@ import { hip, hsh } from '@rljson/hash';
 import { IsReady } from '@rljson/is-ready';
 import { copy, equals, JsonValue } from '@rljson/json';
 import {
-  ContentType,
-  iterateTablesSync,
-  Rljson,
-  TableCfg,
-  TableKey,
-  TableType,
+  ContentType, iterateTablesSync, Rljson, TableCfg, TableKey, TableType
 } from '@rljson/rljson';
 
 import { IoTools } from './io-tools.ts';
 import { Io } from './io.ts';
+
 
 /**
  * In-Memory implementation of the Rljson Io interface.

@@ -7,7 +7,6 @@
 import { Io } from './io.ts';
 import { Socket } from './socket.ts';
 
-
 export class PeerSocketMock implements Socket {
   private _listenersMap: Map<string | symbol, Array<(...args: any[]) => void>> =
     new Map();
@@ -16,6 +15,40 @@ export class PeerSocketMock implements Socket {
   disconnected: boolean = true;
 
   constructor(private _io: Io) {}
+
+  // ............................................................................
+  /**
+   * Removes a specific listener for the specified event.
+   * @param eventName - The name of the event.
+   * @param listener - The callback function to remove.
+   * @returns The PeerSocketMock instance for chaining.
+   */
+  off(eventName: string | symbol, listener: (...args: any[]) => void): this {
+    /* v8 ignore next -- @preserve */
+    const listeners = this._listenersMap.get(eventName) || [];
+    const index = listeners.indexOf(listener);
+    /* v8 ignore else -- @preserve */
+    if (index !== -1) {
+      listeners.splice(index, 1);
+      this._listenersMap.set(eventName, listeners);
+    }
+    return this;
+  }
+
+  // ............................................................................
+  /**
+   * Removes all listeners for the specified event, or all listeners if no event is specified.
+   * @param eventName - (Optional) The name of the event.
+   * @returns The PeerSocketMock instance for chaining.
+   */
+  removeAllListeners(eventName?: string | symbol): this {
+    if (eventName) {
+      this._listenersMap.delete(eventName);
+    } else {
+      this._listenersMap.clear();
+    }
+    return this;
+  }
 
   // ............................................................................
   /**
