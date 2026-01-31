@@ -13,7 +13,7 @@ export interface Socket {
   disconnect(): void;
   on(eventName: string | symbol, listener: (...args: any[]) => void): this;
   emit(eventName: string | symbol, ...args: any[]): boolean | this;
-  off(eventName: string | symbol, listener: (...args: any[]) => void): this;
+  off(eventName: string | symbol, listener?: (...args: any[]) => void): this;
   removeAllListeners(eventName?: string | symbol): this;
 }
 

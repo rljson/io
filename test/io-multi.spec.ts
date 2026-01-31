@@ -10,7 +10,6 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { Io, IoMem, IoMulti, IoMultiIo, IoPeer, PeerSocketMock } from '../src';
 
-
 const createExampleTableWithData = async (
   key: string,
   prefix: string,
@@ -191,5 +190,79 @@ describe('IoMulti', () => {
     await expect(
       ioMulti.contentType({ table: 'nonExistingTable' }),
     ).rejects.toThrowError('Table "nonExistingTable" not found');
+  });
+
+  it('should read rows from second readable when first has empty table (distributed scenario)', async () => {
+    // Scenario: Client B has an empty table locally, but data exists on Server → Client A
+    // This simulates a distributed scenario where:
+    // - clientB (priority 0) has the table but with 0 rows
+    // - serverA (priority 1) has the table with actual data
+
+    const clientB = new IoMem();
+    await clientB.init();
+
+    const serverAPeerMem = new IoMem();
+    await serverAPeerMem.init();
+    const serverAPeerSocket = new PeerSocketMock(serverAPeerMem);
+    const serverA = new IoPeer(serverAPeerSocket);
+    await serverA.init();
+
+    // Create the table on both, but only add data to serverA
+    const tableCfg: TableCfg = exampleTableCfg({ key: 'distributedTable' });
+    await clientB.createOrExtendTable({ tableCfg });
+    await serverA.createOrExtendTable({ tableCfg });
+
+    // Only write data to serverA
+    await serverA.write({
+      data: {
+        distributedTable: {
+          _data: [
+            { a: 'serverValue0', b: 100 },
+            { a: 'serverValue1', b: 101 },
+          ],
+          _hash: '',
+          _type: 'components',
+        },
+      },
+    });
+
+    // Verify clientB has empty table
+    const clientBRows = await clientB.readRows({
+      table: 'distributedTable',
+      where: {},
+    });
+    expect(clientBRows['distributedTable']._data.length).toBe(0);
+
+    // Verify serverA has data
+    const serverARows = await serverA.readRows({
+      table: 'distributedTable',
+      where: {},
+    });
+    expect(serverARows['distributedTable']._data.length).toBe(2);
+
+    // Create IoMulti with clientB (priority 0) first, serverA (priority 1) second
+    const iosDistributed: Array<IoMultiIo> = [
+      { io: clientB, priority: 0, read: true, write: true, dump: true },
+      { io: serverA, priority: 1, read: true, write: false, dump: false },
+    ];
+
+    const ioMultiDistributed = new IoMulti(iosDistributed);
+    await ioMultiDistributed.init();
+
+    // BUG FIX TEST: IoMulti should skip clientB (empty) and read from serverA
+    const { ['distributedTable']: rows } = await ioMultiDistributed.readRows({
+      table: 'distributedTable',
+      where: {},
+    });
+
+    expect(rows).toBeDefined();
+    expect(rows._data.length).toBe(2);
+    expect(rows._data.map((r) => (r as any)['a']).sort()).toEqual([
+      'serverValue0',
+      'serverValue1',
+    ]);
+
+    // Cleanup
+    await ioMultiDistributed.close();
   });
 });
