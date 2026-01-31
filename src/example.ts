@@ -232,6 +232,7 @@ export const multiExample = async () => {
     },
   });
 
+  /* v8 ignore next -- @preserve */
   await io.close();
 };
 
