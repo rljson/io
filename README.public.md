@@ -426,6 +426,23 @@ const socket = socketClient('http://localhost:3000');
 const remote = new IoPeer(socket);
 await remote.init();
 
+// Create table schema in both cache and remote
+const tableCfg = {
+  key: 'users',
+  type: 'components',
+  columns: [
+    { key: '_hash', type: 'string', titleShort: 'Hash', titleLong: 'Hash' },
+    { key: 'id', type: 'number', titleShort: 'ID', titleLong: 'User ID' },
+    { key: 'name', type: 'string', titleShort: 'Name', titleLong: 'Name' }
+  ],
+  isHead: false,
+  isRoot: false,
+  isShared: true
+};
+
+await cache.createOrExtendTable({ tableCfg });
+await remote.createOrExtendTable({ tableCfg });
+
 // Combined multi-tier Io
 const io = new IoMulti([
   {

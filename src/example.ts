@@ -171,6 +171,7 @@ export const multiExample = async () => {
     isShared: true,
   };
 
+  await cache.createOrExtendTable({ tableCfg });
   await remote.createOrExtendTable({ tableCfg });
 
   // Pre-populate remote with data
