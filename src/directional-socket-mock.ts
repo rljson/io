@@ -6,6 +6,7 @@
 
 import { Socket } from './socket.ts';
 
+
 /**
  * Creates a pair of connected sockets that properly route messages between them.
  * Unlike SocketMock, this maintains directionality - when socketA emits, only socketB's
@@ -14,7 +15,10 @@ import { Socket } from './socket.ts';
  * This is essential for client-server testing where both use the same socket instance
  * but need separate event handling.
  */
-export function createSocketPair(): [Socket, Socket] {
+export function createSocketPair(): [
+  DirectionalSocketMock,
+  DirectionalSocketMock,
+] {
   const socketA = new DirectionalSocketMock();
   const socketB = new DirectionalSocketMock();
 
@@ -25,13 +29,17 @@ export function createSocketPair(): [Socket, Socket] {
   return [socketA, socketB];
 }
 
-class DirectionalSocketMock implements Socket {
+export class DirectionalSocketMock implements Socket {
   public connected: boolean = false;
   public disconnected: boolean = true;
 
   private _peer?: DirectionalSocketMock;
-  private _listeners: Map<string | symbol, Array<(...args: any[]) => void>> = new Map();
-  private _onceListeners: Map<string | symbol, Array<(...args: any[]) => void>> = new Map();
+  private _listeners: Map<string | symbol, Array<(...args: any[]) => void>> =
+    new Map();
+  private _onceListeners: Map<
+    string | symbol,
+    Array<(...args: any[]) => void>
+  > = new Map();
 
   _setPeer(peer: DirectionalSocketMock): void {
     this._peer = peer;
@@ -106,7 +114,9 @@ class DirectionalSocketMock implements Socket {
    */
   emit(eventName: string | symbol, ...args: any[]): boolean {
     if (!this._peer) {
-      console.warn(`DirectionalSocketMock.emit: No peer connected for event ${String(eventName)}`);
+      console.warn(
+        `DirectionalSocketMock.emit: No peer connected for event ${String(eventName)}`,
+      );
       return false;
     }
 
@@ -141,7 +151,10 @@ class DirectionalSocketMock implements Socket {
         try {
           listener(...args);
         } catch (error) {
-          console.error(`Error in once listener for ${String(eventName)}:`, error);
+          console.error(
+            `Error in once listener for ${String(eventName)}:`,
+            error,
+          );
         }
       });
     }
