@@ -53,7 +53,7 @@ export interface ReverseRefs {
   };
 }
 
-/* v8 ignore start */
+/* v8 ignore start -- @preserve */
 
 // .............................................................................
 /**
@@ -110,7 +110,7 @@ export const calcReverseRefs = (rljson: Rljson): ReverseRefs => {
   return result;
 };
 
-/* v8 ignore end */
+/* v8 ignore stop -- @preserve */
 
 // .............................................................................
 const _writeComponentRefs = (
