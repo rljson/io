@@ -14,7 +14,7 @@ import { Socket } from './socket.ts';
 export class IoServer {
   private _sockets: Socket[] = [];
 
-  constructor(private readonly _io: Io) {}
+  constructor(private _io: Io) {}
 
   // ...........................................................................
   /**
@@ -44,8 +44,10 @@ export class IoServer {
    * @param socket - The socket to add the transport layer to.
    */
   private async _addTransportLayer(socket: Socket): Promise<void> {
-    // CRUD operations
-    const crud = this._generateTransportLayerCRUD(this._io);
+    // CRUD operations — use arrow functions that read this._io at call time,
+    // so that when _io is replaced (e.g. after _rebuildMultis), existing
+    // socket handlers automatically use the latest Io instance.
+    const crud = this._generateTransportLayerCRUD();
     for (const [key, fn] of Object.entries(crud)) {
       socket.on(key, (...args: any[]) => {
         const cb = args[args.length - 1];
@@ -74,29 +76,31 @@ export class IoServer {
 
   // ...........................................................................
   /**
-   * Generates a transport layer object for the given Io instance.
-   * @param io - The Io instance to generate the transport layer for.
-   * @returns An object containing methods that correspond to the Io interface.
+   * Generates a transport layer object that always delegates to the current
+   * this._io.  Each method is an arrow function reading this._io at call
+   * time so that external code can replace _io after construction and all
+   * existing socket handlers pick up the new instance.
    */
-  private _generateTransportLayerCRUD = (io: Io) =>
+  private _generateTransportLayerCRUD = () =>
     ({
-      init: () => io.init(),
-      close: () => io.close(),
+      init: () => this._io.init(),
+      close: () => this._io.close(),
       isOpen: () =>
-        new Promise((resolve) => resolve(io.isOpen)) as Promise<boolean>,
-      isReady: () => io.isReady(),
-      dump: () => io.dump(),
-      dumpTable: (request: { table: string }) => io.dumpTable(request),
-      contentType: (request: { table: string }) => io.contentType(request),
-      tableExists: (tableKey: TableKey) => io.tableExists(tableKey),
+        new Promise((resolve) => resolve(this._io.isOpen)) as Promise<boolean>,
+      isReady: () => this._io.isReady(),
+      dump: () => this._io.dump(),
+      dumpTable: (request: { table: string }) => this._io.dumpTable(request),
+      contentType: (request: { table: string }) =>
+        this._io.contentType(request),
+      tableExists: (tableKey: TableKey) => this._io.tableExists(tableKey),
       createOrExtendTable: (request: { tableCfg: TableCfg }) =>
         this.createOrExtendTable(request),
-      rawTableCfgs: () => io.rawTableCfgs(),
-      write: (request: { data: Rljson }) => io.write(request),
+      rawTableCfgs: () => this._io.rawTableCfgs(),
+      write: (request: { data: Rljson }) => this._io.write(request),
       readRows: (request: {
         table: string;
         where: { [column: string]: JsonValue | null };
-      }) => io.readRows(request),
-      rowCount: (table: string) => io.rowCount(table),
+      }) => this._io.readRows(request),
+      rowCount: (table: string) => this._io.rowCount(table),
     } as { [key: string]: (...args: any[]) => Promise<any> });
 }
