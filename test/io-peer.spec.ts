@@ -95,4 +95,58 @@ describe('IoPeer', () => {
     await peer.close();
     await expect(peer.isReady()).rejects.toBeUndefined();
   });
+
+  describe('_withTimeout', () => {
+    it('should bypass timeout when _requestTimeoutMs <= 0', async () => {
+      const noTimeoutPeer = new IoPeer(socket, 0);
+      await noTimeoutPeer.init();
+      const result = await noTimeoutPeer.dump();
+      expect(result).toBeDefined();
+    });
+
+    it('should reject with timeout when ack never arrives', async () => {
+      // Create a socket mock that connects but never fires ack callbacks
+      const listeners: Map<string, ((...args: any[]) => void)[]> = new Map();
+      const noAckSocket: Socket = {
+        connected: false,
+        disconnected: true,
+        connect() {
+          this.connected = true;
+          this.disconnected = false;
+          const cbs = listeners.get('connect') ?? [];
+          for (const cb of cbs) cb();
+        },
+        disconnect() {
+          this.connected = false;
+          this.disconnected = true;
+          const cbs = listeners.get('disconnect') ?? [];
+          for (const cb of cbs) cb();
+        },
+        on(event: string, listener: (...args: any[]) => void) {
+          const cbs = listeners.get(event) ?? [];
+          cbs.push(listener);
+          listeners.set(event, cbs);
+          return this;
+        },
+        emit() {
+          // Intentionally never calls the ack callback
+          return true;
+        },
+        off() {
+          return this;
+        },
+        removeAllListeners() {
+          return this;
+        },
+      };
+
+      const timeoutPeer = new IoPeer(noAckSocket, 50);
+      noAckSocket.connect();
+      timeoutPeer.isOpen = true;
+
+      await expect(timeoutPeer.dump()).rejects.toThrow(
+        'Timeout after 50ms: dump',
+      );
+    });
+  });
 });

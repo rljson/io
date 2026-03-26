@@ -16,7 +16,33 @@ import { Socket } from './socket.ts';
 export class IoPeer implements Io {
   isOpen: boolean = false;
 
-  constructor(private _socket: Socket) {}
+  constructor(
+    private _socket: Socket,
+    private _requestTimeoutMs: number = 30_000,
+  ) {}
+
+  // ...........................................................................
+  /**
+   * Wraps a promise with a timeout. If the promise does not settle within
+   * `_requestTimeoutMs`, the returned promise rejects with a timeout error.
+   * Clears the timer on settlement to avoid leaks and unhandled rejections.
+   */
+  private _withTimeout<T>(promise: Promise<T>, operation: string): Promise<T> {
+    if (this._requestTimeoutMs <= 0) return promise;
+    let timer: ReturnType<typeof setTimeout>;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        reject(
+          new Error(
+            `Timeout after ${this._requestTimeoutMs}ms: ${operation}`,
+          ),
+        );
+      }, this._requestTimeoutMs);
+    });
+    return Promise.race([promise, timeoutPromise]).finally(() => {
+      clearTimeout(timer!);
+    });
+  }
 
   // ...........................................................................
   /**
@@ -86,12 +112,15 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to the dumped database content.
    */
   async dump(): Promise<Rljson> {
-    return new Promise((resolve) => {
-      // Request dump, resolve once the data is received (ack)
-      this._socket.emit('dump', (data: Rljson) => {
-        resolve(data);
-      });
-    });
+    return this._withTimeout(
+      new Promise((resolve) => {
+        // Request dump, resolve once the data is received (ack)
+        this._socket.emit('dump', (data: Rljson) => {
+          resolve(data);
+        });
+      }),
+      'dump',
+    );
   }
 
   // ...........................................................................
@@ -101,13 +130,20 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to the dumped table data.
    */
   dumpTable(request: { table: string }): Promise<Rljson> {
-    return new Promise((resolve, reject) => {
-      // Request dumpTable, resolve once the data is received (ack)
-      this._socket.emit('dumpTable', request, (data: Rljson, error?: Error) => {
-        if (error) reject(error);
-        resolve(data);
-      });
-    });
+    return this._withTimeout(
+      new Promise((resolve, reject) => {
+        // Request dumpTable, resolve once the data is received (ack)
+        this._socket.emit(
+          'dumpTable',
+          request,
+          (data: Rljson, error?: Error) => {
+            if (error) reject(error);
+            resolve(data);
+          },
+        );
+      }),
+      'dumpTable',
+    );
   }
 
   // ...........................................................................
@@ -117,18 +153,21 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to the content type of the specified table.
    */
   contentType(request: { table: string }): Promise<ContentType> {
-    return new Promise((resolve, reject) => {
-      // Request contentType, resolve once the data is received (ack)
-      this._socket.emit(
-        'contentType',
-        request,
-        (data: ContentType, error?: Error) => {
-          /* v8 ignore next -- @preserve */
-          if (error) reject(error);
-          resolve(data);
-        },
-      );
-    });
+    return this._withTimeout(
+      new Promise((resolve, reject) => {
+        // Request contentType, resolve once the data is received (ack)
+        this._socket.emit(
+          'contentType',
+          request,
+          (data: ContentType, error?: Error) => {
+            /* v8 ignore next -- @preserve */
+            if (error) reject(error);
+            resolve(data);
+          },
+        );
+      }),
+      'contentType',
+    );
   }
 
   // ...........................................................................
@@ -138,12 +177,15 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to true if the table exists, false otherwise.
    */
   tableExists(tableKey: TableKey): Promise<boolean> {
-    return new Promise((resolve) => {
-      // Request tableExists, resolve once the data is received (ack)
-      this._socket.emit('tableExists', tableKey, (exists: boolean) => {
-        resolve(exists);
-      });
-    });
+    return this._withTimeout(
+      new Promise((resolve) => {
+        // Request tableExists, resolve once the data is received (ack)
+        this._socket.emit('tableExists', tableKey, (exists: boolean) => {
+          resolve(exists);
+        });
+      }),
+      'tableExists',
+    );
   }
 
   // ...........................................................................
@@ -153,17 +195,20 @@ export class IoPeer implements Io {
    * @returns A promise that resolves once the table is created or extended.
    */
   createOrExtendTable(request: { tableCfg: TableCfg }): Promise<void> {
-    return new Promise((resolve, reject) => {
-      // Request createOrExtendTable, resolve once the data is received (ack)
-      this._socket.emit(
-        'createOrExtendTable',
-        request,
-        (_?: boolean, error?: Error) => {
-          if (error) reject(error);
-          resolve();
-        },
-      );
-    });
+    return this._withTimeout(
+      new Promise((resolve, reject) => {
+        // Request createOrExtendTable, resolve once the data is received (ack)
+        this._socket.emit(
+          'createOrExtendTable',
+          request,
+          (_?: boolean, error?: Error) => {
+            if (error) reject(error);
+            resolve();
+          },
+        );
+      }),
+      'createOrExtendTable',
+    );
   }
 
   // ...........................................................................
@@ -172,12 +217,15 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to an array of table configurations.
    */
   rawTableCfgs(): Promise<TableCfg[]> {
-    return new Promise((resolve) => {
-      // Request rawTableCfgs, resolve once the data is received (ack)
-      this._socket.emit('rawTableCfgs', (data: TableCfg[]) => {
-        resolve(data);
-      });
-    });
+    return this._withTimeout(
+      new Promise((resolve) => {
+        // Request rawTableCfgs, resolve once the data is received (ack)
+        this._socket.emit('rawTableCfgs', (data: TableCfg[]) => {
+          resolve(data);
+        });
+      }),
+      'rawTableCfgs',
+    );
   }
 
   // ...........................................................................
@@ -187,13 +235,16 @@ export class IoPeer implements Io {
    * @returns A promise that resolves once the data is written.
    */
   write(request: { data: Rljson }): Promise<void> {
-    return new Promise((resolve, reject) => {
-      // Request write, resolve once the data is received (ack)
-      this._socket.emit('write', request, (_?: boolean, error?: Error) => {
-        if (error) reject(error);
-        resolve();
-      });
-    });
+    return this._withTimeout(
+      new Promise((resolve, reject) => {
+        // Request write, resolve once the data is received (ack)
+        this._socket.emit('write', request, (_?: boolean, error?: Error) => {
+          if (error) reject(error);
+          resolve();
+        });
+      }),
+      'write',
+    );
   }
 
   // ...........................................................................
@@ -206,17 +257,20 @@ export class IoPeer implements Io {
     table: string;
     where: { [column: string]: JsonValue | null };
   }): Promise<Rljson> {
-    return new Promise((resolve, reject) => {
-      // Request readRows, resolve once the data is received (ack)
-      this._socket.emit(
-        'readRows',
-        request,
-        (result?: Rljson, error?: Error) => {
-          if (error) reject(error);
-          resolve(result!);
-        },
-      );
-    });
+    return this._withTimeout(
+      new Promise((resolve, reject) => {
+        // Request readRows, resolve once the data is received (ack)
+        this._socket.emit(
+          'readRows',
+          request,
+          (result?: Rljson, error?: Error) => {
+            if (error) reject(error);
+            resolve(result!);
+          },
+        );
+      }),
+      'readRows',
+    );
   }
 
   // ...........................................................................
@@ -226,13 +280,20 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to the number of rows in the specified table.
    */
   rowCount(table: string): Promise<number> {
-    return new Promise((resolve, reject) => {
-      // Request rowCount, resolve once the data is received (ack)
-      this._socket.emit('rowCount', table, (count?: number, error?: Error) => {
-        if (error) reject(error);
-        resolve(count!);
-      });
-    });
+    return this._withTimeout(
+      new Promise((resolve, reject) => {
+        // Request rowCount, resolve once the data is received (ack)
+        this._socket.emit(
+          'rowCount',
+          table,
+          (count?: number, error?: Error) => {
+            if (error) reject(error);
+            resolve(count!);
+          },
+        );
+      }),
+      'rowCount',
+    );
   }
 
   // ...........................................................................
