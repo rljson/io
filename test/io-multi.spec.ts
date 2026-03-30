@@ -265,4 +265,104 @@ describe('IoMulti', () => {
     // Cleanup
     await ioMultiDistributed.close();
   });
+
+  it('should check tableExists through parallel same-priority readables', async () => {
+    // The main ioMulti has readableA and readableB both at priority 3
+    // with 'readableTable'. This exercises the parallel tableExists path.
+    const exists = await ioMulti.tableExists('readableTable');
+    expect(exists).toBe(true);
+
+    const notExists = await ioMulti.tableExists('nonExistingTable');
+    expect(notExists).toBe(false);
+  });
+
+  it('should readRows from a single-readable group with data (mixed group sizes)', async () => {
+    // IoMulti with mixed group sizes:
+    //   priority 1: singleIo (alone → group.length === 1 path, with id set)
+    //   priority 2: peerA + peerB (together → group.length > 1 path)
+    // This covers the single-readable readRows path with a defined id (L298)
+    // and the _groupByPriority else branch (L462) for same-priority entries.
+    const singleIo = new IoMem();
+    await singleIo.init();
+    await createExampleTableWithData('mixedTable', 'S', singleIo);
+
+    const peerMemA = new IoMem();
+    await peerMemA.init();
+    const peerSocketA = new PeerSocketMock(peerMemA);
+    const peerA = new IoPeer(peerSocketA);
+    await peerA.init();
+
+    const peerMemB = new IoMem();
+    await peerMemB.init();
+    const peerSocketB = new PeerSocketMock(peerMemB);
+    const peerB = new IoPeer(peerSocketB);
+    await peerB.init();
+
+    const ioMultiMixed = new IoMulti([
+      {
+        io: singleIo,
+        priority: 1,
+        read: true,
+        write: true,
+        dump: true,
+        id: 'singleIo',
+      },
+      { io: peerA, priority: 2, read: true, write: false, dump: false },
+      { io: peerB, priority: 2, read: true, write: false, dump: false },
+    ]);
+    await ioMultiMixed.init();
+
+    // readRows hits the single-readable path (priority 1 group has 1 entry)
+    // and the data exists → exercises the rows > 0 branch with defined id
+    const { ['mixedTable']: rows } = await ioMultiMixed.readRows({
+      table: 'mixedTable',
+      where: {},
+    });
+    expect(rows._data.length).toBe(3);
+    expect(rows._data.map((r) => (r as any)['a']).sort()).toEqual([
+      'mixedTableValueS0',
+      'mixedTableValueS1',
+      'mixedTableValueS2',
+    ]);
+
+    await ioMultiMixed.close();
+  });
+
+  it('should group consecutive same-priority entries in _groupByPriority', () => {
+    const mockIo = {} as Io;
+    const groups = IoMulti._groupByPriority([
+      { io: mockIo, priority: 1, read: true, write: false, dump: false },
+      { io: mockIo, priority: 2, read: true, write: false, dump: false },
+      { io: mockIo, priority: 2, read: true, write: false, dump: false },
+      { io: mockIo, priority: 3, read: true, write: false, dump: false },
+    ]);
+    expect(groups.length).toBe(3);
+    expect(groups[0].length).toBe(1);
+    expect(groups[1].length).toBe(2);
+    expect(groups[2].length).toBe(1);
+
+    // Empty input returns no groups (covers else branch of final guard)
+    const emptyGroups = IoMulti._groupByPriority([]);
+    expect(emptyGroups.length).toBe(0);
+  });
+
+  it('should readRows from single-readable without id', async () => {
+    // Single readable without id → exercises the right branch of ?? (fallback '')
+    const singleIo = new IoMem();
+    await singleIo.init();
+    await createExampleTableWithData('noIdTable', 'N', singleIo);
+
+    const ioMultiNoId = new IoMulti([
+      { io: singleIo, priority: 1, read: true, write: true, dump: true },
+    ]);
+    await ioMultiNoId.init();
+
+    const { ['noIdTable']: rows } = await ioMultiNoId.readRows({
+      table: 'noIdTable',
+      where: {},
+    });
+    expect(rows._data.length).toBe(3);
+
+    await ioMultiNoId.close();
+  });
 });
