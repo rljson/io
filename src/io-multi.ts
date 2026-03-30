@@ -152,7 +152,9 @@ export class IoMulti implements Io {
 
   // ...........................................................................
   /**
-   * Checks if a specific table exists in any of the underlying readable Io instances.
+   * Checks if a specific table exists in any of the underlying readable Io
+   * instances.  Readables at the same priority level are queried in parallel
+   * so that one slow peer does not block others.
    * @param tableKey The key of the table to check.
    * @returns A promise that resolves to true if the table exists in any readable Io, false otherwise.
    */
@@ -162,11 +164,18 @@ export class IoMulti implements Io {
       throw new Error('No readable Io available');
     }
 
-    for (let i = 0; i < this.readables.length; i++) {
-      const readable = this.readables[i].io;
-      const exists = await readable.tableExists(tableKey);
-      if (exists) {
-        return true;
+    const groups = IoMulti._groupByPriority(this.readables);
+    for (const group of groups) {
+      if (group.length === 1) {
+        const exists = await group[0].io.tableExists(tableKey);
+        if (exists) return true;
+      } else {
+        const results = await Promise.allSettled(
+          group.map((r) => r.io.tableExists(tableKey)),
+        );
+        for (const result of results) {
+          if (result.status === 'fulfilled' && result.value) return true;
+        }
       }
     }
     return false;
@@ -192,7 +201,11 @@ export class IoMulti implements Io {
 
   // ...........................................................................
   /**
-   * Retrieves the raw table configurations from the highest priority underlying readable Io instance.
+   * Retrieves the raw table configurations from the highest priority underlying
+   * readable Io instance that has any.  Stops after the first readable that
+   * returns results — this avoids expensive network round-trips to lower-
+   * priority peers when the local cache (IoMem, priority 1) already has the
+   * answer.
    * @returns A promise that resolves to an array of table configurations.
    */
   async rawTableCfgs(): Promise<TableCfg[]> {
@@ -211,6 +224,7 @@ export class IoMulti implements Io {
             rawTableCfgs.set(tableCfg.key, tableCfg);
           }
         }
+        break; // Stop after the first readable that has table configs
       }
     }
     return Array.from(rawTableCfgs.values());
@@ -237,7 +251,12 @@ export class IoMulti implements Io {
 
   // ...........................................................................
   /**
-   * Reads rows from a specific table by merging rows from all underlying readable Io instances.
+   * Reads rows from a specific table.  Readables are grouped by priority:
+   * priorities are tried in ascending order.  Within a priority group,
+   * all readables are queried **in parallel** — only the first one to
+   * return rows wins.  This prevents one slow/stale peer from blocking
+   * others at the same priority level.
+   *
    * @param request An object containing the table name and where clause.
    * @returns A promise that resolves to the read rows.
    */
@@ -256,37 +275,76 @@ export class IoMulti implements Io {
     let readFrom: string = '';
 
     const errors: Error[] = [];
-    for (const readable of this.readables) {
-      // Read rows from this readable Io
-      let tableRows: any[] = [];
-      let tableType: ContentType;
 
-      try {
-        const { [request.table]: tableData } = await readable.io.readRows(
-          request,
+    // Group readables by priority (already sorted by priority)
+    const groups = IoMulti._groupByPriority(this.readables);
+
+    for (const group of groups) {
+      if (group.length === 1) {
+        // Single readable at this priority — query directly (no race overhead)
+        const readable = group[0];
+        try {
+          const { [request.table]: tableData } = await readable.io.readRows(
+            request,
+          );
+          const tableRows = (tableData as RljsonTable<Json, ContentType>)
+            ._data;
+          const tableType = (tableData as RljsonTable<Json, ContentType>)
+            ._type;
+          tableExistsAny = true;
+          type ??= tableType;
+
+          if (tableRows.length > 0) {
+            /* v8 ignore next -- @preserve */
+            readFrom = readable.id ?? '';
+            /* v8 ignore else -- @preserve */
+            for (const tableRow of tableRows) {
+              const ref = tableRow._hash as string;
+              rows.set(ref, tableRow);
+            }
+            break; // Got rows — done
+          }
+        } catch (e) {
+          errors.push(e as Error);
+        }
+      } else {
+        // Multiple readables at the same priority — race them in parallel.
+        // Collect all settled results and pick the first with rows.
+        const results = await Promise.allSettled(
+          group.map(async (readable) => {
+            const { [request.table]: tableData } = await readable.io.readRows(
+              request,
+            );
+            return {
+              readable,
+              tableRows: (tableData as RljsonTable<Json, ContentType>)._data,
+              tableType: (tableData as RljsonTable<Json, ContentType>)._type,
+            };
+          }),
         );
-        tableRows = (tableData as RljsonTable<Json, ContentType>)._data;
-        tableType = (tableData as RljsonTable<Json, ContentType>)._type;
-        tableExistsAny = true;
-        readFrom = readable.id ?? '';
-      } catch (e) {
-        errors.push(e as Error);
-        continue; // Table does not exist in this readable Io
+
+        let foundRows = false;
+        for (const result of results) {
+          if (result.status === 'rejected') {
+            errors.push(result.reason as Error);
+            continue;
+          }
+          tableExistsAny = true;
+          const { readable, tableRows, tableType } = result.value;
+          type ??= tableType;
+          if (tableRows.length > 0 && !foundRows) {
+            foundRows = true;
+            readFrom = readable.id ?? '';
+            /* v8 ignore else -- @preserve */
+            for (const tableRow of tableRows) {
+              const ref = tableRow._hash as string;
+              rows.set(ref, tableRow);
+            }
+          }
+        }
+
+        if (foundRows) break; // Got rows — done
       }
-
-      type ??= tableType;
-
-      if (tableRows.length === 0) {
-        continue; // No rows to merge from this readable Io
-      }
-
-      /* v8 ignore else -- @preserve */
-      for (const tableRow of tableRows) {
-        const ref = tableRow._hash;
-        rows.set(ref, tableRow);
-      }
-
-      break; // Stop after the first readable that has the table
     }
 
     if (!tableExistsAny) {
@@ -379,6 +437,32 @@ export class IoMulti implements Io {
     return this._ios
       .filter((ioMultiIo) => ioMultiIo.dump)
       .sort((a, b) => a.priority - b.priority);
+  }
+
+  // ...........................................................................
+  /**
+   * Groups IoMultiIo entries by their priority value.
+   * Input must already be sorted by priority (ascending).
+   * Returns an array of groups, each group containing entries with the same
+   * priority.
+   */
+  static _groupByPriority(ios: Array<IoMultiIo>): Array<Array<IoMultiIo>> {
+    const groups: Array<Array<IoMultiIo>> = [];
+    let current: Array<IoMultiIo> = [];
+    let currentPriority: number | null = null;
+
+    for (const io of ios) {
+      if (io.priority !== currentPriority) {
+        if (current.length > 0) groups.push(current);
+        current = [io];
+        currentPriority = io.priority;
+      } else {
+        current.push(io);
+      }
+    }
+    if (current.length > 0) groups.push(current);
+
+    return groups;
   }
 
   // ...........................................................................
