@@ -140,6 +140,38 @@ export class IoMem implements Io {
    */
   private readonly _rowIndex = new Map<TableKey, Map<string, any>>();
 
+  /**
+   * Tables whose table hash (and thus the global hash) is outdated
+   * after writes. Hashes are refreshed lazily before they become
+   * observable (dump, dumpTable, create/extend) instead of after every
+   * single write — row hashes themselves are always up to date.
+   */
+  private readonly _dirtyTableHashes = new Set<TableKey>();
+
+  // ...........................................................................
+  /**
+   * Recomputes the hashes of all dirty tables and the global hash.
+   * Produces exactly the state an eager per-write update would have
+   * produced (hashes are deterministic over the same data).
+   */
+  private _refreshHashes(): void {
+    if (this._dirtyTableHashes.size === 0) {
+      return;
+    }
+
+    for (const tableKey of this._dirtyTableHashes) {
+      const table = this._mem[tableKey] as TableType;
+      table._hash = '';
+      hip(table, {
+        updateExistingHashes: false,
+        throwOnWrongHashes: false,
+      });
+    }
+    this._dirtyTableHashes.clear();
+
+    this._updateGlobalHash();
+  }
+
   // ...........................................................................
   /**
    * Returns the row index of a table, building it lazily from the
@@ -295,6 +327,15 @@ export class IoMem implements Io {
 
   // ...........................................................................
   private async _init() {
+    // Fold pending lazy hash updates — a re-init validates all hashes
+    this._refreshHashes();
+
+    // Reset caches — a re-init replaces the tableCfgs table, so cached
+    // configs and indexes must be rebuilt
+    this._rowIndex.clear();
+    this._latestCfgs.clear();
+    this._columnKeys.clear();
+
     this._ioTools = new IoTools(this);
     this._initTableCfgs();
     this._updateGlobalHash();
@@ -334,6 +375,10 @@ export class IoMem implements Io {
   private async _createOrExtendTable(request: {
     tableCfg: TableCfg;
   }): Promise<void> {
+    // Fold pending lazy hash updates before the eager global hash
+    // update of the create/extend paths
+    this._refreshHashes();
+
     // Make sure that the table config is compatible
     // with an potential existing table
     const tableCfg = request.tableCfg;
@@ -404,6 +449,7 @@ export class IoMem implements Io {
   // ...........................................................................
 
   private async _dump(): Promise<Rljson> {
+    this._refreshHashes();
     return copy(this._mem);
   }
 
@@ -411,6 +457,7 @@ export class IoMem implements Io {
   private async _dumpTable(request: { table: string }): Promise<Rljson> {
     await this._ioTools.throwWhenTableDoesNotExist(request.table);
 
+    this._refreshHashes();
     const table = this._mem[request.table] as TableType;
 
     return {
@@ -458,17 +505,10 @@ export class IoMem implements Io {
         }
       }
 
-      // Update the table hash (same options as
-      // sortTableDataAndUpdateHash — the data is already sorted)
-      oldTable._hash = '';
-      hip(oldTable, {
-        updateExistingHashes: false,
-        throwOnWrongHashes: false,
-      });
+      // Table and global hash are refreshed lazily before they become
+      // observable — see _refreshHashes
+      this._dirtyTableHashes.add(table);
     }
-
-    // Recalc main hashes
-    this._updateGlobalHash();
   }
 
   // ...........................................................................

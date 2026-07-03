@@ -97,6 +97,27 @@ describe('IoMem', () => {
     });
   });
 
+  describe('re-init', () => {
+    it('re-initializes after writes with pending lazy hash updates', async () => {
+      await io.write({
+        data: {
+          memTable: {
+            _type: 'components',
+            _data: [hip({ name: 'beforeReInit', _hash: '' } as any)],
+          },
+        } as any,
+      });
+
+      // Re-init validates all hashes — pending lazy updates must be
+      // folded and caches reset
+      await io.init();
+      await io.isReady();
+
+      const dump = await io.dump();
+      expect(dump).toBeDefined();
+    });
+  });
+
   describe('write', () => {
     it('ignores non-table values like a top-level _hash', async () => {
       await io.write({
