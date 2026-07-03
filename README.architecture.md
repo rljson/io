@@ -18,7 +18,7 @@ found in the LICENSE file in the root of this package.
 
 The central abstraction that defines all database operations:
 
-```
+```text
 ┌─────────────────────────────────────────────┐
 │              Io Interface                   │
 ├─────────────────────────────────────────────┤
@@ -42,7 +42,7 @@ The central abstraction that defines all database operations:
 
 In-memory implementation using JavaScript objects.
 
-```
+```text
 ┌─────────────────────┐
 │      IoMem          │
 ├─────────────────────┤
@@ -61,6 +61,21 @@ In-memory implementation using JavaScript objects.
 - Uses `@rljson/hash` for data hashing and identity
 - `IsReady` pattern for initialization tracking
 
+**Performance internals** (no observable API change):
+
+- Rows are indexed per table by content hash — write dedup is O(1) and
+  `readRows` with a string `_hash` in the where clause resolves through
+  the index instead of scanning the table
+- Table data is kept hash-sorted incrementally (binary-searched insert)
+  instead of re-sorting the whole table per write
+- Table and global hashes are updated lazily: writes mark tables dirty,
+  hashes are recomputed before they become observable (`dump`,
+  `dumpTable`, `createOrExtendTable`, re-`init`) — deterministic hashes
+  make the refreshed state identical to eager updates
+- The latest table configuration and column keys are cached per table
+  (updated on create/extend), so validation does not re-scan all
+  configurations per read/write
+
 **Data Structure:**
 
 ```typescript
@@ -76,7 +91,7 @@ _mem = {
 
 Remote database connection over sockets (Socket.IO compatible).
 
-```
+```text
 ┌──────────────┐         Socket          ┌──────────────┐
 │   IoPeer     │◄───────────────────────►│ IoPeerBridge │
 │  (Client)    │     Events/Acks         │   (Server)   │
@@ -107,7 +122,7 @@ Remote database connection over sockets (Socket.IO compatible).
 
 Server-side handler that bridges socket events to Io operations.
 
-```
+```text
 ┌─────────────────────────────────────┐
 │        IoPeerBridge                 │
 ├─────────────────────────────────────┤
@@ -132,7 +147,7 @@ Server-side handler that bridges socket events to Io operations.
 
 Aggregates multiple Io instances with priority-based cascading.
 
-```
+```text
 ┌────────────────────────────────────────────┐
 │             IoMulti                        │
 ├────────────────────────────────────────────┤
@@ -182,7 +197,7 @@ IoMultiIo {
 
 Provides name mapping between different table name formats.
 
-```
+```text
 ┌──────────────────────────────────────┐
 │     IoDbNameMapping                  │
 ├──────────────────────────────────────┤
@@ -202,7 +217,7 @@ Provides name mapping between different table name formats.
 
 Server implementation that combines Socket.IO with Io backends.
 
-```
+```text
 ┌─────────────────────────────────────┐
 │         IoServer                    │
 ├─────────────────────────────────────┤
@@ -230,7 +245,7 @@ Server implementation that combines Socket.IO with Io backends.
 
 ### Write Operation
 
-```
+```text
 Client Code
     │
     ▼
@@ -248,7 +263,7 @@ io.write(data)
 
 ### Read Operation (IoMulti Cascade)
 
-```
+```text
 io.readRows({table: 'users', where: {id: 1}})
     │
     ▼
@@ -293,7 +308,7 @@ return rljson; // Only after loop completes
 
 ### Event-Based Protocol
 
-```
+```text
 Client (IoPeer)                    Server (IoPeerBridge)
       │                                    │
       ├─── emit('readRows', request) ────►│

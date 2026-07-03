@@ -101,6 +101,19 @@ describe('IoTools', () => {
         '- Column "c" in row 0 of table "table" does not exist.',
       ]);
     });
+
+    it('ignores tables of type tableCfgs', async () => {
+      const data: Rljson = {
+        tableCfgs: {
+          _type: 'tableCfgs',
+          _data: [{ anything: 'goes', _hash: '' }],
+        },
+      } as unknown as Rljson;
+
+      await expect(
+        ioTools.throwWhenTableDataDoesNotMatchCfg(data),
+      ).resolves.toBeUndefined();
+    });
   });
 
   describe('allTableKeys', () => {
