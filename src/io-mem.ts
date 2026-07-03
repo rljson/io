@@ -8,7 +8,13 @@ import { hip, hsh } from '@rljson/hash';
 import { IsReady } from '@rljson/is-ready';
 import { copy, equals, JsonValue } from '@rljson/json';
 import {
-  ContentType, iterateTablesSync, Rljson, TableCfg, TableKey, TableType
+  ContentType,
+  iterateTablesSync,
+  Rljson,
+  TableCfg,
+  TableKey,
+  TableType,
+  validateRljsonAgainstTableCfg,
 } from '@rljson/rljson';
 
 import { IoTools } from './io-tools.ts';
@@ -118,6 +124,102 @@ export class IoMem implements Io {
 
   private _mem: Rljson = hip({} as Rljson);
 
+  /**
+   * Latest table configuration per table (the one with the most
+   * columns). Kept in sync by _createTable/_extendTable so that reads
+   * and writes need no repeated scan over all configurations.
+   */
+  private readonly _latestCfgs = new Map<TableKey, TableCfg>();
+
+  /** Column key sets per table, derived from _latestCfgs */
+  private readonly _columnKeys = new Map<TableKey, Set<string>>();
+
+  // ...........................................................................
+  /**
+   * Returns the latest table configuration, filling the cache lazily
+   * from IoTools (which picks the config with the most columns).
+   * @param table - The table to get the configuration for
+   */
+  private async _latestCfg(table: TableKey): Promise<TableCfg> {
+    let cfg = this._latestCfgs.get(table);
+    if (!cfg) {
+      cfg = await this._ioTools.tableCfg(table);
+      this._latestCfgs.set(table, cfg);
+    }
+    return cfg;
+  }
+
+  /**
+   * Updates the cached latest configuration of a table
+   * @param cfg - The new latest configuration
+   */
+  private _setLatestCfg(cfg: TableCfg): void {
+    this._latestCfgs.set(cfg.key, cfg);
+    this._columnKeys.set(cfg.key, new Set(cfg.columns.map((c) => c.key)));
+  }
+
+  /**
+   * Throws when one of the given columns does not exist in the table.
+   * Mirrors IoTools.throwWhenColumnDoesNotExist but uses the cached
+   * configuration.
+   * @param table - The table to check
+   * @param columns - The columns to check
+   */
+  private async _throwWhenColumnDoesNotExist(
+    table: TableKey,
+    columns: string[],
+  ): Promise<void> {
+    let columnKeys = this._columnKeys.get(table);
+    if (!columnKeys) {
+      const cfg = await this._latestCfg(table);
+      columnKeys = new Set(cfg.columns.map((c) => c.key));
+      this._columnKeys.set(table, columnKeys);
+    }
+
+    const missingColumns = columns.filter((column) => !columnKeys.has(column));
+    if (missingColumns.length > 0) {
+      throw new Error(
+        `The following columns do not exist in table "${table}": ${missingColumns.join(
+          ', ',
+        )}.`,
+      );
+    }
+  }
+
+  /**
+   * Throws when the data does not match the table configurations.
+   * Mirrors IoTools.throwWhenTableDataDoesNotMatchCfg but uses the
+   * cached configurations.
+   * @param data - The data to validate
+   */
+  private async _throwWhenTableDataDoesNotMatchCfg(
+    data: Rljson,
+  ): Promise<void> {
+    const errors: string[] = [];
+
+    for (const tableKey of Object.keys(data)) {
+      const table = data[tableKey] as TableType;
+
+      // Skip non-table values (like _hash) — mirrors iterateTables
+      if (typeof table !== 'object' || !Array.isArray(table?._data)) continue;
+
+      // Ignore tableCfgs table
+      /* v8 ignore next -- @preserve */
+      if (table._type === 'tableCfgs') continue;
+
+      const tableCfg = await this._latestCfg(tableKey);
+      errors.push(...validateRljsonAgainstTableCfg(table._data, tableCfg));
+    }
+
+    if (errors.length > 0) {
+      throw new Error(
+        `Table data does not match the configuration.\n\nErrors:\n${errors
+          .map((e) => `- ${e}`)
+          .join('\n')}`,
+      );
+    }
+  }
+
   // ...........................................................................
   private async _init() {
     this._ioTools = new IoTools(this);
@@ -186,6 +288,7 @@ export class IoMem implements Io {
     newConfig = hsh(newConfig);
     this._mem.tableCfgs._data.push(newConfig);
     this._ioTools.sortTableDataAndUpdateHash(this._mem.tableCfgs);
+    this._setLatestCfg(newConfig);
 
     // Create a table and write it into the database
     const table: TableType = {
@@ -212,6 +315,7 @@ export class IoMem implements Io {
     newConfig = hsh(newConfig);
     this._mem.tableCfgs._data.push(newConfig);
     this._ioTools.sortTableDataAndUpdateHash(this._mem.tableCfgs);
+    this._setLatestCfg(newConfig);
 
     // Update the config of the existing table
     const table = this._mem[newConfig.key] as TableType;
@@ -249,12 +353,16 @@ export class IoMem implements Io {
   // ...........................................................................
   private async _write(request: { data: Rljson }): Promise<void> {
     const addedData = hsh(request.data);
-    this._removeNullValues(addedData);
+    const removedNullValues = this._removeNullValues(addedData);
     const tables = Object.keys(addedData);
-    hsh(addedData);
+
+    // Row hashes only change when null values were actually removed
+    if (removedNullValues) {
+      hsh(addedData);
+    }
 
     await this._ioTools.throwWhenTablesDoNotExist(request.data);
-    await this._ioTools.throwWhenTableDataDoesNotMatchCfg(request.data);
+    await this._throwWhenTableDataDoesNotMatchCfg(request.data);
 
     for (const table of tables) {
       if (table.startsWith('_')) {
@@ -286,7 +394,7 @@ export class IoMem implements Io {
     where: { [column: string]: JsonValue };
   }): Promise<Rljson> {
     await this._ioTools.throwWhenTableDoesNotExist(request.table);
-    await this._ioTools.throwWhenColumnDoesNotExist(
+    await this._throwWhenColumnDoesNotExist(
       request.table,
       Object.keys(request.where),
     );
@@ -325,7 +433,9 @@ export class IoMem implements Io {
     return result;
   }
 
-  _removeNullValues(rljson: Rljson) {
+  _removeNullValues(rljson: Rljson): boolean {
+    let removedAny = false;
+
     iterateTablesSync(rljson, (table) => {
       const data = rljson[table]._data;
 
@@ -333,9 +443,12 @@ export class IoMem implements Io {
         for (const key in row) {
           if (row[key] === null) {
             delete row[key];
+            removedAny = true;
           }
         }
       }
     });
+
+    return removedAny;
   }
 }
