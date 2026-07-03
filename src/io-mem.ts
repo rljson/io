@@ -134,6 +134,79 @@ export class IoMem implements Io {
   /** Column key sets per table, derived from _latestCfgs */
   private readonly _columnKeys = new Map<TableKey, Set<string>>();
 
+  /**
+   * Per-table index of rows by content hash. Rows are only ever added,
+   * never removed, so the index cannot go stale.
+   */
+  private readonly _rowIndex = new Map<TableKey, Map<string, any>>();
+
+  // ...........................................................................
+  /**
+   * Returns the row index of a table, building it lazily from the
+   * table data on first access.
+   * @param table - The table to index
+   */
+  private _rowIndexFor(table: TableKey): Map<string, any> {
+    let index = this._rowIndex.get(table);
+    if (!index) {
+      index = new Map();
+      const tableData = (this._mem[table] as TableType)._data;
+      for (const row of tableData) {
+        index.set(row._hash as string, row);
+      }
+      this._rowIndex.set(table, index);
+    }
+    return index;
+  }
+
+  // ...........................................................................
+  /**
+   * Inserts a row into hash-sorted table data at its sorted position —
+   * preserves the order sortTableDataAndUpdateHash establishes without
+   * a full re-sort.
+   * @param data - The hash-sorted table data
+   * @param row - The row to insert
+   */
+  private static _insertSortedByHash(data: any[], row: any): void {
+    const hash = row._hash as string;
+    let lo = 0;
+    let hi = data.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if ((data[mid]._hash as string) < hash) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
+      }
+    }
+    data.splice(lo, 0, row);
+  }
+
+  // ...........................................................................
+  /**
+   * The row filter predicate of readRows. Extracted so that the indexed
+   * fast path and the full scan share identical semantics.
+   * @param row - The row to check
+   * @param where - The where clause
+   */
+  private static _rowMatchesWhere(
+    row: any,
+    where: { [column: string]: JsonValue },
+  ): boolean {
+    for (const column in where) {
+      const a = row[column];
+      const b = where[column];
+      if (b === null && a === undefined) {
+        return true;
+      }
+
+      if (!equals(a, b)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   // ...........................................................................
   /**
    * Returns the latest table configuration, filling the cache lazily
@@ -289,6 +362,7 @@ export class IoMem implements Io {
     this._mem.tableCfgs._data.push(newConfig);
     this._ioTools.sortTableDataAndUpdateHash(this._mem.tableCfgs);
     this._setLatestCfg(newConfig);
+    this._rowIndex.get('tableCfgs')?.set(newConfig._hash as string, newConfig);
 
     // Create a table and write it into the database
     const table: TableType = {
@@ -316,6 +390,7 @@ export class IoMem implements Io {
     this._mem.tableCfgs._data.push(newConfig);
     this._ioTools.sortTableDataAndUpdateHash(this._mem.tableCfgs);
     this._setLatestCfg(newConfig);
+    this._rowIndex.get('tableCfgs')?.set(newConfig._hash as string, newConfig);
 
     // Update the config of the existing table
     const table = this._mem[newConfig.key] as TableType;
@@ -371,17 +446,25 @@ export class IoMem implements Io {
 
       const oldTable = this._mem[table] as TableType;
       const newTable = addedData[table] as TableType;
+      const rowIndex = this._rowIndexFor(table);
 
-      // Table exists. Merge data
+      // Table exists. Merge data — O(1) dedup via the row index and
+      // sorted insert instead of a linear scan plus full re-sort
       for (const item of newTable._data) {
-        const hash = item._hash;
-        const exists = oldTable._data.find((i) => i._hash === hash);
-        if (!exists) {
-          oldTable._data.push(item as any);
+        const hash = item._hash as string;
+        if (!rowIndex.has(hash)) {
+          rowIndex.set(hash, item);
+          IoMem._insertSortedByHash(oldTable._data, item);
         }
       }
 
-      this._ioTools.sortTableDataAndUpdateHash(oldTable);
+      // Update the table hash (same options as
+      // sortTableDataAndUpdateHash — the data is already sorted)
+      oldTable._hash = '';
+      hip(oldTable, {
+        updateExistingHashes: false,
+        throwOnWrongHashes: false,
+      });
     }
 
     // Recalc main hashes
@@ -402,21 +485,19 @@ export class IoMem implements Io {
     // Read table from data
     const table = this._mem[request.table] as TableType;
 
-    // Filter table data
-    const tableDataFiltered = table._data.filter((row) => {
-      for (const column in request.where) {
-        const a = row[column];
-        const b = request.where[column];
-        if (b === null && a === undefined) {
-          return true;
-        }
-
-        if (!equals(a, b)) {
-          return false;
-        }
-      }
-      return true;
-    });
+    // Filter table data. Lookups by content hash use the row index
+    // instead of scanning the whole table.
+    const whereHash = request.where['_hash'];
+    let tableDataFiltered: any[];
+    if (typeof whereHash === 'string') {
+      const row = this._rowIndexFor(request.table).get(whereHash);
+      tableDataFiltered =
+        row && IoMem._rowMatchesWhere(row, request.where) ? [row] : [];
+    } else {
+      tableDataFiltered = table._data.filter((row) =>
+        IoMem._rowMatchesWhere(row, request.where),
+      );
+    }
 
     // Create an table
     const tableFiltered: TableType = {

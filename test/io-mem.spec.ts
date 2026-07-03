@@ -50,6 +50,53 @@ describe('IoMem', () => {
     });
   });
 
+  describe('readRows by _hash', () => {
+    it('serves hash lookups from the row index', async () => {
+      const row = hip({ name: 'indexed', _hash: '' } as any);
+      await io.write({
+        data: {
+          memTable: { _type: 'components', _data: [row] },
+        } as any,
+      });
+
+      // Found
+      const found = await io.readRows({
+        table: 'memTable',
+        where: { _hash: row._hash },
+      });
+      expect(found.memTable._data.length).toBe(1);
+      expect(found.memTable._data[0].name).toBe('indexed');
+
+      // Not found
+      const missing = await io.readRows({
+        table: 'memTable',
+        where: { _hash: 'DOES-NOT-EXIST' },
+      });
+      expect(missing.memTable._data.length).toBe(0);
+
+      // Found by hash but rejected by an additional column condition
+      const rejected = await io.readRows({
+        table: 'memTable',
+        where: { _hash: row._hash, name: 'differentName' },
+      });
+      expect(rejected.memTable._data.length).toBe(0);
+    });
+
+    it('builds the row index lazily for tables with existing rows', async () => {
+      // tableCfgs already contains rows from init — a hash lookup
+      // builds its index from the existing data
+      const cfgs = await io.rawTableCfgs();
+      const someCfg = cfgs[0];
+
+      const result = await io.readRows({
+        table: 'tableCfgs',
+        where: { _hash: someCfg._hash as string },
+      });
+      expect(result.tableCfgs._data.length).toBe(1);
+      expect((result.tableCfgs._data[0] as TableCfg).key).toBe(someCfg.key);
+    });
+  });
+
   describe('write', () => {
     it('ignores non-table values like a top-level _hash', async () => {
       await io.write({
