@@ -78,6 +78,18 @@ export interface Io {
     where: { [column: string]: JsonValue | null };
   }): Promise<Rljson>;
 
+  /**
+   * Optional batch read: returns the rows matching the given content
+   * hashes in one request. Hashes without a matching row are simply
+   * absent from the result. Implementations answering many hash lookups
+   * in one round trip should provide this; callers MUST fall back to
+   * readRows when the method is not implemented.
+   */
+  readRowsByHashes?(request: {
+    table: string;
+    hashes: string[];
+  }): Promise<Rljson>;
+
   /** Returns the number of rows in the given table */
   rowCount(table: string): Promise<number>;
 }

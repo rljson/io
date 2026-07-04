@@ -78,6 +78,11 @@ The `Io` interface is the core abstraction that defines a standard set of operat
 - **Data Operations**: `write()`, `readRows()`, `dump()`
 - **Schema Management**: `createOrExtendTable()`, `tableExists()`, `rawTableCfgs()`
 - **Metadata**: `contentType()`, `rowCount()`, `lastUpdate()`
+- **Optional Batch Reads**: `readRowsByHashes()` — answers many content
+  hash lookups in one request. Implementations may omit it; callers must
+  fall back to `readRows()` then. `IoMem`, `IoMulti` (per-hash cascade
+  across its members) and `IoPeer`/`IoServer` (one socket round trip,
+  with automatic per-hash fallback against older remotes) support it.
 
 All implementations (in-memory, remote, multi-source) conform to this interface.
 

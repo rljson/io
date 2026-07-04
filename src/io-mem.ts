@@ -82,6 +82,35 @@ export class IoMem implements Io {
     return this._readRows(request);
   }
 
+  async readRowsByHashes(request: {
+    table: string;
+    hashes: string[];
+  }): Promise<Rljson> {
+    await this._ioTools.throwWhenTableDoesNotExist(request.table);
+
+    const table = this._mem[request.table] as TableType;
+    const rowIndex = this._rowIndexFor(request.table);
+
+    const seen = new Set<string>();
+    const rows: any[] = [];
+    for (const hash of request.hashes) {
+      if (seen.has(hash)) continue;
+      seen.add(hash);
+      const row = rowIndex.get(hash);
+      if (row) {
+        rows.push(row);
+      }
+    }
+
+    const tableFiltered: TableType = {
+      _type: table._type,
+      _data: rows,
+    };
+    this._ioTools.sortTableDataAndUpdateHash(tableFiltered);
+
+    return { [request.table]: tableFiltered };
+  }
+
   async rowCount(table: string): Promise<number> {
     const tableData = this._mem[table] as TableType;
     if (!tableData) {
