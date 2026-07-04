@@ -411,6 +411,137 @@ export class IoMulti implements Io {
 
   // ...........................................................................
   /**
+   * Batch read with PER-HASH cascade: every hash not found in a
+   * higher-priority readable is looked up in the next one. Readables
+   * without readRowsByHashes are queried per hash via readRows.
+   * @param request - The table and the row hashes to read
+   */
+  async readRowsByHashes(request: {
+    table: string;
+    hashes: string[];
+  }): Promise<Rljson> {
+    /* v8 ignore next -- @preserve */
+    if (this.readables.length === 0) {
+      throw new Error('No readable Io available');
+    }
+
+    let tableExistsAny = false;
+    const rows: Map<string, Json> = new Map();
+    let type: ContentType | undefined = undefined;
+    let readFrom: string = '';
+    const errors: Error[] = [];
+
+    let remaining = Array.from(new Set(request.hashes));
+
+    for (const readable of this.readables) {
+      if (remaining.length === 0) break;
+
+      try {
+        let result: Rljson;
+        if (readable.io.readRowsByHashes) {
+          result = await readable.io.readRowsByHashes({
+            table: request.table,
+            hashes: remaining,
+          });
+        } else {
+          result = await IoMulti._readHashesViaReadRows(
+            readable.io,
+            request.table,
+            remaining,
+          );
+        }
+
+        const tableData = result[request.table] as RljsonTable<
+          Json,
+          ContentType
+        >;
+        tableExistsAny = true;
+        // The table type is identical across all ios serving the table
+        type = tableData._type;
+
+        if (tableData._data.length > 0) {
+          // Same hint as in readRows: both sides are exercised by tests
+          // but v8 cannot attribute this branch across the await above
+          /* v8 ignore next -- @preserve */
+          readFrom = readable.id ?? '';
+          for (const tableRow of tableData._data) {
+            rows.set(tableRow._hash as string, tableRow);
+          }
+          remaining = remaining.filter((hash) => !rows.has(hash));
+        }
+      } catch (e) {
+        errors.push(e as Error);
+      }
+    }
+
+    if (!tableExistsAny) {
+      /* v8 ignore if -- @preserve */
+      if (errors.length === 0) {
+        throw new Error(`Table "${request.table}" not found`);
+      } else {
+        const preciseErrors = errors.filter(
+          (err) => !err.message.includes(`Table "${request.table}" not found`),
+        );
+        /* v8 ignore next -- @preserve */
+        if (preciseErrors.length > 0) {
+          throw preciseErrors[0];
+        } else {
+          throw errors[0];
+        }
+      }
+    }
+
+    const rljson = {
+      [request.table]: hip({ _data: Array.from(rows.values()), _type: type }),
+    } as Rljson;
+
+    // Write merged rows back to all writables (hot-swapping cache) —
+    // mirrors readRows
+    if (this.writables.length > 0 && rows.size > 0) {
+      for (const writeable of this.writables) {
+        if (writeable.id === readFrom) {
+          continue; // Skip writing back to the source readable Io
+        }
+        /* v8 ignore next -- @preserve */
+        try {
+          await writeable.io.write({ data: rljson });
+        } catch {
+          continue; // Table does not exist in this writable Io
+        }
+      }
+    }
+
+    return rljson;
+  }
+
+  /**
+   * Per-hash fallback for readables without readRowsByHashes.
+   * @param io - The readable io
+   * @param table - The table to read from
+   * @param hashes - The row hashes to read
+   */
+  private static async _readHashesViaReadRows(
+    io: Io,
+    table: string,
+    hashes: string[],
+  ): Promise<Rljson> {
+    const results = await Promise.all(
+      hashes.map((hash) => io.readRows({ table, where: { _hash: hash } })),
+    );
+
+    let type: ContentType | undefined = undefined;
+    const rows: Json[] = [];
+    for (const result of results) {
+      const tableData = result[table] as RljsonTable<Json, ContentType>;
+      type ??= tableData._type;
+      rows.push(...tableData._data);
+    }
+
+    return { [table]: { _data: rows, _type: type } } as Rljson;
+  }
+
+  // ...........................................................................
+  /**
    * Gets the list of underlying readable Io instances, sorted by priority.
    */
   get readables(): Array<IoMultiIo> {

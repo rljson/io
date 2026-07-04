@@ -60,6 +60,7 @@ export class IoPeerBridge {
       'createOrExtendTable',
       'write',
       'readRows',
+      'readRowsByHashes',
       'rowCount',
       'dumpTable',
       'dump',

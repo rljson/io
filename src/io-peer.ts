@@ -275,6 +275,80 @@ export class IoPeer implements Io {
 
   // ...........................................................................
   /**
+   * True once the remote side signalled that it does not support batch
+   * reads — all further batch reads then use per-hash readRows.
+   */
+  private _batchReadsUnsupported = false;
+
+  /**
+   * Batch read over the socket. Falls back to per-hash readRows when
+   * the remote side does not support it (older server) and remembers
+   * the capability for subsequent calls.
+   * @param request - The table and the row hashes to read
+   */
+  async readRowsByHashes(request: {
+    table: string;
+    hashes: string[];
+  }): Promise<Rljson> {
+    if (!this._batchReadsUnsupported) {
+      try {
+        return await this._withTimeout(
+          new Promise<Rljson>((resolve, reject) => {
+            this._socket.emit(
+              'readRowsByHashes',
+              request,
+              (result?: Rljson, error?: Error) => {
+                if (error) reject(error);
+                resolve(result!);
+              },
+            );
+          }),
+          'readRowsByHashes',
+        );
+      } catch (error) {
+        const message = String((error as Error).message);
+        const unsupported =
+          message.includes('not found on Io instance') ||
+          message.includes('not supported') ||
+          message.includes('Timeout after');
+        if (!unsupported) {
+          throw error;
+        }
+        this._batchReadsUnsupported = true;
+      }
+    }
+
+    // Per-hash fallback for remote sides without batch support
+    const hashes = Array.from(new Set(request.hashes));
+    const results = await Promise.all(
+      hashes.map((hash) =>
+        this.readRows({ table: request.table, where: { _hash: hash } }),
+      ),
+    );
+
+    let type: ContentType | undefined = undefined;
+    const rows: any[] = [];
+    for (const result of results) {
+      const tableData = result[request.table];
+      type ??= tableData._type;
+      rows.push(...tableData._data);
+    }
+
+    /* v8 ignore next -- @preserve */
+    if (type === undefined) {
+      // No hashes given — derive the table type from an empty query
+      const empty = await this.readRows({
+        table: request.table,
+        where: { _hash: '__NONE__' },
+      });
+      type = empty[request.table]._type;
+    }
+
+    return { [request.table]: { _data: rows, _type: type } } as Rljson;
+  }
+
+  // ...........................................................................
+  /**
    * Retrieves the number of rows in a specific table.
    * @param table The name of the table to count rows in.
    * @returns A promise that resolves to the number of rows in the specified table.
