@@ -3,7 +3,6 @@
 //
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
-/* v8 ignore file -- @preserve */
 import { Socket } from './socket.ts';
 
 export class SocketMock implements Socket {
@@ -174,5 +173,3 @@ export class SocketMock implements Socket {
     return new Map(this._onceListeners);
   }
 }
-
-// ...existing code...
