@@ -33,12 +33,12 @@ git pull
 
 ## Set pull request title
 
-Replace `Add Type and fix double testing` here and below
+Replace `Update dependencies, esp. hash calculation. Fix coverage issues` here and below
 
 ## Create a feature branch
 
 ```bash
-node scripts/create-branch.js "Add Type and fix double testing"
+node scripts/create-branch.js "Update dependencies, esp. hash calculation. Fix coverage issues"
 ```
 
 ## Update-dependencies
@@ -64,7 +64,7 @@ In Vscode, press
 
 ```bash
 git add .
-git commit -am"Add Type and fix double testing"
+git commit -am"Update dependencies, esp. hash calculation. Fix coverage issues"
 ```
 
 ## Increase version
@@ -95,7 +95,7 @@ node scripts/push-branch.js
 ## Create a pull request
 
 ```bash
-gh pr create --base main --title "Add Type and fix double testing" --body " "
+gh pr create --base main --title "Update dependencies, esp. hash calculation. Fix coverage issues" --body " "
 ```
 
 ## Code review
