@@ -101,6 +101,14 @@ export class IoServer {
         table: string;
         where: { [column: string]: JsonValue | null };
       }) => this._io.readRows(request),
+      readRowsByHashes: (request: { table: string; hashes: string[] }) =>
+        this._io.readRowsByHashes
+          ? this._io.readRowsByHashes(request)
+          : Promise.reject(
+              new Error(
+                'Method "readRowsByHashes" not found on Io instance',
+              ),
+            ),
       rowCount: (table: string) => this._io.rowCount(table),
     } as { [key: string]: (...args: any[]) => Promise<any> });
 }
