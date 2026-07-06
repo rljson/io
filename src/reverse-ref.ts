@@ -1,4 +1,3 @@
-/* v8 ignore file -- @preserve */
 // @license
 // Copyright (c) 2025 Rljson
 //
@@ -52,8 +51,6 @@ export interface ReverseRefs {
     [childRow: Ref]: ParentRef;
   };
 }
-
-/* v8 ignore start -- @preserve */
 
 // .............................................................................
 /**
@@ -109,8 +106,6 @@ export const calcReverseRefs = (rljson: Rljson): ReverseRefs => {
 
   return result;
 };
-
-/* v8 ignore stop -- @preserve */
 
 // .............................................................................
 const _writeComponentRefs = (
@@ -171,6 +166,10 @@ const _writeCakeRefs = (
   const parentRowHash = parentRow._hash as string;
 
   for (const layer in parentRow.layers) {
+    if (layer.startsWith('_')) {
+      continue;
+    }
+
     const childTableName = layer;
     const childRowHash = parentRow.layers[layer] as string;
     _write(

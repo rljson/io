@@ -1,30 +1,67 @@
 {
   "buffets": {
-    "z99Uy6hMEVPcBfFzsBxIyZ": {}
+    "LWm73Eo9_WtG042j3XbVMN": {}
   },
   "cakes": {
-    "FShJOllEImdno0ZPZS0Ucr": {}
+    "WUmWBtwDHygFr7onFkS1Ro": {
+      "buffets": {
+        "LWm73Eo9_WtG042j3XbVMN": {}
+      }
+    }
   },
   "slices": {
     "wyYfK5E4ArrMKQ_zvi2-EE": {}
   },
-  "ComponentTypes": {
+  "ingredientTypes": {
     "UNxHIyPK7AACyUsbISW7bp": {}
   },
-  "layers": {
-    "I0zT7120s1gWEDrGhhSr6n": {}
+  "recipeLayers": {
+    "LTjCmRWGh_PZ-kaiGdOhoM": {
+      "cakes": {
+        "WUmWBtwDHygFr7onFkS1Ro": {}
+      }
+    }
   },
   "recipes": {
-    "gqLuZbpbjOMyk0DjQ3AFFy": {}
+    "hrbQ0G76e2wcoa6JQBoikR": {
+      "recipeLayers": {
+        "LTjCmRWGh_PZ-kaiGdOhoM": {}
+      }
+    }
   },
-  "recipecomponents": {
-    "4coxp7hPCsH7hSnAVeUVZj": {}
+  "recipeIngredients": {
+    "z5e4t8dYRgDCmWwMF-Az2i": {
+      "recipes": {
+        "hrbQ0G76e2wcoa6JQBoikR": {}
+      }
+    }
   },
-  "components": {
-    "A5d-4if1fQpQERfwFsjKqb": {}
+  "ingredients": {
+    "6nm9Xc1yaHQ8McoHsVBcPg": {
+      "recipeIngredients": {
+        "z5e4t8dYRgDCmWwMF-Az2i": {}
+      }
+    },
+    "Gg03zgQO86Wi4l9gBHks52": {}
   },
   "nutritionalValues": {
-    "R165gWZn_Pcj_je3AwSsXI": {},
-    "IqeoWJjZQNlr-NVk2QT15B": {}
+    "_B7QTbVEsn4XxGI-I33Vy0": {
+      "ingredients": {
+        "6nm9Xc1yaHQ8McoHsVBcPg": {}
+      }
+    },
+    "iMJY4rMvyhTnh-_o9th8y7": {
+      "ingredients": {
+        "Gg03zgQO86Wi4l9gBHks52": {}
+      }
+    }
+  },
+  "ingredientsInsertHistory": {
+    "a1lrq8PaniS6hV0zNnDPvB": {},
+    "HKsX0TB_5Mj94xtlwd-FeO": {}
+  },
+  "recipesTreeTable": {
+    "dDxhSgXRSL7YZSeO2pbJN_": {},
+    "-IzcMkK7_AlBnzaIzrqWk2": {}
   }
 }
