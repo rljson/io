@@ -10,6 +10,7 @@ import { ContentType, Rljson, RljsonTable, TableCfg, TableKey, TableType } from 
 
 import { IoMem } from './io-mem.ts';
 import { IoPeer } from './io-peer.ts';
+import { ioTrace } from './io-trace.ts';
 import { Io } from './io.ts';
 import { PeerSocketMock } from './peer-socket-mock.ts';
 
@@ -133,7 +134,10 @@ export class IoMulti implements Io {
 
   // ...........................................................................
   /**
-   * Retrieves the content type of a specific table from the first underlying readable Io instance that contains the table.
+   * Retrieves the content type of a specific table from the first
+   * underlying readable Io instance that contains the table. Skips
+   * readables that are closed right now, using the next open one
+   * instead.
    * @param request An object containing the table name.
    * @returns A promise that resolves to the content type of the table.
    */
@@ -143,18 +147,27 @@ export class IoMulti implements Io {
       throw new Error('No readable Io available');
     }
 
-    for (const { io: readable } of this.readables) {
-      return readable.contentType(request);
+    const errors: Error[] = [];
+    for (const ioMultiIo of this.readables) {
+      if (IoMulti._isClosed(ioMultiIo, errors)) continue;
+      return ioMultiIo.io.contentType(request);
     }
-    /* v8 ignore next -- @preserve */
-    throw new Error(`Table "${request.table}" not found`);
+
+    // Every readable was closed (the loop above only falls through
+    // without returning in that case) — throw the recorded reason
+    // instead of a generic "not found", which would look like a config
+    // problem rather than "nothing was reachable".
+    throw errors[0];
   }
 
   // ...........................................................................
   /**
    * Checks if a specific table exists in any of the underlying readable Io
    * instances.  Readables at the same priority level are queried in parallel
-   * so that one slow peer does not block others.
+   * so that one slow peer does not block others. Readables that are
+   * closed right now are skipped; if that leaves no readable at all to
+   * ask, the call throws instead of returning `false` (which would
+   * misleadingly claim the table was confirmed absent).
    * @param tableKey The key of the table to check.
    * @returns A promise that resolves to true if the table exists in any readable Io, false otherwise.
    */
@@ -164,20 +177,32 @@ export class IoMulti implements Io {
       throw new Error('No readable Io available');
     }
 
+    const errors: Error[] = [];
+    let anyOpen = false;
+
     const groups = IoMulti._groupByPriority(this.readables);
     for (const group of groups) {
-      if (group.length === 1) {
-        const exists = await group[0].io.tableExists(tableKey);
+      const openGroup = IoMulti._skipClosed(group, errors);
+      if (openGroup.length === 0) continue;
+      anyOpen = true;
+
+      if (openGroup.length === 1) {
+        const exists = await openGroup[0].io.tableExists(tableKey);
         if (exists) return true;
       } else {
         const results = await Promise.allSettled(
-          group.map((r) => r.io.tableExists(tableKey)),
+          openGroup.map((r) => r.io.tableExists(tableKey)),
         );
         for (const result of results) {
           if (result.status === 'fulfilled' && result.value) return true;
         }
       }
     }
+
+    if (!anyOpen) {
+      throw errors[0];
+    }
+
     return false;
   }
 
@@ -205,7 +230,8 @@ export class IoMulti implements Io {
    * readable Io instance that has any.  Stops after the first readable that
    * returns results — this avoids expensive network round-trips to lower-
    * priority peers when the local cache (IoMem, priority 1) already has the
-   * answer.
+   * answer. Readables that are closed right now are skipped in favor of
+   * the next open one.
    * @returns A promise that resolves to an array of table configurations.
    */
   async rawTableCfgs(): Promise<TableCfg[]> {
@@ -215,8 +241,14 @@ export class IoMulti implements Io {
     }
 
     const rawTableCfgs: Map<string, TableCfg> = new Map();
-    for (const { io: readable } of this.readables) {
-      const cfgs = await readable.rawTableCfgs();
+    const errors: Error[] = [];
+    let anyOpen = false;
+
+    for (const ioMultiIo of this.readables) {
+      if (IoMulti._isClosed(ioMultiIo, errors)) continue;
+      anyOpen = true;
+
+      const cfgs = await ioMultiIo.io.rawTableCfgs();
       /* v8 ignore else -- @preserve */
       if (cfgs.length > 0) {
         for (const tableCfg of cfgs) {
@@ -227,6 +259,13 @@ export class IoMulti implements Io {
         break; // Stop after the first readable that has table configs
       }
     }
+
+    // Every readable was closed — throw instead of pretending there are
+    // simply no table configs anywhere.
+    if (!anyOpen) {
+      throw errors[0];
+    }
+
     return Array.from(rawTableCfgs.values());
   }
 
@@ -276,8 +315,18 @@ export class IoMulti implements Io {
 
     const errors: Error[] = [];
 
+    // Skip readables that are closed right now; each skip is recorded
+    // as an error so that an all-closed situation still throws below
+    // instead of silently returning an empty result.
+    const openReadables = IoMulti._skipClosed(this.readables, errors);
+
     // Group readables by priority (already sorted by priority)
-    const groups = IoMulti._groupByPriority(this.readables);
+    const groups = IoMulti._groupByPriority(openReadables);
+
+    ioTrace(
+      () =>
+        `IoMulti.readRows table=${request.table} readables=${this.readables.length} open=${openReadables.length} groups=${groups.length}`,
+    );
 
     for (const group of groups) {
       if (group.length === 1) {
@@ -294,6 +343,11 @@ export class IoMulti implements Io {
           tableExistsAny = true;
           type ??= tableType;
 
+          ioTrace(
+            () =>
+              `IoMulti.readRows group priority=${readable.priority} size=1 rows=${tableRows.length}`,
+          );
+
           if (tableRows.length > 0) {
             /* v8 ignore next -- @preserve */
             readFrom = readable.id ?? '';
@@ -306,6 +360,10 @@ export class IoMulti implements Io {
           }
         } catch (e) {
           errors.push(e as Error);
+          ioTrace(
+            () =>
+              `IoMulti.readRows group priority=${readable.priority} size=1 error=${(e as Error).message}`,
+          );
         }
       } else {
         // Multiple readables at the same priority — race them in parallel.
@@ -342,6 +400,11 @@ export class IoMulti implements Io {
             }
           }
         }
+
+        ioTrace(
+          () =>
+            `IoMulti.readRows group priority=${group[0].priority} size=${group.length} found=${foundRows}`,
+        );
 
         if (foundRows) break; // Got rows — done
       }
@@ -435,6 +498,13 @@ export class IoMulti implements Io {
 
     for (const readable of this.readables) {
       if (remaining.length === 0) break;
+
+      // Skip readables that are closed right now — recorded as an
+      // error (see IoMulti._isClosed) so that an all-closed cascade
+      // still throws below instead of returning an empty result.
+      if (IoMulti._isClosed(readable, errors)) {
+        continue;
+      }
 
       try {
         let result: Rljson;
@@ -568,6 +638,44 @@ export class IoMulti implements Io {
     return this._ios
       .filter((ioMultiIo) => ioMultiIo.dump)
       .sort((a, b) => a.priority - b.priority);
+  }
+
+  // ...........................................................................
+  /**
+   * Returns true and records an Error in `errors` when the given
+   * member's underlying Io reports itself closed (`io.isOpen ===
+   * false`) at call time. `isOpen` is treated as "open" unless it is
+   * literally `false` — this covers Io implementations that never set
+   * the flag at all.
+   *
+   * Recording the skip as an error (instead of silently dropping the
+   * member) matters: callers reuse the same error-collection path used
+   * for genuine read failures, so when *every* potential holder of a
+   * table turns out to be closed, the call throws a meaningful error
+   * instead of returning a clean empty result that would be
+   * indistinguishable from "table has no rows".
+   * @param ioMultiIo - The candidate Io member.
+   * @param errors - Error collector shared with the caller's error-handling path.
+   */
+  private static _isClosed(ioMultiIo: IoMultiIo, errors: Error[]): boolean {
+    if (ioMultiIo.io.isOpen === false) {
+      errors.push(new Error(`Io "${ioMultiIo.id ?? 'unknown'}" is closed`));
+      return true;
+    }
+    return false;
+  }
+
+  // ...........................................................................
+  /**
+   * Filters out members that are closed right now (see `_isClosed`).
+   * @param ios - The candidate Io members.
+   * @param errors - Error collector shared with the caller's error-handling path.
+   */
+  private static _skipClosed(
+    ios: Array<IoMultiIo>,
+    errors: Error[],
+  ): Array<IoMultiIo> {
+    return ios.filter((ioMultiIo) => !IoMulti._isClosed(ioMultiIo, errors));
   }
 
   // ...........................................................................
