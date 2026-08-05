@@ -14,6 +14,19 @@ import { Socket } from './socket.ts';
 export class IoServer {
   private _sockets: Socket[] = [];
 
+  /**
+   * Handler references registered per socket in `_addTransportLayer`,
+   * so `removeSocket` can actually `socket.off()` them. Without this,
+   * the CRUD listeners are anonymous arrows with no retained
+   * reference, so nothing could ever unregister them — `removeSocket`
+   * used to only forget the socket internally while the listeners kept
+   * firing on it forever.
+   */
+  private _socketHandlers: Map<
+    Socket,
+    Array<{ event: string; handler: (...args: any[]) => void }>
+  > = new Map();
+
   constructor(private _io: Io) {}
 
   // ...........................................................................
@@ -31,10 +44,20 @@ export class IoServer {
 
   // ...........................................................................
   /**
-   * Removes a transport layer from the given socket.
+   * Removes the transport layer from the given socket, so it no longer
+   * reacts to CRUD events. Idempotent: removing a socket twice, or a
+   * socket that was never added, is a no-op — it does not throw.
    * @param socket - The socket to remove the transport layer from.
    */
   removeSocket(socket: Socket): void {
+    const handlers = this._socketHandlers.get(socket);
+    if (handlers) {
+      for (const { event, handler } of handlers) {
+        socket.off(event, handler);
+      }
+      this._socketHandlers.delete(socket);
+    }
+
     this._sockets = this._sockets.filter((s) => s !== socket);
   }
 
@@ -48,8 +71,10 @@ export class IoServer {
     // so that when _io is replaced (e.g. after _rebuildMultis), existing
     // socket handlers automatically use the latest Io instance.
     const crud = this._generateTransportLayerCRUD();
+    const handlers: Array<{ event: string; handler: (...args: any[]) => void }> =
+      [];
     for (const [key, fn] of Object.entries(crud)) {
-      socket.on(key, (...args: any[]) => {
+      const handler = (...args: any[]) => {
         const cb = args[args.length - 1];
 
         fn.apply(this, args.slice(0, -1))
@@ -59,8 +84,13 @@ export class IoServer {
           .catch((err) => {
             cb(null, err);
           });
-      });
+      };
+
+      socket.on(key, handler);
+      handlers.push({ event: key, handler });
     }
+
+    this._socketHandlers.set(socket, handlers);
   }
 
   // ...........................................................................

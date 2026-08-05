@@ -36,6 +36,8 @@ describe('PeerSocketMock', () => {
   });
 
   it('should emit events', async () => {
+    socket.connect();
+
     const dump = await vi.waitFor(
       () =>
         new Promise((r) => {
@@ -50,6 +52,8 @@ describe('PeerSocketMock', () => {
   });
 
   it('should return error on wrong parameters of events', async () => {
+    socket.connect();
+
     const error: Error = await vi.waitFor(
       () =>
         new Promise((r) => {
@@ -65,9 +69,56 @@ describe('PeerSocketMock', () => {
   });
 
   it('should throw error on emitting unsupported event', () => {
+    socket.connect();
+
     expect(() => socket.emit('unsupportedEvent')).toThrowError(
       'Event unsupportedEvent not supported',
     );
+  });
+
+  describe('dead-peer mode (not connected)', () => {
+    it('should swallow emit and never invoke the ack when not connected', async () => {
+      expect(socket.connected).toBe(false);
+
+      const ack = vi.fn();
+      const returned = socket.emit('dump', ack);
+
+      expect(returned).toBe(true);
+
+      // Give any (incorrectly) pending microtask a chance to run.
+      await new Promise((r) => setTimeout(r, 10));
+      expect(ack).not.toHaveBeenCalled();
+    });
+
+    it('should resume answering once connected', async () => {
+      const ack = vi.fn();
+      socket.emit('dump', ack);
+      await new Promise((r) => setTimeout(r, 10));
+      expect(ack).not.toHaveBeenCalled();
+
+      socket.connect();
+
+      const dump = await vi.waitFor(
+        () =>
+          new Promise((r) => {
+            socket.emit('dump', (data: any) => {
+              r(data);
+            });
+          }),
+        { timeout: 5000 },
+      );
+      expect(dump).toEqual(await io.dump());
+    });
+
+    it('should go back to swallowing after disconnect', async () => {
+      socket.connect();
+      socket.disconnect();
+
+      const ack = vi.fn();
+      socket.emit('dump', ack);
+      await new Promise((r) => setTimeout(r, 10));
+      expect(ack).not.toHaveBeenCalled();
+    });
   });
 
   it('should register event listeners and invoke them on connect/disconnect', () => {
