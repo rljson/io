@@ -8,7 +8,7 @@ I/O layer for the RLJSON ecosystem. Depends on `@rljson/rljson`.
 
 - **Never commit directly to `main`.** Always work on a feature branch.
 - **Never modify the `scripts` section in `package.json`** without explicit user permission.
-- **ESLint pinned to `~9.39.2`.** ESLint 10+ breaks the build.
+- **ESLint currently on `~10.6.0`** (see `package.json`) and the build is green on it — the earlier `~9.39.2` pin is stale, ESLint 10 does **not** break this build. The spirit still applies: don't blindly bump major versions — verify `pnpm test` stays green before changing the pin, and update this doc when you do.
 - **100% test coverage** on all new/modified `src/` files (Statements, Branches, Functions, Lines).
 
 ---
@@ -44,7 +44,7 @@ git checkout main && git fetch && git pull
 # 2. Feature branch
 node scripts/create-branch.js "<description>"
 
-# 3. Update deps (verify eslint stays on 9.x)
+# 3. Update deps (verify pnpm test still passes after — see Dependency Pinning)
 pnpm update --latest && pnpm ls eslint
 
 # 4. Develop, write tests, update docs
@@ -139,11 +139,14 @@ Uses **pnpm**. **Never modify the `scripts` section in `package.json`** without 
 ## Dependency Pinning (MANDATORY)
 
 ```jsonc
-"eslint": "~9.39.2"   // ✅ CORRECT — pin to 9.x
-"eslint": "^10.0.0"   // ❌ WRONG — ESLint 10 breaks the build
+"eslint": "~10.6.0"   // ✅ CURRENT — verified working, see package.json
 ```
 
-After `pnpm update --latest`, always verify: `pnpm ls eslint`.
+The exact pin matters less than the discipline: `pnpm update --latest` bumps
+major versions too, which can silently break the build (lint rule changes,
+config format changes, etc.). After `pnpm update --latest`, always run
+`pnpm test` before committing, and verify `pnpm ls eslint` matches what you
+expect.
 
 Also:
 - **TypeScript**: ESM modules (`"type": "module"`)

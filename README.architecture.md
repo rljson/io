@@ -118,6 +118,37 @@ Remote database connection over sockets (Socket.IO compatible).
 - `tableExists` → check table
 - `createOrExtendTable` → schema operations
 
+**Request timeout & fail-fast on a closed socket:**
+
+Every request method wraps its socket round-trip in `_withTimeout` — if no
+ack arrives within `_requestTimeoutMs` (default 30s), the call rejects with
+`Timeout after <ms>ms: <operation>`.
+
+Before emitting anything, every request method also checks `this.isOpen`
+and rejects **immediately** with `IoPeer: socket closed (<operation>)` when
+it is `false`, instead of emitting onto a dead socket and paying the full
+30s timeout to find out. `isOpen` is kept in sync by the `connect` /
+`disconnect` listeners registered in `init()`. This fail-fast check is
+independent of (and a defense-in-depth complement to) `IoMulti`'s own
+closed-member skipping described above — it protects any caller of a bare
+`IoPeer`, not just ones going through `IoMulti`.
+
+**Batch-read capability latch (`readRowsByHashes`):**
+
+`IoPeer.readRowsByHashes` tries a single batched round-trip first, falling
+back to one `readRows` per hash when batching isn't available. Two distinct
+"unsupported" signals are handled differently, on purpose:
+
+| Remote signal | Meaning | Latch behavior |
+| --- | --- | --- |
+| Error includes `'not found on Io instance'` or `'not supported'` | The remote genuinely does not implement batch reads (old server) | **Permanent** — `_batchReadsUnsupported = true`; never tried again for this peer |
+| Error includes `'Timeout after'` | The one request timed out — often transient (temporary overload/slow peer), not proof of missing support | **Decaying** — `_batchRetryAfter = Date.now() + 60_000`; this call falls back to per-hash, batch is skipped (not retried) until the window elapses, then tried again |
+
+The decay avoids two failure modes at once: hammering a genuinely
+unsupported/overloaded peer with a fresh 30s timeout on every call (no
+decay at all), and permanently downgrading a peer to slow per-hash reads
+after one transient blip (permanent latch on timeout, the old behavior).
+
 ### 4. IoPeerBridge (`io-peer-bridge.ts`)
 
 Server-side handler that bridges socket events to Io operations.
@@ -177,10 +208,44 @@ IoMultiIo {
 
 **Read Behavior:**
 
-- Query readables in priority order (lowest number first)
-- Stop at first successful response with data
-- If table exists but has 0 rows, continue cascade
-- Merge results from multiple sources if needed
+- Readables are grouped by priority (`_groupByPriority`); groups are tried in
+  ascending priority order, lowest number first
+- Within a priority group of more than one readable, all members are queried
+  **in parallel** via `Promise.allSettled` — every member in the group is
+  awaited, then the **first-non-empty member in group order** wins (not the
+  fastest to settle). This keeps results deterministic while still letting
+  one slow/rejecting peer in a group not take down the others.
+- Stop at the first priority group that produces data
+- If a table exists but has 0 rows, continue the cascade to the next
+  priority group (see "Bug Fix: Empty Table Cascade" below)
+- Merge results from multiple sources if needed (`readRowsByHashes` cascade)
+
+**Closed-member handling (skip-and-record):**
+
+`readRows`, `readRowsByHashes`, `tableExists`, `contentType` and
+`rawTableCfgs` all filter out members whose underlying `io.isOpen === false`
+**at call time**, before querying them — a readable that dropped its
+connection after `IoMulti.init()` is simply not asked. `isOpen` is treated
+as "open" unless it is literally `false`, so Io implementations that never
+set the flag are unaffected.
+
+A skipped-closed member is not silently dropped — it is **recorded as an
+error** in the same error-collection array used for genuine read failures
+(`IoMulti._isClosed` / `_skipClosed`). This matters for one specific
+situation: if *every* potential holder of a table turns out to be closed,
+the call **throws** the recorded "is closed" error instead of returning a
+clean empty result (`[]` / `false` / an empty `Rljson`) that would be
+indistinguishable from "the table genuinely has no rows" or "the table
+does not exist". As soon as at least one open member legitimately answers
+(including "not found" / "no rows"), that answer is trusted normally.
+
+`contentType` and `rawTableCfgs` walk `readables` for the first usable
+answer; with this change that means the first **open** readable, skipping
+past a closed higher-priority one to the next open one.
+
+`dump`/`dumpTable` iterate `dumpables`, not `readables`, and are unaffected
+by this change — they already tolerate a missing/erroring member per-source
+(dumpTable) or are out of scope for this hardening (dump).
 
 **Write Behavior:**
 
@@ -240,6 +305,19 @@ Server implementation that combines Socket.IO with Io backends.
 - Manages multiple client connections
 - Each client gets its own IoPeerBridge
 - Can serve shared or isolated Io instances
+
+**Socket lifecycle (`addSocket` / `removeSocket`):**
+
+`addSocket` registers one listener per CRUD event (`_addTransportLayer`)
+and keeps the exact handler references it registered, per socket, in a
+`Map<Socket, Array<{ event, handler }>>`. `removeSocket` looks up that map
+and calls `socket.off(event, handler)` for each one, then forgets the
+socket. This is what makes `removeSocket` actually stop a socket from being
+served — handlers used to be anonymous arrows with no retained reference,
+so nothing could ever unregister them; `removeSocket` only forgot the
+socket in its own bookkeeping while the listeners kept firing on it
+forever. `removeSocket` is idempotent: removing an already-removed socket,
+or one that was never added, is a no-op (no throw).
 
 ## Data Flow
 
@@ -346,6 +424,14 @@ Client (IoPeer)                    Server (IoPeerBridge)
 - Pre-configured pair for IoPeer/IoPeerBridge testing
 - Simulates real Socket.IO behavior
 - Automatic connection handling
+- **Dead-peer mode:** `emit()` checks `connected` first. When `connected`
+  is `false`, the request is swallowed — the ack callback is never
+  invoked, simulating a socket whose packets vanish, rather than one that
+  (unrealistically) answers instantly regardless of connection state.
+  Toggle `connected` for a test via the existing `connect()` /
+  `disconnect()` methods. This is what makes it possible to write
+  meaningful tests for `IoPeer`'s timeout and fail-fast-on-closed-socket
+  behavior against this mock instead of only against hand-rolled sockets.
 
 ## Testing Utilities
 
@@ -440,10 +526,51 @@ socket.emit('readRows', request, (result, error) => {
 
 ### IoMulti Error Strategy
 
-- Collect errors from all sources
+- Collect errors from all sources into a single `errors` array
+- A closed member (`io.isOpen === false`) that gets skipped instead of
+  queried counts as a source of error too — it pushes an `Io "<id>" is
+  closed` error into the same array (see `IoMulti._isClosed` /
+  `_skipClosed`)
 - Filter out generic "table not found" errors if table exists anywhere
 - Throw most specific error available
 - If no data found anywhere but table exists: Return empty result
+- **If every potential holder was closed** (so nothing could be queried at
+  all): throw the recorded "is closed" error rather than returning a clean
+  empty result — an untouched closed member and a confirmed "no rows" are
+  different situations and must not look the same to the caller. This
+  applies to `readRows`, `readRowsByHashes`, `tableExists` (throws instead
+  of returning `false`) and `rawTableCfgs` (throws instead of returning
+  `[]`), in addition to `contentType`.
+
+## Diagnostics: `ioTrace` (`io-trace.ts`)
+
+An injectable, zero-cost-when-disabled trace hook for diagnosing read
+amplification and peer-lifecycle issues (e.g. why a hub is being hit far
+more often than expected) in a running `IoMulti` + `IoPeer` setup.
+
+```typescript
+import { setIoTraceLogger } from '@rljson/io';
+
+// The package itself never reads env vars or writes to stdout — the
+// host app decides when tracing is active and wires a logger in.
+if (process.env.SL_IO_TRACE) {
+  setIoTraceLogger((msg) => console.debug(msg));
+}
+```
+
+- `setIoTraceLogger(logger | null)` installs (or, with `null`, removes)
+  the logger used by `ioTrace`.
+- `ioTrace(() => message)` calls the installed logger with the built
+  message — the message-building function is only invoked when a logger
+  is installed, so call sites can log fairly verbose diagnostics without
+  any cost while tracing is disabled (the default).
+- Wired into `IoMulti.readRows` (readable/open/group counts on entry, and
+  a line per priority group with the row count or error it produced) and
+  into `IoPeer.readRows` (`peer readRows-> table=...` on request start,
+  `peer readRows<- rows=<n>` or `peer readRows<- err=<message>` on
+  settlement) — the two places most relevant to diagnosing hub read
+  amplification. Intentionally not wired into every method, to keep the
+  hook's surface (and its performance impact when enabled) minimal.
 
 ## Performance Considerations
 
@@ -466,6 +593,30 @@ socket.emit('readRows', request, (result, error) => {
 - **Best For:** Production apps needing performance + reliability
 
 ## Version History
+
+### v0.0.73 (peer-lifecycle-hardening)
+
+- **Fix:** `IoMulti` (`readRows`, `readRowsByHashes`, `tableExists`,
+  `contentType`, `rawTableCfgs`) now skips readables that are closed
+  (`io.isOpen === false`) at call time instead of querying them; a skip is
+  recorded as an error so an all-closed situation throws a meaningful
+  error instead of returning a clean empty result
+- **Fix:** `IoPeer` request methods fail fast with `IoPeer: socket closed
+  (<operation>)` when `isOpen` is `false`, instead of emitting onto a dead
+  socket and waiting out the full 30s request timeout
+- **Change:** `IoPeer.readRowsByHashes`'s batch-capability latch now
+  distinguishes a genuine "unsupported" signal (permanent latch, as
+  before) from a timeout (transient — falls back for that call only, then
+  retries batch reads after a 60s decay window) — a timeout no longer
+  permanently downgrades a peer to per-hash reads
+- **Fix:** `IoServer.removeSocket` actually unregisters the socket's CRUD
+  listeners now (previously a no-op beyond internal bookkeeping); it is
+  idempotent
+- **Feature:** `PeerSocketMock` gained a dead-peer mode — `emit()`
+  swallows requests (never acks) while `connected` is `false`
+- **Feature:** New injectable trace hook (`setIoTraceLogger` / `ioTrace`,
+  exported from the package root) wired into `IoMulti.readRows` and
+  `IoPeer.readRows`, for diagnosing read amplification in production
 
 ### v0.0.65
 
