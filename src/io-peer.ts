@@ -8,6 +8,7 @@ import { JsonValue } from '@rljson/json';
 import { ContentType, Rljson, TableCfg, TableKey } from '@rljson/rljson';
 
 import { IoMem } from './io-mem.ts';
+import { ioTrace } from './io-trace.ts';
 import { Io } from './io.ts';
 import { PeerSocketMock } from './peer-socket-mock.ts';
 import { Socket } from './socket.ts';
@@ -42,6 +43,23 @@ export class IoPeer implements Io {
     return Promise.race([promise, timeoutPromise]).finally(() => {
       clearTimeout(timer!);
     });
+  }
+
+  // ...........................................................................
+  /**
+   * Guards request methods against emitting onto a socket that is
+   * already known to be closed. Without this, a request against a dead
+   * socket would sit in `_withTimeout` and burn the full
+   * `_requestTimeoutMs` (default 30s) before failing — even though
+   * `isOpen` already told us the answer.
+   * @param operation - Name of the operation, used in the error message.
+   * @returns A rejected promise when the socket is closed, `null` when the request may proceed.
+   */
+  private _closedError(operation: string): Promise<never> | null {
+    if (this.isOpen === false) {
+      return Promise.reject(new Error(`IoPeer: socket closed (${operation})`));
+    }
+    return null;
   }
 
   // ...........................................................................
@@ -112,6 +130,9 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to the dumped database content.
    */
   async dump(): Promise<Rljson> {
+    const closed = this._closedError('dump');
+    if (closed) return closed;
+
     return this._withTimeout(
       new Promise((resolve) => {
         // Request dump, resolve once the data is received (ack)
@@ -130,6 +151,9 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to the dumped table data.
    */
   dumpTable(request: { table: string }): Promise<Rljson> {
+    const closed = this._closedError('dumpTable');
+    if (closed) return closed;
+
     return this._withTimeout(
       new Promise((resolve, reject) => {
         // Request dumpTable, resolve once the data is received (ack)
@@ -153,6 +177,9 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to the content type of the specified table.
    */
   contentType(request: { table: string }): Promise<ContentType> {
+    const closed = this._closedError('contentType');
+    if (closed) return closed;
+
     return this._withTimeout(
       new Promise((resolve, reject) => {
         // Request contentType, resolve once the data is received (ack)
@@ -177,6 +204,9 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to true if the table exists, false otherwise.
    */
   tableExists(tableKey: TableKey): Promise<boolean> {
+    const closed = this._closedError('tableExists');
+    if (closed) return closed;
+
     return this._withTimeout(
       new Promise((resolve) => {
         // Request tableExists, resolve once the data is received (ack)
@@ -195,6 +225,9 @@ export class IoPeer implements Io {
    * @returns A promise that resolves once the table is created or extended.
    */
   createOrExtendTable(request: { tableCfg: TableCfg }): Promise<void> {
+    const closed = this._closedError('createOrExtendTable');
+    if (closed) return closed;
+
     return this._withTimeout(
       new Promise((resolve, reject) => {
         // Request createOrExtendTable, resolve once the data is received (ack)
@@ -217,6 +250,9 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to an array of table configurations.
    */
   rawTableCfgs(): Promise<TableCfg[]> {
+    const closed = this._closedError('rawTableCfgs');
+    if (closed) return closed;
+
     return this._withTimeout(
       new Promise((resolve) => {
         // Request rawTableCfgs, resolve once the data is received (ack)
@@ -235,6 +271,9 @@ export class IoPeer implements Io {
    * @returns A promise that resolves once the data is written.
    */
   write(request: { data: Rljson }): Promise<void> {
+    const closed = this._closedError('write');
+    if (closed) return closed;
+
     return this._withTimeout(
       new Promise((resolve, reject) => {
         // Request write, resolve once the data is received (ack)
@@ -257,6 +296,14 @@ export class IoPeer implements Io {
     table: string;
     where: { [column: string]: JsonValue | null };
   }): Promise<Rljson> {
+    const closed = this._closedError('readRows');
+    if (closed) return closed;
+
+    // Trace hook for diagnosing read amplification: logs the request
+    // and, once settled, the row count or the error. Both are no-ops
+    // unless a trace logger has been installed via setIoTraceLogger.
+    ioTrace(() => `peer readRows-> table=${request.table}`);
+
     return this._withTimeout(
       new Promise((resolve, reject) => {
         // Request readRows, resolve once the data is received (ack)
@@ -264,7 +311,15 @@ export class IoPeer implements Io {
           'readRows',
           request,
           (result?: Rljson, error?: Error) => {
-            if (error) reject(error);
+            if (error) {
+              ioTrace(() => `peer readRows<- err=${error.message}`);
+              reject(error);
+            } else {
+              ioTrace(
+                () =>
+                  `peer readRows<- rows=${result![request.table]._data.length}`,
+              );
+            }
             resolve(result!);
           },
         );
@@ -276,23 +331,53 @@ export class IoPeer implements Io {
   // ...........................................................................
   /**
    * True once the remote side signalled that it does not support batch
-   * reads — all further batch reads then use per-hash readRows.
+   * reads at all (old server, method missing) — all further batch
+   * reads then use per-hash readRows permanently.
    */
   private _batchReadsUnsupported = false;
 
   /**
+   * Timestamp (ms, `Date.now()`) before which batch reads are skipped
+   * after a *timeout* — as opposed to `_batchReadsUnsupported`, this is
+   * not permanent. A timeout is often transient (temporarily
+   * overloaded/slow peer) rather than proof the remote side lacks
+   * batch support, so retrying after a decay window is safer than
+   * latching per-hash reads forever. `null` means no decay is active.
+   */
+  private _batchRetryAfter: number | null = null;
+
+  /** Decay window applied after a batch-read timeout (see `_batchRetryAfter`). */
+  private readonly _batchRetryDecayMs = 60_000;
+
+  /**
    * Batch read over the socket. Falls back to per-hash readRows when
-   * the remote side does not support it (older server) and remembers
-   * the capability for subsequent calls.
+   * the remote side does not support it.
+   *
+   * Two distinct "unsupported" signals are handled differently:
+   * - The remote side reports the method is missing/unsupported
+   *   ('not found on Io instance' / 'not supported'): batch reads are
+   *   latched off permanently (`_batchReadsUnsupported`), matching the
+   *   fact that this can never change for a given remote.
+   * - The request times out ('Timeout after'): this is treated as
+   *   transient. The current call falls back to per-hash reads, and
+   *   further batch attempts are suppressed only until
+   *   `_batchRetryAfter` (a decay window), after which batch reads are
+   *   tried again.
    * @param request - The table and the row hashes to read
    */
   async readRowsByHashes(request: {
     table: string;
     hashes: string[];
   }): Promise<Rljson> {
-    if (!this._batchReadsUnsupported) {
+    const closed = this._closedError('readRowsByHashes');
+    if (closed) return closed;
+
+    const decayActive =
+      this._batchRetryAfter !== null && Date.now() < this._batchRetryAfter;
+
+    if (!this._batchReadsUnsupported && !decayActive) {
       try {
-        return await this._withTimeout(
+        const batchResult = await this._withTimeout(
           new Promise<Rljson>((resolve, reject) => {
             this._socket.emit(
               'readRowsByHashes',
@@ -305,16 +390,21 @@ export class IoPeer implements Io {
           }),
           'readRowsByHashes',
         );
+        this._batchRetryAfter = null;
+        return batchResult;
       } catch (error) {
         const message = String((error as Error).message);
-        const unsupported =
+        const permanentlyUnsupported =
           message.includes('not found on Io instance') ||
-          message.includes('not supported') ||
-          message.includes('Timeout after');
-        if (!unsupported) {
+          message.includes('not supported');
+        const timedOut = message.includes('Timeout after');
+        if (permanentlyUnsupported) {
+          this._batchReadsUnsupported = true;
+        } else if (timedOut) {
+          this._batchRetryAfter = Date.now() + this._batchRetryDecayMs;
+        } else {
           throw error;
         }
-        this._batchReadsUnsupported = true;
       }
     }
 
@@ -354,6 +444,9 @@ export class IoPeer implements Io {
    * @returns A promise that resolves to the number of rows in the specified table.
    */
   rowCount(table: string): Promise<number> {
+    const closed = this._closedError('rowCount');
+    if (closed) return closed;
+
     return this._withTimeout(
       new Promise((resolve, reject) => {
         // Request rowCount, resolve once the data is received (ack)

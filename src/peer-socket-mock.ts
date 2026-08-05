@@ -100,11 +100,23 @@ export class PeerSocketMock implements Socket {
   // ............................................................................
   /**
    * Emits an event, invoking the corresponding method on the Io instance.
+   *
+   * Dead-peer mode: when `connected` is `false`, the request is
+   * swallowed — the ack callback is never invoked, simulating a socket
+   * whose packets vanish rather than one that answers instantly. This
+   * lets tests exercise real timeout / fail-fast handling instead of
+   * observing a mock that (unrealistically) answers regardless of
+   * connection state. Use `connect()` / `disconnect()` to flip
+   * `connected` for a test.
    * @param eventName - The name of the event to emit.
    * @param args - The arguments to pass to the event listener.
    * @returns
    */
   emit(eventName: string | symbol, ...args: any[]): boolean {
+    if (!this.connected) {
+      return true; // Dead peer — swallow the request, never ack
+    }
+
     const fn = (this._io as any)[eventName] as (...args: any[]) => Promise<any>;
     if (typeof fn !== 'function') {
       throw new Error(`Event ${eventName.toString()} not supported`);
