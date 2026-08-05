@@ -197,6 +197,7 @@ describe('readRowsByHashes', () => {
     it('reads batches over the socket', async () => {
       const io = await setupIoMem([rowA, rowB]);
       const peer = new IoPeer(new PeerSocketMock(io));
+      await peer.init();
 
       const result = await peer.readRowsByHashes({
         table: 't',
@@ -210,6 +211,7 @@ describe('readRowsByHashes', () => {
     it('falls back to per-hash reads when the remote side lacks support', async () => {
       const io = await setupIoMem([rowA, rowB]);
       const peer = new IoPeer(new PeerSocketMock(withoutBatchReads(io)));
+      await peer.init();
 
       const result = await peer.readRowsByHashes({
         table: 't',
@@ -236,39 +238,124 @@ describe('readRowsByHashes', () => {
     it('rethrows genuine remote errors without latching the fallback', async () => {
       const io = await setupIoMem([]);
       const peer = new IoPeer(new PeerSocketMock(io));
+      await peer.init();
 
       await expect(
         peer.readRowsByHashes({ table: 'nope', hashes: ['x'] }),
       ).rejects.toThrow('Table "nope" not found');
       expect((peer as any)._batchReadsUnsupported).toBe(false);
+      expect((peer as any)._batchRetryAfter).toBe(null);
     });
 
-    it('falls back after a timeout and remembers it', async () => {
+    it('falls back after a timeout WITHOUT latching permanently, and does not retry batch within the decay window', async () => {
       const io = await setupIoMem([rowA]);
       const inner = new PeerSocketMock(io);
+      inner.connect();
 
-      // A socket that swallows batch requests but forwards the rest
+      // A socket that always swallows batch requests but forwards the
+      // rest — simulates a peer whose batch endpoint keeps timing out.
       const socket = {
         on: inner.on.bind(inner),
         off: inner.off.bind(inner),
         removeAllListeners: inner.removeAllListeners.bind(inner),
         connected: inner.connected,
         disconnected: inner.disconnected,
+        connect: inner.connect.bind(inner),
+        disconnect: inner.disconnect.bind(inner),
         emit: (eventName: string | symbol, ...args: any[]) => {
           if (eventName === 'readRowsByHashes') {
-            return true; // never acks
+            return true; // never acks -> times out
           }
           return inner.emit(eventName, ...args);
         },
       } as unknown as Socket;
 
       const peer = new IoPeer(socket, 30);
+      await peer.init();
 
       const result = await peer.readRowsByHashes({
         table: 't',
         hashes: [rowA._hash],
       });
       expect(result.t._data.length).toBe(1);
+
+      // NOT permanently latched — this was a timeout, not a genuine
+      // "unsupported" signal.
+      expect((peer as any)._batchReadsUnsupported).toBe(false);
+      expect((peer as any)._batchRetryAfter).toBeGreaterThan(Date.now());
+
+      // Within the decay window, batch is skipped entirely — no second
+      // 30ms timeout is paid, the per-hash fallback is used directly.
+      const start2 = Date.now();
+      const stillWithinWindow = await peer.readRowsByHashes({
+        table: 't',
+        hashes: [rowA._hash],
+      });
+      const secondCallMs = Date.now() - start2;
+      expect(stillWithinWindow.t._data.length).toBe(1);
+      expect(secondCallMs).toBeLessThan(25); // well under the 30ms timeout
+    });
+
+    it('retries batch again once the decay window has elapsed', async () => {
+      const io = await setupIoMem([rowA]);
+      const peer = new IoPeer(new PeerSocketMock(io));
+      await peer.init();
+
+      // Simulate "a timeout happened a while ago and the decay window
+      // has since elapsed" without waiting for real time to pass.
+      (peer as any)._batchRetryAfter = Date.now() - 1;
+
+      const result = await peer.readRowsByHashes({
+        table: 't',
+        hashes: [rowA._hash],
+      });
+      expect(result.t._data.length).toBe(1);
+
+      // A successful batch call clears the decay window again.
+      expect((peer as any)._batchRetryAfter).toBe(null);
+    });
+
+    it('latches permanently (no decay) when the remote reports "not supported"', async () => {
+      const io = await setupIoMem([rowA]);
+      const inner = new PeerSocketMock(io);
+      inner.connect();
+
+      const socket = {
+        on: inner.on.bind(inner),
+        off: inner.off.bind(inner),
+        removeAllListeners: inner.removeAllListeners.bind(inner),
+        connected: inner.connected,
+        disconnected: inner.disconnected,
+        connect: inner.connect.bind(inner),
+        disconnect: inner.disconnect.bind(inner),
+        emit: (eventName: string | symbol, ...args: any[]) => {
+          if (eventName === 'readRowsByHashes') {
+            const cb = args[args.length - 1];
+            cb(null, new Error('not supported'));
+            return true;
+          }
+          return inner.emit(eventName, ...args);
+        },
+      } as unknown as Socket;
+
+      const peer = new IoPeer(socket, 30);
+      await peer.init();
+
+      const result = await peer.readRowsByHashes({
+        table: 't',
+        hashes: [rowA._hash],
+      });
+      expect(result.t._data.length).toBe(1);
+      expect((peer as any)._batchReadsUnsupported).toBe(true);
+      expect((peer as any)._batchRetryAfter).toBe(null);
+
+      // Unlike the decay-based timeout latch, the permanent latch is
+      // never lifted — even a fresh call keeps using the fallback.
+      const again = await peer.readRowsByHashes({
+        table: 't',
+        hashes: [rowA._hash],
+      });
+      expect(again.t._data.length).toBe(1);
       expect((peer as any)._batchReadsUnsupported).toBe(true);
     });
   });
