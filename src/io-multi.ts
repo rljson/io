@@ -147,16 +147,37 @@ export class IoMulti implements Io {
       throw new Error('No readable Io available');
     }
 
+    // Mirrors tableExists()'s priority-group fallback: a readable that
+    // doesn't have the table (e.g. an empty local cache) must not stop the
+    // search — the next, lower-priority readable (e.g. a peer) may have
+    // it. Closed readables are skipped the same way tableExists() skips
+    // them, in favor of the next open one.
+    const groups = IoMulti._groupByPriority(this.readables);
     const errors: Error[] = [];
-    for (const ioMultiIo of this.readables) {
-      if (IoMulti._isClosed(ioMultiIo, errors)) continue;
-      return ioMultiIo.io.contentType(request);
+    for (const group of groups) {
+      const openGroup = IoMulti._skipClosed(group, errors);
+      if (openGroup.length === 0) continue;
+      if (openGroup.length === 1) {
+        try {
+          return await openGroup[0].io.contentType(request);
+        } catch (error) {
+          errors.push(error as Error);
+        }
+      } else {
+        const results = await Promise.allSettled(
+          openGroup.map((r) => r.io.contentType(request)),
+        );
+        for (const result of results) {
+          if (result.status === 'fulfilled') return result.value;
+          errors.push(result.reason);
+        }
+      }
     }
 
-    // Every readable was closed (the loop above only falls through
-    // without returning in that case) — throw the recorded reason
-    // instead of a generic "not found", which would look like a config
-    // problem rather than "nothing was reachable".
+    // Every group that reaches this point failed (was empty, closed, or
+    // every readable in it rejected), and readables.length > 0 is
+    // guaranteed above, so at least one error was always pushed —
+    // errors[0] is never undefined here.
     throw errors[0];
   }
 
@@ -226,12 +247,14 @@ export class IoMulti implements Io {
 
   // ...........................................................................
   /**
-   * Retrieves the raw table configurations from the highest priority underlying
-   * readable Io instance that has any.  Stops after the first readable that
-   * returns results — this avoids expensive network round-trips to lower-
-   * priority peers when the local cache (IoMem, priority 1) already has the
-   * answer. Readables that are closed right now are skipped in favor of
-   * the next open one.
+   * Retrieves and merges raw table configurations from every open,
+   * readable Io instance — not just the first one that returns any (every
+   * readable, even an otherwise-empty local cache, always has at least
+   * its own bootstrap "tableCfgs" self-descriptor, so stopping early
+   * would mask real table cfgs a lower-priority peer actually has).
+   * Priority order decides which definition wins on a key collision.
+   * Readables that are closed right now are skipped in favor of the next
+   * open one.
    * @returns A promise that resolves to an array of table configurations.
    */
   async rawTableCfgs(): Promise<TableCfg[]> {
@@ -256,7 +279,6 @@ export class IoMulti implements Io {
             rawTableCfgs.set(tableCfg.key, tableCfg);
           }
         }
-        break; // Stop after the first readable that has table configs
       }
     }
 

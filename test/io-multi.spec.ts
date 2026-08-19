@@ -192,6 +192,63 @@ describe('IoMulti', () => {
     ).rejects.toThrowError('Table "nonExistingTable" not found');
   });
 
+  it('falls through to a lower-priority readable when the higher-priority one does not have the table', async () => {
+    // BUG FIX TEST: a fresh client's empty local cache (priority 0) never
+    // has any tables yet — contentType() must not stop there, it must fall
+    // through to the peer (priority 1) that actually has the table, the
+    // same way readRows()/tableExists() already do.
+    const emptyLocal = new IoMem();
+    await emptyLocal.init();
+
+    const serverMem = new IoMem();
+    await serverMem.init();
+    const serverSocket = new PeerSocketMock(serverMem);
+    const serverPeer = new IoPeer(serverSocket);
+    await serverPeer.init();
+
+    const tableCfg: TableCfg = exampleTableCfg({ key: 'peerOnlyTable' });
+    await serverPeer.createOrExtendTable({ tableCfg });
+
+    const ioMultiFallthrough = new IoMulti([
+      { io: emptyLocal, priority: 0, read: true, write: true, dump: true },
+      { io: serverPeer, priority: 1, read: true, write: false, dump: false },
+    ]);
+    await ioMultiFallthrough.init();
+
+    const contentType = await ioMultiFallthrough.contentType({
+      table: 'peerOnlyTable',
+    });
+    expect(contentType).toBe('components');
+  });
+
+  it('merges rawTableCfgs across every readable instead of stopping at the first one with any cfgs', async () => {
+    // BUG FIX TEST: even a fresh, otherwise-empty local Io always has at
+    // least its own bootstrap "tableCfgs" self-descriptor, so
+    // rawTableCfgs() must not stop as soon as ANY readable returns
+    // something — it has to merge every readable's cfgs to see tables that
+    // only exist on a lower-priority peer.
+    const emptyLocal = new IoMem();
+    await emptyLocal.init();
+
+    const serverMem = new IoMem();
+    await serverMem.init();
+    const serverSocket = new PeerSocketMock(serverMem);
+    const serverPeer = new IoPeer(serverSocket);
+    await serverPeer.init();
+
+    const tableCfg: TableCfg = exampleTableCfg({ key: 'peerOnlyTable' });
+    await serverPeer.createOrExtendTable({ tableCfg });
+
+    const ioMultiFallthrough = new IoMulti([
+      { io: emptyLocal, priority: 0, read: true, write: true, dump: true },
+      { io: serverPeer, priority: 1, read: true, write: false, dump: false },
+    ]);
+    await ioMultiFallthrough.init();
+
+    const cfgs = await ioMultiFallthrough.rawTableCfgs();
+    expect(cfgs.map((c) => c.key)).toContain('peerOnlyTable');
+  });
+
   it('should read rows from second readable when first has empty table (distributed scenario)', async () => {
     // Scenario: Client B has an empty table locally, but data exists on Server → Client A
     // This simulates a distributed scenario where:
@@ -264,6 +321,17 @@ describe('IoMulti', () => {
 
     // Cleanup
     await ioMultiDistributed.close();
+  });
+
+  it('reads contentType through parallel same-priority readables', async () => {
+    // Exercises the multi-item group (Promise.allSettled) branch of
+    // contentType() — readableA and readableB both sit at priority 3.
+    const contentType = await ioMulti.contentType({ table: 'readableTable' });
+    expect(contentType).toBe('components');
+
+    await expect(
+      ioMulti.contentType({ table: 'nonExistingTable' }),
+    ).rejects.toThrow();
   });
 
   it('should check tableExists through parallel same-priority readables', async () => {
