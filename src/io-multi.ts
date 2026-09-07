@@ -425,6 +425,13 @@ export class IoMulti implements Io {
         }
       }
     } else {
+      // Same rule as the batch read: a readable that threw leaves us unable to
+      // say the row is absent, so an empty answer would be a lie the caller
+      // cannot detect.
+      const unanswered = IoMulti._realFailures(request.table, errors);
+      if (rows.size === 0 && unanswered.length > 0) {
+        throw unanswered[0];
+      }
       const rljson = {
         [request.table]: hip({ _data: Array.from(rows.values()), _type: type }),
       } as Rljson;
@@ -470,6 +477,25 @@ export class IoMulti implements Io {
       throw new Error(`Table "${table}" not found`);
     }
     return Promise.resolve(tableData._data.length);
+  }
+
+  // ...........................................................................
+  /**
+   * The errors that mean a readable could NOT ANSWER, as opposed to answering
+   * that it has nothing.
+   *
+   * "Table not found" is the second kind: in a cascade it is normal for a
+   * readable not to serve a given table, and it says nothing about whether the
+   * row exists elsewhere. A closed socket or a timeout is the first kind, and
+   * that is what must not be reported as an empty result.
+   * @param table - The table that was read.
+   * @param errors - Errors collected from the readables.
+   * @returns The errors that leave the answer unknown.
+   */
+  private static _realFailures(table: string, errors: Error[]): Error[] {
+    return errors.filter(
+      (err) => !err.message.includes(`Table "${table}" not found`),
+    );
   }
 
   // ...........................................................................
@@ -559,6 +585,19 @@ export class IoMulti implements Io {
           throw errors[0];
         }
       }
+    }
+
+    // A readable that FAILED is not a readable that had nothing. Dropping the
+    // errors here turned "I could not ask" into "there is nothing" — and a
+    // caller pulling document bodies by content hash cannot tell those apart:
+    // it reads the empty answer as "already gone" and applies nothing. Measured
+    // on the fleet: a node whose peer socket had dropped issued 1 705 body
+    // pulls and applied none of them, while the hub held every document.
+    //
+    // Only report an empty or partial answer when nothing failed to answer.
+    const unanswered = IoMulti._realFailures(request.table, errors);
+    if (unanswered.length > 0 && remaining.length > 0) {
+      throw unanswered[0];
     }
 
     const rljson = {
