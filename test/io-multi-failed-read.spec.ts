@@ -57,11 +57,21 @@ describe('IoMulti — a failed read is not an empty one', () => {
     ).rejects.toThrow('Timeout after 30000ms');
   });
 
-  it('readRows reports the failure instead of an empty result', async () => {
+  it('a fetch by hash reports the failure instead of an empty result', async () => {
     const multi = multiWith(broken('socket closed'));
     await expect(
       multi.readRows({ table, where: { _hash: 'nowhere' } }),
     ).rejects.toThrow('socket closed');
+  });
+
+  it('an ordinary query still answers empty, even next to a failure', async () => {
+    // A query on any other column asks a different question, and empty is a
+    // normal answer to it. Callers issue those constantly — making one flaky
+    // readable turn every single one into an exception would trade a narrow,
+    // proven fault for a wide, unmeasured one.
+    const multi = multiWith(broken('socket closed'));
+    const result = await multi.readRows({ table, where: { a: 'nowhere' } });
+    expect(result[table]._data).toEqual([]);
   });
 
   it('a closed readable is a failure too', async () => {

@@ -428,8 +428,23 @@ export class IoMulti implements Io {
       // Same rule as the batch read: a readable that threw leaves us unable to
       // say the row is absent, so an empty answer would be a lie the caller
       // cannot detect.
+      // Only a FETCH BY HASH is held to this rule, not every query.
+      //
+      // `readRows({_hash})` is what `readRow` issues: "give me this exact
+      // content-addressed row". There, an empty answer means "it does not
+      // exist", and a source that failed makes that unknowable — so returning
+      // empty is a lie the caller cannot detect.
+      //
+      // A query on any other column is a different question, and an empty
+      // result is a normal answer to it. Callers issue those constantly, so
+      // making a single flaky readable turn every one of them into an
+      // exception would trade a narrow, proven fault for a wide, unmeasured
+      // one.
+      const where = request.where as Record<string, unknown>;
+      const isFetchByHash =
+        Object.keys(where).length === 1 && where['_hash'] !== undefined;
       const unanswered = IoMulti._realFailures(request.table, errors);
-      if (rows.size === 0 && unanswered.length > 0) {
+      if (isFetchByHash && rows.size === 0 && unanswered.length > 0) {
         throw unanswered[0];
       }
       const rljson = {
