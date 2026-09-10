@@ -6,6 +6,15 @@ I/O layer for the RLJSON ecosystem. Depends on `@rljson/rljson`.
 
 ## Non-Negotiable Constraints
 
+- **Never work on an in-repo copy of a dependency.** If code belongs to an
+  `@rljson/*` package, it is changed **in that package**, released, and consumed
+  from the registry — never vendored into this repo's `src/`. A repo-local copy
+  forks silently. On 2026-09-10 a long-lived branch of `cos-one-client` carried
+  359 lines written into a copy of `@rljson/mongo-agent` that `main` had deleted
+  two days earlier; the branches could not be merged until that code was ported
+  into the package and released from a third repository. Rule of thumb: a
+  directory under `src/` named after a dependency **and carrying an `index.ts`**
+  is a copy, not glue over one.
 - **Never commit directly to `main`.** Always work on a feature branch.
 - **Never modify the `scripts` section in `package.json`** without explicit user permission.
 - **ESLint currently on `~10.6.0`** (see `package.json`) and the build is green on it — the earlier `~9.39.2` pin is stale, ESLint 10 does **not** break this build. The spirit still applies: don't blindly bump major versions — verify `pnpm test` stays green before changing the pin, and update this doc when you do.
