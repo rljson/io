@@ -82,6 +82,63 @@ describe('IoMulti — a failed read is not an empty one', () => {
     ).rejects.toThrow('is closed');
   });
 
+  it('a readable that rejects with NOTHING still reports a failure', async () => {
+    // `IoPeer.isReady()` rejects with a bare `Promise.reject()` — no value at
+    // all — and a rejection with no value has no `.message`. Classifying it
+    // threw `Cannot read properties of undefined (reading 'includes')` from
+    // inside the cascade, so one offline peer failed the whole read with a
+    // TypeError naming neither the table nor the layer.
+    //
+    // On the lab that surfaced as a node which had just been told about a ref
+    // and could not fetch the tree behind it, reporting
+    // `No tree nodes found for e2eFileTree@wNVEQejv…` — a message that blames
+    // the data for a fault in the reader. It was the last thing standing
+    // between a ref crossing the EventHub and the file following it.
+    const silent = {
+      isOpen: true,
+      init: async () => {},
+      close: async () => {},
+      isReady: async () => {},
+      readRows: () => Promise.reject(),
+      readRowsByHashes: () => Promise.reject(),
+    } as unknown as Io;
+
+    await expect(
+      multiWith(silent).readRowsByHashes({ table, hashes: ['nowhere'] }),
+    ).rejects.toThrow(/failed without a reason/);
+    await expect(
+      multiWith(silent).readRows({ table, where: { _hash: 'nowhere' } }),
+    ).rejects.toThrow(/failed without a reason/);
+  });
+
+  it('a readable that rejects with a plain value says what it was', async () => {
+    // Not every non-Error rejection is empty. A string or a code is still the
+    // only thing the caller has to go on, so it is carried through rather than
+    // flattened into "no reason".
+    const rude = {
+      isOpen: true,
+      init: async () => {},
+      close: async () => {},
+      isReady: async () => {},
+      readRows: () => Promise.reject('ECONNRESET'),
+      readRowsByHashes: () => Promise.reject('ECONNRESET'),
+    } as unknown as Io;
+
+    await expect(
+      multiWith(rude).readRowsByHashes({ table, hashes: ['nowhere'] }),
+    ).rejects.toThrow(/ECONNRESET/);
+
+    // And when the layer has a name, the message uses it — "Io \"cloud\"
+    // failed" is a place to look; "a readable failed" is not.
+    const named = new IoMulti([
+      { io: healthy, priority: 1, read: true, write: false, dump: true },
+      { io: rude, id: 'cloud', priority: 2, read: true, write: false, dump: false },
+    ]);
+    await expect(
+      named.readRowsByHashes({ table, hashes: ['nowhere'] }),
+    ).rejects.toThrow(/Io "cloud" failed: ECONNRESET/);
+  });
+
   it('a readable that simply does not serve the table is NOT a failure', async () => {
     // Normal in a cascade, and it says nothing about whether the row exists
     // elsewhere — so an empty answer here is the truth, not a guess.

@@ -359,10 +359,11 @@ export class IoMulti implements Io {
             break; // Got rows — done
           }
         } catch (e) {
-          errors.push(e as Error);
+          const error = IoMulti._asError(e, readable.id);
+          errors.push(error);
           ioTrace(
             () =>
-              `IoMulti.readRows group priority=${readable.priority} size=1 error=${(e as Error).message}`,
+              `IoMulti.readRows group priority=${readable.priority} size=1 error=${error.message}`,
           );
         }
       } else {
@@ -384,7 +385,7 @@ export class IoMulti implements Io {
         let foundRows = false;
         for (const result of results) {
           if (result.status === 'rejected') {
-            errors.push(result.reason as Error);
+            errors.push(IoMulti._asError(result.reason));
             continue;
           }
           tableExistsAny = true;
@@ -507,8 +508,41 @@ export class IoMulti implements Io {
    * @param errors - Errors collected from the readables.
    * @returns The errors that leave the answer unknown.
    */
+  /**
+   * What a readable actually rejected with, as an `Error`.
+   *
+   * A readable may reject with NOTHING. `IoPeer.isReady()` does exactly that —
+   * a bare `Promise.reject()` — and a rejection with no value has no
+   * `.message`, so every later line that classified or logged it threw
+   * `Cannot read properties of undefined (reading 'includes')` from inside the
+   * cascade. One offline peer then failed the whole read with a TypeError that
+   * named neither the table nor the layer.
+   *
+   * Measured on the lab: a node that had just been told about a ref could not
+   * fetch the tree behind it and reported
+   * `No tree nodes found for e2eFileTree@wNVEQejv…` — a message that blames
+   * the data for a fault in the reader.
+   *
+   * Normalised here, once, at the only two places a readable's rejection
+   * enters the cascade, so nothing downstream has to defend itself.
+   * @param reason - Whatever was thrown or rejected.
+   * @param id - The readable's id, when it has one.
+   * @returns An Error that says something.
+   */
+  private static _asError(reason: unknown, id?: string): Error {
+    if (reason instanceof Error) return reason;
+    const where = id === undefined ? 'a readable' : `Io "${id}"`;
+    return new Error(
+      reason === undefined || reason === null
+        ? `${where} failed without a reason`
+        : `${where} failed: ${String(reason)}`,
+    );
+  }
+
   private static _realFailures(table: string, errors: Error[]): Error[] {
     return errors.filter(
+      // Every collected failure is a real `Error` — see {@link _asError} —
+      // so reading `.message` here is safe.
       (err) => !err.message.includes(`Table "${table}" not found`),
     );
   }
@@ -581,7 +615,7 @@ export class IoMulti implements Io {
           remaining = remaining.filter((hash) => !rows.has(hash));
         }
       } catch (e) {
-        errors.push(e as Error);
+        errors.push(IoMulti._asError(e, readable.id));
       }
     }
 
