@@ -6,6 +6,7 @@
 
 import { Io } from './io.ts';
 import { Socket } from './socket.ts';
+import { serializableError } from './serializable-error.ts';
 
 
 /**
@@ -114,8 +115,9 @@ export class IoPeerBridge {
         })
         .catch((error: any) => {
           if (typeof callback === 'function') {
-            // For errors, send null as result and error as second parameter
-            callback(null, error); // Two arguments
+            // Serialisable, or the far side receives `{}` — see
+            // {@link serializableError}.
+            callback(null, serializableError(error)); // Two arguments
           }
         });
     };
