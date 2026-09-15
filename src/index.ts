@@ -19,3 +19,4 @@ export * from './reverse-ref.ts';
 export * from './socket-mock.ts';
 export * from './directional-socket-mock.ts';
 export * from './socket.ts';
+export * from './serializable-error.ts';

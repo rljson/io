@@ -9,6 +9,7 @@ import { Rljson, TableCfg, TableKey } from '@rljson/rljson';
 
 import { Io } from './io.ts';
 import { Socket } from './socket.ts';
+import { serializableError } from './serializable-error.ts';
 
 
 export class IoServer {
@@ -82,7 +83,18 @@ export class IoServer {
             cb(result, null);
           })
           .catch((err) => {
-            cb(null, err);
+            // An `Error` does not survive a socket: `message` and `stack` are
+            // not enumerable, so the far side receives `{}` and every layer
+            // above it reports `[object Object]`.
+            //
+            // That is not only unreadable, it changes behaviour. `IoMulti`
+            // classifies its collected failures BY MESSAGE, and the one it
+            // must recognise is `Table "x" not found` — the ordinary answer
+            // from a layer that does not serve a table. Stripped of its text
+            // that benign miss reads as a hard failure, and a fetch-by-hash
+            // throws it. Measured: a node could not read a tree across the
+            // cloud and reported `No tree nodes found`, blaming the data.
+            cb(null, serializableError(err));
           });
       };
 

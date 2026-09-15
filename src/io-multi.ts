@@ -532,17 +532,30 @@ export class IoMulti implements Io {
   private static _asError(reason: unknown, id?: string): Error {
     if (reason instanceof Error) return reason;
     const where = id === undefined ? 'a readable' : `Io "${id}"`;
-    return new Error(
-      reason === undefined || reason === null
-        ? `${where} failed without a reason`
-        : `${where} failed: ${String(reason)}`,
-    );
+    if (reason === undefined || reason === null) {
+      return new Error(`${where} failed without a reason`);
+    }
+    // A failure that crossed a socket arrives as a plain object — see
+    // {@link serializableError}. Read the text off it rather than rendering
+    // `[object Object]`, because the text is what {@link _realFailures}
+    // branches on.
+    if (typeof reason === 'object') {
+      const bag = reason as { message?: unknown };
+      return new Error(
+        `${where} failed: ` +
+          (typeof bag.message === 'string' && bag.message.length > 0
+            ? bag.message
+            : JSON.stringify(reason)),
+      );
+    }
+    return new Error(`${where} failed: ${String(reason)}`);
   }
 
   private static _realFailures(table: string, errors: Error[]): Error[] {
     return errors.filter(
-      // Every collected failure is a real `Error` — see {@link _asError} —
-      // so reading `.message` here is safe.
+      // Every collected failure is a real `Error` — see {@link _asError} — so
+      // reading `.message` here is safe, and the text is intact even when the
+      // failure crossed a socket to get here.
       (err) => !err.message.includes(`Table "${table}" not found`),
     );
   }
