@@ -367,38 +367,96 @@ export class IoMulti implements Io {
           );
         }
       } else {
-        // Multiple readables at the same priority — race them in parallel.
-        // Collect all settled results and pick the first with rows.
-        const results = await Promise.allSettled(
-          group.map(async (readable) => {
-            const { [request.table]: tableData } = await readable.io.readRows(
-              request,
+        // Multiple readables at the same priority — a REAL race now.
+        //
+        // This said "race them in parallel" and then awaited
+        // `Promise.allSettled`, which is not a race: it waits for every
+        // member. So a group was only ever as fast as its SLOWEST member,
+        // and one member that never answers made every read through this
+        // priority cost that member's request timeout — `IoPeer`'s default
+        // is 30 s.
+        //
+        // `_skipClosed` above handles the member that can be SEEN to be
+        // gone; `isOpen` is false and it never enters the group. The one
+        // that hurts is the member that is still open and simply silent: a
+        // half-open TCP socket, a firewall that drops without resetting, a
+        // peer under load. Nothing can be skipped, and the wait was the
+        // timeout.
+        //
+        // Measured from both ends. `server.ts` records it against a cloud
+        // store that used to sit at priority 2 — *"a read the LAN could
+        // answer in milliseconds instead takes as long as the cloud does …
+        // files that were sitting on a peer two metres away never arrived,
+        // because the hub was waiting on a continent"* — and moving the
+        // cloud to priority 3 sidestepped the symptom without touching this.
+        // In `@rljson/fs-agent` one gagged socket in a four-node mesh
+        // blocked thirteen reads in a single test.
+        //
+        // **Taking the first answer WITH ROWS changes only timing, not the
+        // result.** The old loop already used the first non-empty member's
+        // rows and discarded every other member's, so nothing downstream
+        // ever saw more than one member's answer per group.
+        //
+        // When NOBODY has rows the full set of outcomes is still needed,
+        // because an empty answer is only trustworthy if nothing failed —
+        // the rule stated further down. So the race is between "someone has
+        // rows" and "everyone has settled", and both branches are correct:
+        // whichever resolves first gives an answer the old code could also
+        // have produced.
+        const attempts = group.map(async (readable) => {
+          const { [request.table]: tableData } = await readable.io.readRows(
+            request,
+          );
+          return {
+            readable,
+            tableRows: (tableData as RljsonTable<Json, ContentType>)._data,
+            tableType: (tableData as RljsonTable<Json, ContentType>)._type,
+          };
+        });
+
+        // Never settles when no member has rows, which is exactly what makes
+        // the race below fall through to the settled set. Each attempt gets
+        // its own rejection handler so a failing member cannot surface as an
+        // unhandled rejection; the settled set records it properly.
+        const firstWithRows = new Promise<{
+          readable: IoMultiIo;
+          tableRows: Json[];
+          tableType: ContentType;
+        }>((resolve) => {
+          for (const attempt of attempts) {
+            attempt.then(
+              (value) => {
+                if (value.tableRows.length > 0) resolve(value);
+              },
+              () => undefined,
             );
-            return {
-              readable,
-              tableRows: (tableData as RljsonTable<Json, ContentType>)._data,
-              tableType: (tableData as RljsonTable<Json, ContentType>)._type,
-            };
-          }),
-        );
+          }
+        });
+
+        const outcome = await Promise.race([
+          firstWithRows.then((hit) => ({ hit })),
+          Promise.allSettled(attempts).then((results) => ({ results })),
+        ]);
 
         let foundRows = false;
-        for (const result of results) {
-          if (result.status === 'rejected') {
-            errors.push(IoMulti._asError(result.reason));
-            continue;
-          }
+        if ('hit' in outcome) {
+          const { readable, tableRows, tableType } = outcome.hit;
+          foundRows = true;
           tableExistsAny = true;
-          const { readable, tableRows, tableType } = result.value;
           type ??= tableType;
-          if (tableRows.length > 0 && !foundRows) {
-            foundRows = true;
-            readFrom = readable.id ?? '';
-            /* v8 ignore else -- @preserve */
-            for (const tableRow of tableRows) {
-              const ref = tableRow._hash as string;
-              rows.set(ref, tableRow);
+          readFrom = readable.id ?? '';
+          for (const tableRow of tableRows) {
+            const ref = tableRow._hash as string;
+            rows.set(ref, tableRow);
+          }
+        } else {
+          for (const result of outcome.results) {
+            if (result.status === 'rejected') {
+              errors.push(IoMulti._asError(result.reason));
+              continue;
             }
+            tableExistsAny = true;
+            type ??= result.value.tableType;
           }
         }
 
