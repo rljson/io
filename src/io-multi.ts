@@ -709,7 +709,12 @@ export class IoMulti implements Io {
 
     let tableExistsAny = false;
     const rows: Map<string, Json> = new Map();
-    let type: ContentType | undefined = undefined;
+    // No `= undefined` initializer: `absorb` below assigns this from inside a
+    // closure, and TypeScript's narrowing does not follow a closure — with the
+    // initializer the read at the end of this method is pinned to `undefined`
+    // and the result no longer typechecks as an `Rljson`. Declared-only keeps
+    // it `ContentType | undefined`.
+    let type: ContentType | undefined;
     let readFrom: string = '';
     const errors: Error[] = [];
     const setAside: SourceSetAside[] = [];
