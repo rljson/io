@@ -30,6 +30,37 @@ export type IoMultiIo = {
 
 // ...........................................................................
 /**
+ * How long ONE source may take to answer a batch read while another source
+ * could still be asked.
+ *
+ * `readRowsByHashes` walks the readables sequentially, narrowing the wanted
+ * hashes as it goes — that ordering is load-bearing, so the cascade cannot be
+ * grouped and raced the way `readRows` is. The cost was that a source which is
+ * open and never answers blocked every source BEHIND it for its full request
+ * timeout: `IoPeer`'s default is 30 s, and this is the path a TREE fetch takes
+ * (`@rljson/db`'s tree-controller calls `readRowsByHashes`).
+ *
+ * Measured in `@rljson/fs-agent`: a node resolved a peer's announcement,
+ * lifted its tombstone for the re-created path, and then sat in the tree fetch
+ * while a cut peer timed out. The file arrived only when the test window was
+ * widened to 120 s.
+ *
+ * **The bound applies only while a FALLBACK exists.** The last readable in the
+ * cascade is never bounded, because there is nobody else to ask — so a cloud
+ * store at the end keeps exactly the behaviour it had, and a slow-but-working
+ * WAN source is only ever skipped when somebody nearer can answer instead. A
+ * skipped source is recorded as an error, so a batch that ends up short still
+ * throws rather than reporting a partial answer as complete.
+ *
+ * Two seconds, not thirty: a LAN peer that is working answers a batch in
+ * milliseconds, and the source this is meant to protect against is one that
+ * answers never. The real WAN source — a cloud store — sits LAST in the
+ * cascade by design (`server.ts` puts it at priority 3), so it has no fallback
+ * behind it and is never bounded by this at all.
+ */
+export const BATCH_READ_SOURCE_TIMEOUT_MS = 2_000;
+
+/**
  * Multi Io implementation that combines multiple underlying Io instances
  * with different capabilities (read, write, dump) and priorities.
  */
@@ -642,7 +673,8 @@ export class IoMulti implements Io {
 
     let remaining = Array.from(new Set(request.hashes));
 
-    for (const readable of this.readables) {
+    for (let index = 0; index < this.readables.length; index++) {
+      const readable = this.readables[index];
       if (remaining.length === 0) break;
 
       // Skip readables that are closed right now — recorded as an
@@ -652,20 +684,29 @@ export class IoMulti implements Io {
         continue;
       }
 
+      // Is there anybody else to ask? Only then is this source bounded.
+      // See `BATCH_READ_SOURCE_TIMEOUT_MS`.
+      const hasFallback = this.readables
+        .slice(index + 1)
+        .some((later) => later.read && later.io.isOpen !== false);
+
       try {
-        let result: Rljson;
-        if (readable.io.readRowsByHashes) {
-          result = await readable.io.readRowsByHashes({
-            table: request.table,
-            hashes: remaining,
-          });
-        } else {
-          result = await IoMulti._readHashesViaReadRows(
-            readable.io,
-            request.table,
-            remaining,
-          );
-        }
+        const answer = readable.io.readRowsByHashes
+          ? readable.io.readRowsByHashes({
+              table: request.table,
+              hashes: remaining,
+            })
+          : IoMulti._readHashesViaReadRows(
+              readable.io,
+              request.table,
+              remaining,
+            );
+        // ONE await in this scope, not two. A ternary with an `await` on each
+        // arm cost v8 the attribution of the `_data.length > 0` branch below,
+        // which the comment there already explains for the same cause.
+        const result = await (hasFallback
+          ? IoMulti._withSourceBound(answer, readable)
+          : answer);
 
         const tableData = result[request.table] as RljsonTable<
           Json,
@@ -749,6 +790,41 @@ export class IoMulti implements Io {
    * @param table - The table to read from
    * @param hashes - The row hashes to read
    */
+  /**
+   * Bounds one source's answer so the cascade can move on to the next.
+   *
+   * Only ever applied when a fallback exists — see
+   * {@link BATCH_READ_SOURCE_TIMEOUT_MS}. The rejection is caught by the
+   * caller's `try` and recorded in `errors`, which is what keeps a batch that
+   * ends up short from being reported as a complete answer.
+   * @param answer - The source's pending reply.
+   * @param readable - The source, named in the message.
+   * @returns The reply, or a rejection once the bound passes.
+   */
+  private static _withSourceBound(
+    answer: Promise<Rljson>,
+    readable: IoMultiIo,
+  ): Promise<Rljson> {
+    let timer: ReturnType<typeof setTimeout>;
+    return Promise.race([
+      answer,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () =>
+            reject(
+              new Error(
+                `IoMulti.readRowsByHashes: source ${
+                  readable.id ?? 'unknown'
+                } did not answer within ${BATCH_READ_SOURCE_TIMEOUT_MS}ms — ` +
+                  `asking the next`,
+              ),
+            ),
+          BATCH_READ_SOURCE_TIMEOUT_MS,
+        );
+      }),
+    ]).finally(() => clearTimeout(timer));
+  }
+
   private static async _readHashesViaReadRows(
     io: Io,
     table: string,
