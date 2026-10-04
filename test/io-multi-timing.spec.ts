@@ -4,6 +4,7 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
+import { Json } from '@rljson/json';
 import { exampleTableCfg, TableCfg } from '@rljson/rljson';
 
 import { afterEach, describe, expect, it } from 'vitest';
@@ -105,6 +106,111 @@ describe('IoMulti — closed-readable handling and dead-peer timing', () => {
         'tValueHealthy0',
         'tValueHealthy1',
       ]);
+    });
+  });
+
+  // ...........................................................................
+  // (i-b) THE PEER THAT IS STILL OPEN AND SIMPLY NEVER ANSWERS.
+  //
+  // (i) above covers the peer that can be SEEN to be gone: closing it flips
+  // `isOpen` to false, so `_skipClosed` drops it before the read and the
+  // healthy member answers at once. This is the other half, and it is the one
+  // that happens in the field: a half-open TCP socket, a firewall that drops
+  // without resetting, a peer under load. `isOpen` stays TRUE, nothing can be
+  // skipped, and the request simply never comes back.
+  //
+  // `readRows` awaited `Promise.allSettled` over the group, so the group was
+  // only as fast as its slowest member — which for a silent peer means
+  // `IoPeer`'s request timeout, 30 s by default, on EVERY read that reaches
+  // that priority. `server.ts` records the same thing measured on the lab
+  // against a cloud store at priority 2: *"a read the LAN could answer in
+  // milliseconds instead takes as long as the cloud does, or times out …
+  // files that were sitting on a peer two metres away never arrived, because
+  // the hub was waiting on a continent."* Moving the cloud to priority 3
+  // sidestepped it; this is the cause.
+  //
+  // Traced from the other end in `@rljson/fs-agent`, where one gagged socket
+  // in a four-node mesh blocked thirteen reads in a single test and a node
+  // never learned of a file a connected peer had just announced.
+  // ...........................................................................
+  describe('(i-b) an OPEN readable that never answers does not stall its group', () => {
+    it('answers from the healthy member instead of waiting the silent one out', async () => {
+      const healthyMem = new IoMem();
+      await healthyMem.init();
+      await createExampleTableWithData('t', 'Healthy', healthyMem);
+      // Delayed rather than instant, so a pass cannot come from the healthy
+      // member simply having resolved in the same microtask.
+      const healthy = new DelayedIo(healthyMem, { readRows: 20 });
+
+      const silentMem = new IoMem();
+      await silentMem.init();
+      await createExampleTableWithData('t', 'Silent', silentMem);
+      const silent = new DelayedIo(silentMem, { readRows: Infinity });
+
+      const ioMulti = new IoMulti([
+        { io: healthy, priority: 1, read: true, write: false, dump: false },
+        { io: silent, priority: 1, read: true, write: false, dump: false },
+      ]);
+      await ioMulti.init();
+
+      // THE POINT: it is not detectably gone. Nothing may be skipped.
+      expect(silent.isOpen).toBe(true);
+
+      // Raced against a deadline rather than left to the suite's timeout, so
+      // a regression fails in two seconds with a sentence rather than hanging.
+      const read = ioMulti.readRows({ table: 't', where: {} }).then((r) => ({
+        rows: (r.t as { _data: Json[] })._data,
+      }));
+      const outcome = await Promise.race([
+        read,
+        new Promise<{ late: true }>((resolve) =>
+          setTimeout(() => resolve({ late: true }), 2_000),
+        ),
+      ]);
+
+      expect(
+        'rows' in outcome,
+        'the read waited for a member that is open but never answers',
+      ).toBe(true);
+      expect(
+        ((outcome as { rows: Json[] }).rows as { a: string }[])
+          .map((r) => r.a)
+          .sort(),
+      ).toEqual(['tValueHealthy0', 'tValueHealthy1']);
+    });
+  });
+
+  // ...........................................................................
+  // (i-c) THE OTHER SIDE OF THE RACE: nobody in the group has rows.
+  //
+  // The race above resolves on the first member WITH rows. When no member has
+  // any, it has to fall through to every member's outcome instead — because an
+  // empty answer is only trustworthy when nothing failed, which is the rule
+  // the cascade applies below. This pins that path: the table exists on both
+  // members, neither holds the row, nothing failed, so an empty answer is the
+  // honest one and must not be an error.
+  // ...........................................................................
+  describe('(i-c) a group where no member has rows answers empty, not an error', () => {
+    it('reports the table as present and the rows as absent', async () => {
+      const first = new IoMem();
+      await first.init();
+      await createEmptyExampleTable('t', first);
+
+      const second = new IoMem();
+      await second.init();
+      await createEmptyExampleTable('t', second);
+
+      const ioMulti = new IoMulti([
+        { io: first, priority: 1, read: true, write: false, dump: false },
+        { io: second, priority: 1, read: true, write: false, dump: false },
+      ]);
+      await ioMulti.init();
+
+      const { t } = await ioMulti.readRows({ table: 't', where: {} });
+      expect(t._data).toEqual([]);
+      // The type still comes back, which is how a caller tells "the table is
+      // there and empty" from "the table is missing".
+      expect(t._type).toBe('components');
     });
   });
 
