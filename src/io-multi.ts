@@ -48,9 +48,17 @@ export type IoMultiIo = {
  * **The bound applies only while a FALLBACK exists.** The last readable in the
  * cascade is never bounded, because there is nobody else to ask — so a cloud
  * store at the end keeps exactly the behaviour it had, and a slow-but-working
- * WAN source is only ever skipped when somebody nearer can answer instead. A
- * skipped source is recorded as an error, so a batch that ends up short still
- * throws rather than reporting a partial answer as complete.
+ * WAN source is only ever skipped when somebody nearer can answer instead.
+ *
+ * **And it decides who is asked FIRST, never who is believed.** A source past
+ * the bound is SET ASIDE, not abandoned: if the batch is still short once
+ * everybody else has answered, the cascade comes back to it — see
+ * {@link BATCH_READ_SET_ASIDE_TIMEOUT_MS}. `@rljson/bs` shipped this bound
+ * without that second half and lost a working read to it within a day: a blob
+ * only one client held, fetched over a socket through the hub, took longer
+ * than two seconds on a loaded runner and the cascade gave up with the data
+ * reachable. Fifteen of ninety-one tests failed there once the bound was
+ * forced to bite.
  *
  * Two seconds, not thirty: a LAN peer that is working answers a batch in
  * milliseconds, and the source this is meant to protect against is one that
@@ -59,6 +67,40 @@ export type IoMultiIo = {
  * behind it and is never bounded by this at all.
  */
 export const BATCH_READ_SOURCE_TIMEOUT_MS = 2_000;
+
+/**
+ * How long a SET-ASIDE source gets once nobody else could complete the batch.
+ *
+ * Generous on purpose. At this point the alternative is not a faster answer,
+ * it is no answer: every other readable has been asked and the batch is still
+ * short, so waiting is the only thing left that can succeed. Five times the
+ * first bound covers a loaded machine without reinstating the hang this file
+ * set out to remove — an `IoPeer` would reject on its own after 30 s anyway,
+ * and a source that is neither bounded nor self-timing cannot be allowed to
+ * hold the cascade for ever.
+ */
+export const BATCH_READ_SET_ASIDE_TIMEOUT_MS = 10_000;
+
+// ...........................................................................
+/**
+ * A source that lost its turn in a batch read, not a source that failed.
+ *
+ * Thrown by the bound so one `catch` can tell the two apart, and it carries
+ * the source's still-pending answer: the cascade sets the source aside, asks
+ * everybody else, and comes back to this promise if the batch is still short.
+ */
+class SourceSetAside extends Error {
+  constructor(
+    readonly pending: Promise<Rljson>,
+    readonly sourceId: string,
+  ) {
+    super(
+      `IoMulti.readRowsByHashes: source ${sourceId} did not answer within ` +
+        `${BATCH_READ_SOURCE_TIMEOUT_MS}ms — asking the others first`,
+    );
+    this.name = 'SourceSetAside';
+  }
+}
 
 /**
  * Multi Io implementation that combines multiple underlying Io instances
@@ -667,11 +709,41 @@ export class IoMulti implements Io {
 
     let tableExistsAny = false;
     const rows: Map<string, Json> = new Map();
-    let type: ContentType | undefined = undefined;
+    // No `= undefined` initializer: `absorb` below assigns this from inside a
+    // closure, and TypeScript's narrowing does not follow a closure — with the
+    // initializer the read at the end of this method is pinned to `undefined`
+    // and the result no longer typechecks as an `Rljson`. Declared-only keeps
+    // it `ContentType | undefined`.
+    let type: ContentType | undefined;
     let readFrom: string = '';
     const errors: Error[] = [];
+    const setAside: SourceSetAside[] = [];
 
     let remaining = Array.from(new Set(request.hashes));
+
+    /**
+     * Takes what one source answered into the result being built.
+     *
+     * Shared by the first pass and by the set-aside pass below, which must
+     * absorb an answer on exactly the same terms — a source that lost its turn
+     * is still a source, and its rows count the same as anybody else's.
+     * @param result - What the source returned.
+     * @param sourceId - Its id, for the hot-swap exclusion.
+     */
+    const absorb = (result: Rljson, sourceId: string): void => {
+      const tableData = result[request.table] as RljsonTable<Json, ContentType>;
+      tableExistsAny = true;
+      // The table type is identical across all ios serving the table
+      type = tableData._type;
+
+      if (tableData._data.length > 0) {
+        readFrom = sourceId;
+        for (const tableRow of tableData._data) {
+          rows.set(tableRow._hash as string, tableRow);
+        }
+        remaining = remaining.filter((hash) => !rows.has(hash));
+      }
+    };
 
     for (let index = 0; index < this.readables.length; index++) {
       const readable = this.readables[index];
@@ -708,26 +780,24 @@ export class IoMulti implements Io {
           ? IoMulti._withSourceBound(answer, readable)
           : answer);
 
-        const tableData = result[request.table] as RljsonTable<
-          Json,
-          ContentType
-        >;
-        tableExistsAny = true;
-        // The table type is identical across all ios serving the table
-        type = tableData._type;
-
-        if (tableData._data.length > 0) {
-          // Same hint as in readRows: both sides are exercised by tests
-          // but v8 cannot attribute this branch across the await above
-          /* v8 ignore next -- @preserve */
-          readFrom = readable.id ?? '';
-          for (const tableRow of tableData._data) {
-            rows.set(tableRow._hash as string, tableRow);
-          }
-          remaining = remaining.filter((hash) => !rows.has(hash));
-        }
+        absorb(result, readable.id ?? '');
       } catch (e) {
-        errors.push(IoMulti._asError(e, readable.id));
+        // A source past the bound has not failed — it has lost its turn.
+        if (e instanceof SourceSetAside) setAside.push(e);
+        else errors.push(IoMulti._asError(e, readable.id));
+      }
+    }
+
+    // Everybody else has been asked and the batch is still short, so the
+    // sources that only lost their turn get the last word. Skipped entirely
+    // when the batch is already complete, which is the common case: the bound
+    // is there to make a NEARER source answer first, not to drop a far one.
+    for (const aside of setAside) {
+      if (remaining.length === 0) break;
+      try {
+        absorb(await IoMulti._lastWord(aside), aside.sourceId);
+      } catch (e) {
+        errors.push(IoMulti._asError(e, aside.sourceId));
       }
     }
 
@@ -810,16 +880,37 @@ export class IoMulti implements Io {
       answer,
       new Promise<never>((_, reject) => {
         timer = setTimeout(
+          () => reject(new SourceSetAside(answer, readable.id ?? 'unknown')),
+          BATCH_READ_SOURCE_TIMEOUT_MS,
+        );
+      }),
+    ]).finally(() => clearTimeout(timer));
+  }
+
+  /**
+   * Gives a set-aside source the last word, under a generous deadline.
+   *
+   * Nobody else could complete the batch, so this is the only thing left that
+   * can succeed — but it still has to end. See
+   * {@link BATCH_READ_SET_ASIDE_TIMEOUT_MS}.
+   * @param aside - The source that lost its turn earlier.
+   * @returns Its answer, or a rejection naming it once the deadline passes.
+   */
+  private static _lastWord(aside: SourceSetAside): Promise<Rljson> {
+    let timer: ReturnType<typeof setTimeout>;
+    return Promise.race([
+      aside.pending,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
           () =>
             reject(
               new Error(
-                `IoMulti.readRowsByHashes: source ${
-                  readable.id ?? 'unknown'
-                } did not answer within ${BATCH_READ_SOURCE_TIMEOUT_MS}ms — ` +
-                  `asking the next`,
+                `IoMulti.readRowsByHashes: source ${aside.sourceId} did not ` +
+                  `answer within ${BATCH_READ_SET_ASIDE_TIMEOUT_MS}ms, and ` +
+                  `nobody else could complete the batch`,
               ),
             ),
-          BATCH_READ_SOURCE_TIMEOUT_MS,
+          BATCH_READ_SET_ASIDE_TIMEOUT_MS,
         );
       }),
     ]).finally(() => clearTimeout(timer));

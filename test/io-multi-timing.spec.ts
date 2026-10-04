@@ -298,6 +298,131 @@ describe('IoMulti — closed-readable handling and dead-peer timing', () => {
   });
 
   // ...........................................................................
+  // (i-f) SLOW IS NOT SILENT.
+  //
+  // The bound above exists so a source that never answers cannot hold the
+  // cascade. It must not also decide that a source which answered LATE had
+  // nothing — a batch read walks sources sequentially, and the one holding the
+  // rows may simply be the far one.
+  //
+  // `@rljson/bs` shipped the same bound and lost a working read to it within a
+  // day: a blob only one client held, fetched over a socket through the hub,
+  // took longer than two seconds on a loaded CI runner and the cascade gave up
+  // with the data reachable. Fifteen of ninety-one tests failed once the bound
+  // was forced to bite. The rule both packages now hold: **the bound decides
+  // who is asked FIRST, never who is believed.**
+  // ...........................................................................
+  describe('(i-f) a slow source is set aside, not abandoned', () => {
+    /**
+     * The slow source is the ONLY holder, and it is not last — so it is
+     * bounded, and the cascade has to come back to it.
+     */
+    const buildSlowOnlyHolder = async (delayMs: number) => {
+      const holderMem = new IoMem();
+      await holderMem.init();
+      await createExampleTableWithData('t', 'Holder', holderMem);
+      const slow = new DelayedIo(holderMem, { readRowsByHashes: delayMs });
+
+      const { t: holderTable } = await holderMem.readRows({
+        table: 't',
+        where: {},
+      });
+      const hashes = (holderTable as { _data: Json[] })._data.map(
+        (r) => (r as { _hash: string })._hash,
+      );
+
+      // A fallback that is open and has the table but NOT the rows. Its
+      // presence is what arms the bound on the source above it.
+      const emptyMem = new IoMem();
+      await emptyMem.init();
+      await createEmptyExampleTable('t', emptyMem);
+
+      const ioMulti = new IoMulti([
+        { io: slow, priority: 1, read: true, write: false, dump: false },
+        { io: emptyMem, priority: 2, read: true, write: false, dump: false },
+      ]);
+      await ioMulti.init();
+      return { ioMulti, hashes };
+    };
+
+    it('still returns rows only the slow source holds', async () => {
+      const { ioMulti, hashes } = await buildSlowOnlyHolder(
+        BATCH_READ_SOURCE_TIMEOUT_MS + 1_500,
+      );
+      const { t } = await ioMulti.readRowsByHashes({ table: 't', hashes });
+      expect(
+        (t as { _data: Json[] })._data.length,
+        'the rows were available and the read gave up on them',
+      ).toBe(hashes.length);
+    }, 30_000);
+
+    it('still prefers a fallback that CAN answer over waiting', async () => {
+      // The guarantee (i-d) added must survive: when somebody else has the
+      // rows, the slow source is not waited for.
+      const slowMem = new IoMem();
+      await slowMem.init();
+      await createExampleTableWithData('t', 'Slow', slowMem);
+      const slow = new DelayedIo(slowMem, { readRowsByHashes: 20_000 });
+
+      const holderMem = new IoMem();
+      await holderMem.init();
+      await createExampleTableWithData('t', 'Holder', holderMem);
+      const { t: holderTable } = await holderMem.readRows({
+        table: 't',
+        where: {},
+      });
+      const hashes = (holderTable as { _data: Json[] })._data.map(
+        (r) => (r as { _hash: string })._hash,
+      );
+
+      const ioMulti = new IoMulti([
+        { io: slow, priority: 1, read: true, write: false, dump: false },
+        { io: holderMem, priority: 2, read: true, write: false, dump: false },
+      ]);
+      await ioMulti.init();
+
+      const started = Date.now();
+      const { t } = await ioMulti.readRowsByHashes({ table: 't', hashes });
+      expect((t as { _data: Json[] })._data.length).toBe(hashes.length);
+      expect(
+        Date.now() - started,
+        'waited for the slow source although a fallback had the rows',
+      ).toBeLessThan(BATCH_READ_SOURCE_TIMEOUT_MS + 3_000);
+    }, 30_000);
+
+    it('reports a verified absence once the set-aside source has answered too', async () => {
+      // Set aside is not suspicion. When the far source finally answers and
+      // says it does not have the row either, every readable has now been
+      // asked and answered — so an empty result is the TRUE one, and throwing
+      // would invent a failure nobody had. Before the set-aside pass existed
+      // this threw, because the bound's own error counted as "a source that
+      // could not be asked".
+      const slowMem = new IoMem();
+      await slowMem.init();
+      await createExampleTableWithData('t', 'Slow', slowMem);
+      const slow = new DelayedIo(slowMem, {
+        readRowsByHashes: BATCH_READ_SOURCE_TIMEOUT_MS + 1_000,
+      });
+
+      const emptyMem = new IoMem();
+      await emptyMem.init();
+      await createEmptyExampleTable('t', emptyMem);
+
+      const ioMulti = new IoMulti([
+        { io: slow, priority: 1, read: true, write: false, dump: false },
+        { io: emptyMem, priority: 2, read: true, write: false, dump: false },
+      ]);
+      await ioMulti.init();
+
+      const { t } = await ioMulti.readRowsByHashes({
+        table: 't',
+        hashes: ['missing-hash'],
+      });
+      expect((t as { _data: Json[] })._data.length).toBe(0);
+    }, 30_000);
+  });
+
+  // ...........................................................................
   // (i-e) The two other ways a batch source can answer.
   // ...........................................................................
   describe('(i-e) a batch source that answers EMPTY, and one with no id', () => {
@@ -337,6 +462,13 @@ describe('IoMulti — closed-readable handling and dead-peer timing', () => {
       // Ids are handed out by `IoMulti.init()`. A multi that was never
       // init()'d therefore has none, and the message has to stay readable —
       // the same rule as the recorded-error case above.
+      //
+      // This is also the one test that waits out
+      // `BATCH_READ_SET_ASIDE_TIMEOUT_MS`, which is why it takes ten seconds
+      // rather than two: the silent source is set aside, the empty one cannot
+      // complete the batch, and the cascade then gives the silent source its
+      // last word before concluding. A source that answers NEVER must still
+      // end the read — the set-aside pass is bounded for exactly that.
       const silentMem = new IoMem();
       await silentMem.init();
       await createExampleTableWithData('t', 'Silent', silentMem);
