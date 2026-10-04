@@ -9,7 +9,15 @@ import { exampleTableCfg, TableCfg } from '@rljson/rljson';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { Io, IoMem, IoMulti, IoMultiIo, IoPeer, PeerSocketMock } from '../src';
+import {
+  BATCH_READ_SOURCE_TIMEOUT_MS,
+  Io,
+  IoMem,
+  IoMulti,
+  IoMultiIo,
+  IoPeer,
+  PeerSocketMock,
+} from '../src';
 import { setIoTraceLogger } from '../src/io-trace';
 
 import { DelayedIo } from './helpers/DelayedIo';
@@ -212,6 +220,144 @@ describe('IoMulti — closed-readable handling and dead-peer timing', () => {
       // there and empty" from "the table is missing".
       expect(t._type).toBe('components');
     });
+  });
+
+  // ...........................................................................
+  // (i-d) THE BATCH READ: a silent source must not block the sources after it.
+  //
+  // `readRowsByHashes` walks the readables SEQUENTIALLY, narrowing the list of
+  // hashes still wanted as it goes — that ordering is load-bearing, so it is
+  // not grouped and raced like `readRows`. The cost was that a source which is
+  // open and never answers blocked every source behind it for its full request
+  // timeout, 30 s by default.
+  //
+  // It is the path a TREE fetch takes (`@rljson/db`'s tree-controller calls
+  // `readRowsByHashes`), which is why it mattered: in `@rljson/fs-agent` a
+  // node resolved a peer's announcement, lifted its tombstone, and then sat in
+  // the tree fetch while a cut peer timed out — the file arrived only when the
+  // window was widened to 120 s.
+  //
+  // The rule is conservative: a source is bounded only while a FALLBACK
+  // exists. The last readable is never bounded, because there is nobody else
+  // to ask — so a cloud store at the end of the cascade keeps exactly the
+  // behaviour it had.
+  // ...........................................................................
+  describe('(i-d) a silent source in a batch read does not block the ones behind it', () => {
+    it('answers from the later source instead of waiting the silent one out', async () => {
+      const silentMem = new IoMem();
+      await silentMem.init();
+      await createExampleTableWithData('t', 'Silent', silentMem);
+      const silent = new DelayedIo(silentMem, { readRowsByHashes: Infinity });
+
+      const holderMem = new IoMem();
+      await holderMem.init();
+      await createExampleTableWithData('t', 'Holder', holderMem);
+      const holder = new DelayedIo(holderMem, { readRowsByHashes: 20 });
+
+      // Which hashes to ask for — taken from the holder's own rows.
+      const { t: holderTable } = await holderMem.readRows({
+        table: 't',
+        where: {},
+      });
+      const hashes = (holderTable as { _data: Json[] })._data.map(
+        (r) => (r as { _hash: string })._hash,
+      );
+
+      const ioMulti = new IoMulti([
+        // The silent one FIRST, so the sequential walk hits it before the
+        // source that can actually answer.
+        { io: silent, priority: 1, read: true, write: false, dump: false },
+        { io: holder, priority: 2, read: true, write: false, dump: false },
+      ]);
+      await ioMulti.init();
+      expect(silent.isOpen).toBe(true);
+
+      const read = ioMulti
+        .readRowsByHashes({ table: 't', hashes })
+        .then((r) => ({ rows: (r.t as { _data: Json[] })._data }));
+      // The claim is NOT "instant" — it is "does not wait out the source's
+      // request timeout", which for an `IoPeer` is 30 s by default. The bound
+      // is `BATCH_READ_SOURCE_TIMEOUT_MS`, so the deadline here sits above
+      // that and well below 30 s.
+      const outcome = await Promise.race([
+        read,
+        new Promise<{ late: true }>((resolve) =>
+          setTimeout(
+            () => resolve({ late: true }),
+            BATCH_READ_SOURCE_TIMEOUT_MS + 3_000,
+          ),
+        ),
+      ]);
+
+      expect(
+        'rows' in outcome,
+        'the batch read waited for a source that never answers',
+      ).toBe(true);
+      expect((outcome as { rows: Json[] }).rows.length).toBe(hashes.length);
+    }, 20_000);
+  });
+
+  // ...........................................................................
+  // (i-e) The two other ways a batch source can answer.
+  // ...........................................................................
+  describe('(i-e) a batch source that answers EMPTY, and one with no id', () => {
+    it('moves on when a source holds the table but none of the hashes', () => {
+      // Not every miss is a failure: a peer may legitimately have the table
+      // and not the rows. That is a normal answer and the cascade continues
+      // to the next source rather than recording an error.
+      return (async () => {
+        const emptyMem = new IoMem();
+        await emptyMem.init();
+        await createEmptyExampleTable('t', emptyMem);
+
+        const holderMem = new IoMem();
+        await holderMem.init();
+        await createExampleTableWithData('t', 'Holder', holderMem);
+
+        const { t: holderTable } = await holderMem.readRows({
+          table: 't',
+          where: {},
+        });
+        const hashes = (holderTable as { _data: Json[] })._data.map(
+          (r) => (r as { _hash: string })._hash,
+        );
+
+        const ioMulti = new IoMulti([
+          { io: emptyMem, priority: 1, read: true, write: false, dump: false },
+          { io: holderMem, priority: 2, read: true, write: false, dump: false },
+        ]);
+        await ioMulti.init();
+
+        const { t } = await ioMulti.readRowsByHashes({ table: 't', hashes });
+        expect((t as { _data: Json[] })._data.length).toBe(hashes.length);
+      })();
+    });
+
+    it("names a bounded source 'unknown' when it has no id", async () => {
+      // Ids are handed out by `IoMulti.init()`. A multi that was never
+      // init()'d therefore has none, and the message has to stay readable —
+      // the same rule as the recorded-error case above.
+      const silentMem = new IoMem();
+      await silentMem.init();
+      await createExampleTableWithData('t', 'Silent', silentMem);
+      const silent = new DelayedIo(silentMem, { readRowsByHashes: Infinity });
+
+      const emptyMem = new IoMem();
+      await emptyMem.init();
+      await createEmptyExampleTable('t', emptyMem);
+
+      // Deliberately NOT init()'d, so neither readable carries an id.
+      const ioMulti = new IoMulti([
+        { io: silent, priority: 1, read: true, write: false, dump: false },
+        { io: emptyMem, priority: 2, read: true, write: false, dump: false },
+      ]);
+
+      // Nobody can supply the hash, so the batch throws — and the error it
+      // throws is the bounded source's, naming it.
+      await expect(
+        ioMulti.readRowsByHashes({ table: 't', hashes: ['missing-hash'] }),
+      ).rejects.toThrow(/unknown/);
+    }, 20_000);
   });
 
   // ...........................................................................
