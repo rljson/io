@@ -506,9 +506,39 @@ export class IoMulti implements Io {
           }
         });
 
+        // AND A GROUP THAT CANNOT SETTLE MUST STOP TRYING TO.
+        //
+        // `allSettled` waits for the slowest member, and a member that is open
+        // but never answers only settles at its own request timeout — 30 s for
+        // an `IoPeer`. "Nobody has this row" is exactly what a lookup for an
+        // unreplicated ref is, so that wait is the common path, not the rare
+        // one.
+        //
+        // Measured in `@rljson/fs-agent`: 24–27 reads per gate run blocked for
+        // a full 10 s, concentrated on whichever node was partitioned. Two of
+        // them decide protocol behaviour — `ancestryPrevious` and
+        // `resolveAnnouncement` — because both feed the edit chain's verdict on
+        // which way two folders disagree. A verdict that arrives too late is
+        // indistinguishable from no history at all, and the decision then falls
+        // to inference from a content hash, which cannot be made correct.
+        //
+        // Each member is bounded, and a bounded-out member is recorded as a
+        // FAILURE rather than as an absence. The classification below is
+        // unchanged and does the right thing: a fetch by hash that found
+        // nothing while something failed throws instead of reporting a verified
+        // absence. Fast and honest beats slow and honest; fast and WRONG is
+        // what that throw prevents.
+        //
+        // Armed unconditionally here, because this branch only runs for a group
+        // of two or more — a single readable at a priority takes the direct
+        // path above, where there is nobody else to conclude with.
+        const settling = attempts.map((attempt, index) =>
+          IoMulti._withGroupBound(attempt, group[index]),
+        );
+
         const outcome = await Promise.race([
           firstWithRows.then((hit) => ({ hit })),
-          Promise.allSettled(attempts).then((results) => ({ results })),
+          Promise.allSettled(settling).then((results) => ({ results })),
         ]);
 
         let foundRows = false;
@@ -860,6 +890,45 @@ export class IoMulti implements Io {
    * @param table - The table to read from
    * @param hashes - The row hashes to read
    */
+  /**
+   * Bounds ONE member of a priority group so the group can settle at all.
+   *
+   * A group is RACED, so there is no "next source" to fall to — what the bound
+   * buys is the ability to conclude. A member past it rejects with a described
+   * error, which the caller records like any other failure, and that is what
+   * keeps a short answer from being reported as a verified absence. See
+   * {@link BATCH_READ_SOURCE_TIMEOUT_MS}.
+   *
+   * A late answer is discarded and its rejection absorbed: it belongs to a
+   * question already concluded, and an unhandled rejection would crash the
+   * process.
+   * @param attempt - The member's pending answer.
+   * @param readable - The member, named in the message.
+   * @returns The answer, or a rejection once the bound passes.
+   */
+  private static _withGroupBound<T>(
+    attempt: Promise<T>,
+    readable: IoMultiIo,
+  ): Promise<T> {
+    let timer: ReturnType<typeof setTimeout>;
+    return Promise.race([
+      attempt,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => {
+          void attempt.catch(() => undefined);
+          reject(
+            new Error(
+              `IoMulti.readRows: source ${
+                readable.id ?? 'unknown'
+              } did not answer within ${BATCH_READ_SOURCE_TIMEOUT_MS}ms — ` +
+                `this is not a verified absence`,
+            ),
+          );
+        }, BATCH_READ_SOURCE_TIMEOUT_MS);
+      }),
+    ]).finally(() => clearTimeout(timer));
+  }
+
   /**
    * Bounds one source's answer so the cascade can move on to the next.
    *
