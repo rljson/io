@@ -21,8 +21,8 @@ importers:
         specifier: 0.0.23
         version: 0.0.23
       '@rljson/rljson':
-        specifier: 0.0.83
-        version: 0.0.83
+        specifier: 0.0.86
+        version: 0.0.86
       '@rljson/validate':
         specifier: 0.0.12
         version: 0.0.12
@@ -273,6 +273,10 @@ packages:
 
   '@rljson/rljson@0.0.83':
     resolution: {integrity: sha512-/JVC8yEtbWP/lnQbmYTlEAqGBJN/6LoKJSYoxyn8IUTouBIylPNhBmSy9kxYnRlCfgL7pkXlRL/DXQn8jzTOQw==}
+    engines: {node: '>=22.14.0'}
+
+  '@rljson/rljson@0.0.86':
+    resolution: {integrity: sha512-8hoaeG4p8P9+Oq4eCSsg2OHvXgAh8Bzo1l3zUPfjA8Zjb0fKOViF54DoLnYhESH/gngpkrUyqZDQlXZwk6sooQ==}
     engines: {node: '>=22.14.0'}
 
   '@rljson/validate@0.0.12':
@@ -1033,6 +1037,11 @@ packages:
     engines: {node: ^22 || ^24 || >=26}
     hasBin: true
 
+  nanoid@6.0.2:
+    resolution: {integrity: sha512-hIvVOb9Qr1p/9CNNLOe0OlWvgx/ziTsVwKN/GDSsuArN2K0wDiafP3s0SWmsm7o2BdnyS8Z9Z64NFBUbn6ziBg==}
+    engines: {node: ^22 || ^24 || >=26}
+    hasBin: true
+
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
 
@@ -1637,6 +1646,12 @@ snapshots:
       '@rljson/hash': 0.0.19
       '@rljson/json': 0.0.23
       nanoid: 6.0.1
+
+  '@rljson/rljson@0.0.86':
+    dependencies:
+      '@rljson/hash': 0.0.19
+      '@rljson/json': 0.0.23
+      nanoid: 6.0.2
 
   '@rljson/validate@0.0.12':
     dependencies:
@@ -2331,6 +2346,8 @@ snapshots:
   nanoid@3.3.19: {}
 
   nanoid@6.0.1: {}
+
+  nanoid@6.0.2: {}
 
   natural-compare@1.4.0: {}
 
