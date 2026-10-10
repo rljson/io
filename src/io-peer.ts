@@ -13,6 +13,12 @@ import { Io } from './io.ts';
 import { PeerSocketMock } from './peer-socket-mock.ts';
 import { Socket } from './socket.ts';
 
+/**
+ * The most hashes one `readRowsByHashes` request over a socket carries.
+ * Larger reads are split, so no single reply grows with the read.
+ */
+export const READ_ROWS_BY_HASHES_CHUNK = 200;
+
 
 export class IoPeer implements Io {
   isOpen: boolean = false;
@@ -350,6 +356,49 @@ export class IoPeer implements Io {
   private readonly _batchRetryDecayMs = 60_000;
 
   /**
+   * Sends a batch read as requests of at most
+   * {@link READ_ROWS_BY_HASHES_CHUNK} hashes, one after the other, and joins
+   * the replies. An empty read is still one request: its reply carries the
+   * table's type.
+   *
+   * One request for every hash makes the reply grow with the read, and the
+   * reply is what the far side's socket has to accept in one message.
+   * @param request - The table and the row hashes to read
+   */
+  private async _readRowsByHashesInChunks(request: {
+    table: string;
+    hashes: string[];
+  }): Promise<Rljson> {
+    const hashes = Array.from(new Set(request.hashes));
+    const rows: any[] = [];
+    let type: ContentType | undefined;
+
+    let start = 0;
+    do {
+      const chunk = hashes.slice(start, start + READ_ROWS_BY_HASHES_CHUNK);
+      const part = await this._withTimeout(
+        new Promise<Rljson>((resolve, reject) => {
+          this._socket.emit(
+            'readRowsByHashes',
+            { table: request.table, hashes: chunk },
+            (result?: Rljson, error?: Error) => {
+              if (error) reject(error);
+              resolve(result!);
+            },
+          );
+        }),
+        'readRowsByHashes',
+      );
+      const tableData = part[request.table];
+      type ??= tableData._type;
+      rows.push(...tableData._data);
+      start += READ_ROWS_BY_HASHES_CHUNK;
+    } while (start < hashes.length);
+
+    return { [request.table]: { _data: rows, _type: type } } as Rljson;
+  }
+
+  /**
    * Batch read over the socket. Falls back to per-hash readRows when
    * the remote side does not support it.
    *
@@ -377,19 +426,7 @@ export class IoPeer implements Io {
 
     if (!this._batchReadsUnsupported && !decayActive) {
       try {
-        const batchResult = await this._withTimeout(
-          new Promise<Rljson>((resolve, reject) => {
-            this._socket.emit(
-              'readRowsByHashes',
-              request,
-              (result?: Rljson, error?: Error) => {
-                if (error) reject(error);
-                resolve(result!);
-              },
-            );
-          }),
-          'readRowsByHashes',
-        );
+        const batchResult = await this._readRowsByHashesInChunks(request);
         this._batchRetryAfter = null;
         return batchResult;
       } catch (error) {
