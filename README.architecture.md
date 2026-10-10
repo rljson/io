@@ -135,14 +135,25 @@ closed-member skipping described above — it protects any caller of a bare
 
 **Batch-read capability latch (`readRowsByHashes`):**
 
-`IoPeer.readRowsByHashes` tries a single batched round-trip first, falling
-back to one `readRows` per hash when batching isn't available. Two distinct
+`IoPeer.readRowsByHashes` tries batched round-trips first, falling back to
+one `readRows` per hash when batching isn't available. A batch is sent as
+requests of at most `READ_ROWS_BY_HASHES_CHUNK` (200) distinct hashes, one
+after the other, so no single reply grows with the read — the reply is the
+message the far side's socket has to accept whole. Two distinct
 "unsupported" signals are handled differently, on purpose:
 
 | Remote signal | Meaning | Latch behavior |
 | --- | --- | --- |
 | Error includes `'not found on Io instance'` or `'not supported'` | The remote genuinely does not implement batch reads (old server) | **Permanent** — `_batchReadsUnsupported = true`; never tried again for this peer |
 | Error includes `'Timeout after'` | The one request timed out — often transient (temporary overload/slow peer), not proof of missing support | **Decaying** — `_batchRetryAfter = Date.now() + 60_000`; this call falls back to per-hash, batch is skipped (not retried) until the window elapses, then tried again |
+
+Both signals are read from the error's **text**, so they only arrive if the
+far side sends its errors in a shape that survives a socket. `IoPeerBridge`
+does — `{ message, name }` via `serializableError`, including for a method its
+store lacks. A raw `Error` crosses Socket.IO as `{}`; the permanent latch then
+never fires and the read rethrows instead of falling back. That was the case
+for a store without batch reads (`IoSqliteNode`, `IoMssql`) until 0.0.85, and
+`test/io-peer-bridge-json-acks.spec.ts` pins it with JSON acks.
 
 The decay avoids two failure modes at once: hammering a genuinely
 unsupported/overloaded peer with a fresh 30s timeout on every call (no

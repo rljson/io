@@ -2,4 +2,4 @@
 // Kept in sync by test/io_version.test.ts.
 
 /** The version of the `@rljson/io` package. */
-export const ioVersion = '0.0.84';
+export const ioVersion = '0.0.85';

@@ -81,8 +81,13 @@ The `Io` interface is the core abstraction that defines a standard set of operat
 - **Optional Batch Reads**: `readRowsByHashes()` — answers many content
   hash lookups in one request. Implementations may omit it; callers must
   fall back to `readRows()` then. `IoMem`, `IoMulti` (per-hash cascade
-  across its members) and `IoPeer`/`IoServer` (one socket round trip,
-  with automatic per-hash fallback against older remotes) support it.
+  across its members) and `IoPeer`/`IoServer` (requests of at most 200
+  hashes, with automatic per-hash fallback against remotes without batch
+  reads) support it. The contract every implementation that has it must
+  meet is in the conformance suite: missing hashes are left out, each row
+  comes back once, an empty read returns the table's type, and a missing
+  table throws `Table "<key>" not found`. A store without the method skips
+  those tests visibly.
 
 All implementations (in-memory, remote, multi-source) conform to this interface.
 
