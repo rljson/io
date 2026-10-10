@@ -92,13 +92,15 @@ export class IoPeerBridge {
       // Get the Io method
       const ioMethod = (this._io as any)[methodName];
 
-      /* v8 ignore next -- @preserve */
+      // Serialisable like every other error here: a raw `Error` arrives as
+      // `{}`, and `IoPeer` then cannot see that the method is missing and
+      // rethrows instead of falling back to per-hash reads.
       if (typeof ioMethod !== 'function') {
         const error = new Error(
           `Method "${methodName}" not found on Io instance`,
         );
         if (typeof callback === 'function') {
-          callback(null, error);
+          callback(null, serializableError(error));
         }
         return;
       }
@@ -182,7 +184,7 @@ export class IoPeerBridge {
       const result = await ioMethod.apply(this._io, args);
       this._socket.emit(socketEventName, result, null);
     } catch (error) {
-      this._socket.emit(socketEventName, null, error);
+      this._socket.emit(socketEventName, null, serializableError(error));
     }
   }
 
