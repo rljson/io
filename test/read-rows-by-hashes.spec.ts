@@ -13,7 +13,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { Io } from '../src/io';
 import { IoMem } from '../src/io-mem';
 import { IoMulti } from '../src/io-multi';
-import { IoPeer } from '../src/io-peer';
+import { IoPeer, READ_ROWS_BY_HASHES_CHUNK } from '../src/io-peer';
 import { IoServer } from '../src/io-server';
 import { PeerSocketMock } from '../src/peer-socket-mock';
 import { Socket } from '../src/socket';
@@ -206,6 +206,58 @@ describe('readRowsByHashes', () => {
 
       const names = result.t._data.map((r: any) => r.name).sort();
       expect(names).toEqual(['a', 'b']);
+    });
+
+    it('splits a large read into requests of at most READ_ROWS_BY_HASHES_CHUNK hashes', async () => {
+      const count = READ_ROWS_BY_HASHES_CHUNK * 2 + 50;
+      const rows = Array.from({ length: count }, (_, i) =>
+        hip({ name: `row-${i}` }),
+      );
+      const io = await setupIoMem(rows);
+      const socket = new PeerSocketMock(io);
+      const sizes: number[] = [];
+      const emit = socket.emit.bind(socket);
+      (socket as any).emit = (eventName: string, ...args: any[]) => {
+        if (eventName === 'readRowsByHashes') sizes.push(args[0].hashes.length);
+        return emit(eventName, ...args);
+      };
+      const peer = new IoPeer(socket);
+      await peer.init();
+
+      const hashes = rows.map((r: any) => r._hash);
+      const result = await peer.readRowsByHashes({
+        table: 't',
+        hashes: [...hashes, hashes[0]],
+      });
+
+      expect(sizes).toEqual([
+        READ_ROWS_BY_HASHES_CHUNK,
+        READ_ROWS_BY_HASHES_CHUNK,
+        50,
+      ]);
+      expect(result.t._data.map((r: any) => r._hash).sort()).toEqual(
+        [...hashes].sort(),
+      );
+      expect(result.t._type).toBe('components');
+    });
+
+    it('sends an empty read as one request, whose reply carries the type', async () => {
+      const io = await setupIoMem([rowA]);
+      const socket = new PeerSocketMock(io);
+      let requests = 0;
+      const emit = socket.emit.bind(socket);
+      (socket as any).emit = (eventName: string, ...args: any[]) => {
+        if (eventName === 'readRowsByHashes') requests++;
+        return emit(eventName, ...args);
+      };
+      const peer = new IoPeer(socket);
+      await peer.init();
+
+      const result = await peer.readRowsByHashes({ table: 't', hashes: [] });
+
+      expect(requests).toBe(1);
+      expect(result.t._data).toEqual([]);
+      expect(result.t._type).toBe('components');
     });
 
     it('falls back to per-hash reads when the remote side lacks support', async () => {

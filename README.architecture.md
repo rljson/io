@@ -135,8 +135,11 @@ closed-member skipping described above — it protects any caller of a bare
 
 **Batch-read capability latch (`readRowsByHashes`):**
 
-`IoPeer.readRowsByHashes` tries a single batched round-trip first, falling
-back to one `readRows` per hash when batching isn't available. Two distinct
+`IoPeer.readRowsByHashes` tries batched round-trips first, falling back to
+one `readRows` per hash when batching isn't available. A batch is sent as
+requests of at most `READ_ROWS_BY_HASHES_CHUNK` (200) distinct hashes, one
+after the other, so no single reply grows with the read — the reply is the
+message the far side's socket has to accept whole. Two distinct
 "unsupported" signals are handled differently, on purpose:
 
 | Remote signal | Meaning | Latch behavior |
