@@ -777,7 +777,10 @@ export class IoMulti implements Io {
 
     for (let index = 0; index < this.readables.length; index++) {
       const readable = this.readables[index];
-      if (remaining.length === 0) break;
+      // Done once every hash is found — but only after a source has ANSWERED.
+      // An empty read has nothing remaining from the start, and still needs one
+      // answer: it carries the table's type, and a missing table throws.
+      if (remaining.length === 0 && tableExistsAny) break;
 
       // Skip readables that are closed right now — recorded as an
       // error (see IoMulti._isClosed) so that an all-closed cascade
@@ -990,8 +993,11 @@ export class IoMulti implements Io {
     table: string,
     hashes: string[],
   ): Promise<Rljson> {
+    // An empty read still asks once, for no row: the answer carries the
+    // table's type, and a missing table throws — as a batch read does.
+    const asked = hashes.length > 0 ? hashes : ['__NONE__'];
     const results = await Promise.all(
-      hashes.map((hash) => io.readRows({ table, where: { _hash: hash } })),
+      asked.map((hash) => io.readRows({ table, where: { _hash: hash } })),
     );
 
     let type: ContentType | undefined = undefined;

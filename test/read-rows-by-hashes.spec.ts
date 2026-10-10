@@ -125,6 +125,23 @@ describe('readRowsByHashes', () => {
       expect(names).toEqual(['a', 'b']);
     });
 
+    it('answers an empty read with the table type, also through a member without batch reads', async () => {
+      const io = await setupIoMem([rowA]);
+      for (const member of [io, withoutBatchReads(io)]) {
+        const multi = new IoMulti([
+          { io: member, priority: 1, read: true, write: false, dump: false },
+        ]);
+        await multi.init();
+
+        const result = await multi.readRowsByHashes({ table: 't', hashes: [] });
+        expect(result.t._data).toEqual([]);
+        expect(result.t._type).toBe('components');
+        await expect(
+          multi.readRowsByHashes({ table: 'nope', hashes: [] }),
+        ).rejects.toThrow('Table "nope" not found');
+      }
+    });
+
     it('stops cascading once all hashes are found', async () => {
       const io1 = await setupIoMem([rowA, rowB]);
       const io2 = await setupIoMem([]);
