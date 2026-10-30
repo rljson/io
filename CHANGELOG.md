@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Developed in gg tickets
+
+- **Developed in gg tickets.** The rljson DNA (`@rljson/dna-rljson`) is raised to gg's current workflow: the `/gg-*` skills, the development guide and the quick check.
+- **Pull requests are checked by the quick check** (`gg one did commit`: every commit went through gg's local lint, tests and coverage). `Build and Test` runs on `main` after the merge.
+- **`install-conformance-tests.js`** takes the conformance tests from a linked sibling checkout, which has no `dist/`, by running that checkout's `deploy-conformance-tests.js`.
+- **`tsconfig.json` lists `node` in `types`:** TypeScript 6 includes no `@types` by default.
+- **Dependencies raised to their newest versions** (TypeScript 6 among them).
+
 ### Releases go through gg
 
 **What changed for contributors.** The CI no longer publishes:
