@@ -1,0 +1,43 @@
+// @license
+// Copyright (c) rljson
+//
+// Use of this source code is governed by terms that can be
+// found in the LICENSE file in the root of this package.
+
+{
+  // The package name, as declared in pubspec.yaml / package.json.
+  "name": "@rljson/io",
+
+  // 1-2 sentence summary about this repo.
+  "summary": "Low-level interface for reading and writing Rljson data: Io (init, write, readRows, readRowsByHashes, dump, createOrExtendTable) with IoMem, IoMulti, IoPeer/IoPeerBridge/IoServer over sockets; conformance suite for every Io.",
+
+  // 1-3 bullet points: the problem space.
+  "domain": [
+    "Io interface: lifecycle, rows, batch reads by hash, table schemas",
+    "IoMem in memory; IoMulti: priority cascade, hot-swap caching",
+    "remote Io over a Socket; socket mocks, IoTools, IoDbNameMapping, calcReverseRefs, ioTrace"
+  ],
+
+  // The repos this one depends on and the repos depending on it.
+  // Keep the reason or the API behind each entry, not just the name.
+  "interfaces": {
+    // "<repo-a>": "why / API"
+    "uses": {
+      "rljson": "Rljson, TableCfg, ContentType for every Io; validateRljsonAgainstTableCfg, iterateTables",
+      "hash": "hip/hsh: rows, tables, tableCfgs",
+      "is-ready": "IsReady: isReady() of IoMem",
+      "json": "Json types, copy, equals, merge"
+    },
+
+    // "<repo-b>": "why / API"
+    "usedBy": {
+      "db": "Io, IoMem: storage; Socket: Connector transport",
+      "server": "Io, IoMulti, IoPeer, IoPeerBridge, IoServer, IoMem",
+      "fs-agent": "IoMem, createSocketPair: client/server setup",
+      "mongo-agent": "test: IoMem, IoMulti",
+      "webcache": "Io, IoPeer, IoMem: the index and peer reads of rows",
+      "io-sqlite-node": "Io, IoTools, IoDbNameMapping; test: conformance suite",
+      "io-mssql": "Io, IoTools, IoDbNameMapping; test: conformance suite"
+    }
+  }
+}
