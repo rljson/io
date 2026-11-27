@@ -36,7 +36,7 @@ const files = [
 
 const filesToBeDeleted = [
   'scripts/update-doc-settings-and-scripts.js',
-  'doc/workflows/update-from-template-project.md',
+  'doc/en/workflows/update-from-template-project.md',
 ];
 
 const templateRepo = 'https://github.com/rljson/template-project.git';
@@ -111,7 +111,7 @@ function replaceTemplateProject() {
   const pkg = JSON.parse(fs.readFileSync(pkgFile, 'utf8'));
   const projectName = pkg.name.replace('@rljson/', '');
 
-  const replaceFiles = ['doc/workflows/prepare.md', 'doc/workflows/tools.md'];
+  const replaceFiles = ['doc/en/workflows/prepare.md', 'doc/en/workflows/tools.md'];
 
   for (const file of replaceFiles) {
     const filePath = path.join(process.cwd(), file);
