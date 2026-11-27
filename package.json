@@ -51,10 +51,10 @@
     "vitest-dom": "^0.1.1"
   },
   "dependencies": {
-    "@rljson/hash": "0.0.21",
-    "@rljson/is-ready": "0.0.21",
+    "@rljson/hash": "0.0.22",
+    "@rljson/is-ready": "0.0.22",
     "@rljson/json": "0.0.23",
-    "@rljson/rljson": "0.0.89",
-    "@rljson/validate": "0.0.15"
+    "@rljson/rljson": "0.0.90",
+    "@rljson/validate": "0.0.16"
   }
 }
