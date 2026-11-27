@@ -15,18 +15,18 @@ found in the LICENSE file in the root of this package.
 
 ## Prepare
 
-Read [prepare.md](doc/workflows/prepare.md)
+Read [prepare.md](doc/en/workflows/prepare.md)
 
 <!-- ........................................................................-->
 
 ## Develop
 
-Read [develop.md](doc/workflows/develop.md)
+Read [develop.md](doc/en/workflows/develop.md)
 
 ## Tools
 
-Read [tools.md](doc/workflows/tools.md)
+Read [tools.md](doc/en/workflows/tools.md)
 
 ## Superheros
 
-Read [super-hero.md](doc/workflows/super-hero.md)
+Read [super-hero.md](doc/en/workflows/super-hero.md)
